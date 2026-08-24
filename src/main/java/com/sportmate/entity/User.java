@@ -1,10 +1,22 @@
 package com.sportmate.entity;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "User")
@@ -17,8 +29,15 @@ public class User {
     @Column(name = "UserName", nullable = false, unique = true)
     private String userName;
 
-    @Column(name = "Password", nullable = false)
-    private String password;   // BCrypt hash
+    //Authenเพิ่ม
+    @Column(name = "Password")
+    private String password;   // BCrypt hash — null ถ้าล็อกอินผ่าน Google/ThaiD
+
+    @Column(name = "AuthProvider", nullable = false)
+    private String authProvider = "local";   // local / google / thaid
+
+    @Column(name = "ProviderId")
+    private String providerId; //Authen
 
     @Column(name = "PhoneNumber")
     private String phoneNumber;
@@ -104,4 +123,14 @@ public class User {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public Set<Sport> getInterestedSports() { return interestedSports; }
     public void setInterestedSports(Set<Sport> interestedSports) { this.interestedSports = interestedSports; }
+    //authenเพิ่ม
+    public String getAuthProvider() { return authProvider; }
+    public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
+    public String getProviderId() { return providerId; }
+    public void setProviderId(String providerId) { this.providerId = providerId; }
+
+    @Transient
+    public boolean isExternalAccount() {
+    return authProvider != null && !"local".equals(authProvider);
+}
 }

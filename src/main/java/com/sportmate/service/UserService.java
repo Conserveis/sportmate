@@ -1,17 +1,24 @@
 package com.sportmate.service;
 
-import com.sportmate.entity.*;
-import com.sportmate.repository.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.sportmate.entity.Receipt;
+import com.sportmate.entity.Sport;
+import com.sportmate.entity.User;
+import com.sportmate.entity.UserType;
+import com.sportmate.repository.ReceiptRepository;
+import com.sportmate.repository.SportRepository;
+import com.sportmate.repository.UserRepository;
+import com.sportmate.repository.UserTypeRepository;
 
 @Service
 public class UserService {
@@ -33,7 +40,7 @@ public class UserService {
     }
 
     /**
-     * สมัครสมาชิก (FR01 + FR02): สร้างบัญชีแบบยังไม่ยืนยัน แล้วออก OTP ให้ยืนยัน
+     * สมัครสมาชิก: สร้างบัญชีแบบยังไม่ยืนยัน แล้วออก OTP ให้ยืนยัน
      * หมายเหตุ: ไม่มี mail server จริง จึงไม่ได้ "ส่ง" OTP ทางอีเมล แต่จะแสดง OTP
      * บนหน้าจอยืนยัน (โหมดจำลอง) และพิมพ์ลง log ให้กรอกต่อได้
      */
@@ -62,7 +69,7 @@ public class UserService {
         return u;
     }
 
-    /** สร้าง OTP 6 หลัก ตั้งอายุ 10 นาที (FR02.1/FR02.3) และคืนค่า OTP */
+    /** สร้าง OTP 6 หลัก ตั้งอายุ 10 นาที และคืนค่า OTP */
     @Transactional
     public String generateOtp(User u) {
         String code = String.format("%06d", new java.util.Random().nextInt(1_000_000));
@@ -80,7 +87,7 @@ public class UserService {
         return generateOtp(getById(userId));
     }
 
-    /** ตรวจสอบ OTP (FR02.2): ถูกต้อง + ยังไม่หมดอายุ -> เปิดใช้งานบัญชี */
+    /** ตรวจสอบ OTP : ถูกต้อง + ยังไม่หมดอายุ -> เปิดใช้งานบัญชี */
     @Transactional
     public void verifyOtp(Integer userId, String code) {
         User u = getById(userId);
@@ -97,17 +104,29 @@ public class UserService {
         userRepo.save(u);
     }
 
-    /** ล็อกอิน (UC-2) แบบย่อ: ตรวจ username/email + รหัสผ่าน + ต้องยืนยัน OTP แล้ว */
+    /** ล็อกอินAuthen */
     public User login(String userNameOrEmail, String rawPassword) {
-        User u = userRepo.findByUserName(userNameOrEmail)
-                .or(() -> userRepo.findByGmail(userNameOrEmail))
-                .orElseThrow(() -> new IllegalArgumentException("ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง"));
-        if (!encoder.matches(rawPassword, u.getPassword()))
-            throw new IllegalArgumentException("ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง");
-        if (!u.isEmailVerified())
-            throw new UnverifiedUserException(u.getId());
-        return u;
-    }
+    User u = userRepo.findByUserName(userNameOrEmail)
+            .or(() -> userRepo.findByGmail(userNameOrEmail))
+            .orElseThrow(() -> new IllegalArgumentException("ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง"));
+    // บัญชีที่สมัครผ่าน Google/ThaiD ไม่มีรหัสผ่านในระบบเรา
+    if (u.getPassword() == null || u.isExternalAccount())
+        throw new IllegalArgumentException(
+                "บัญชีนี้เข้าสู่ระบบผ่าน " + providerLabel(u.getAuthProvider()) + " กรุณากดปุ่มด้านล่างแทน");
+    if (!encoder.matches(rawPassword, u.getPassword()))
+        throw new IllegalArgumentException("ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง");
+    if (!u.isEmailVerified())
+        throw new UnverifiedUserException(u.getId());
+    return u;
+}
+
+private String providerLabel(String provider) {
+    return switch (provider == null ? "" : provider) {
+        case "google" -> "Google";
+        case "thaid"  -> "ThaiD";
+        default        -> "ผู้ให้บริการภายนอก";
+    };
+} //Authen
 
     /** ใช้บอก controller ว่าบัญชีนี้ยังไม่ยืนยัน OTP เพื่อพาไปหน้ายืนยัน */
     public static class UnverifiedUserException extends RuntimeException {
@@ -134,7 +153,7 @@ public class UserService {
         userRepo.save(u);
     }
 
-    /** แก้ไขข้อมูลส่วนตัว (FR24) */
+    /** แก้ไขข้อมูลส่วนตัว */
     @Transactional
     public void updateProfile(Integer userId, String phone) {
         User u = getById(userId);
@@ -143,7 +162,7 @@ public class UserService {
     }
 
     /**
-     * สมัคร Paid Member รายเดือน (UC-5)
+     * สมัคร Paid Member รายเดือน
      * หมายเหตุ: ไม่ได้ต่อ Payment Gateway จริง — ตรวจรูปแบบบัตรแบบจำลองแล้วถือว่าชำระสำเร็จ
      * -> เปลี่ยน UserType เป็น 'Member', ตั้งวันหมดอายุ +1 เดือน, ออกใบเสร็จ (เก็บเลขบัตร 4 ตัวท้าย)
      */

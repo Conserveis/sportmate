@@ -11,13 +11,34 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
+    private final org.springframework.security.oauth2.client.registration.ClientRegistrationRepository clientRegistrations;
 
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService,
+                          org.springframework.security.oauth2.client.registration.ClientRegistrationRepository clientRegistrations) {
         this.userService = userService;
+        this.clientRegistrations = clientRegistrations;
     }
 
+    /** ข้อมูลปุ่มผู้ให้บริการที่ตั้งค่าไว้จริง — ตัวที่ยังไม่ตั้งค่าจะไม่ขึ้นปุ่ม */
+    private java.util.List<java.util.Map<String, String>> availableProviders() {
+    var result = new java.util.ArrayList<java.util.Map<String, String>>();
+    if (clientRegistrations instanceof Iterable<?> iterable) {
+        for (Object o : iterable) {
+            if (o instanceof org.springframework.security.oauth2.client.registration.ClientRegistration reg) {
+                if ("google".equals(reg.getRegistrationId())) {
+                    result.add(java.util.Map.of("id", "google", "label", "Google", "mark", "G", "url", "/oauth2/authorization/google"));
+                }
+            }
+        }
+    }
+    // ThaiD เป็น mockup — แสดงปุ่มเสมอ ไม่ต้องรอ credential จริง
+    result.add(java.util.Map.of("id", "thaid", "label", "ThaiD (จำลอง)", "mark", "ID", "url", "/thaid-mock/login"));
+    return result;
+}
+
     @GetMapping("/login")
-    public String loginPage() {
+    public String loginPage(Model model) {
+        model.addAttribute("oauthProviders", availableProviders());
         return "login";
     }
 
@@ -37,6 +58,7 @@ public class AuthController {
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("username", username);
+            model.addAttribute("oauthProviders", availableProviders());
             return "login";
         }
     }

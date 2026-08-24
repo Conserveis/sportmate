@@ -1,0 +1,45 @@
+package com.sportmate.config;
+
+import com.sportmate.entity.User;
+import com.sportmate.service.OAuthAccountService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+
+/**
+ * ทำงานทันทีหลังผู้ใช้ยืนยันตัวตนกับ Google/Apple/ThaiD สำเร็จ
+ *
+ * หน้าที่สำคัญ: แปลงผู้ใช้ภายนอกให้เป็นบัญชีในระบบ แล้ว "ใส่ uid ลง session"
+ * ให้เหมือนกับตอนล็อกอินด้วยรหัสผ่านทุกประการ — ทำให้ AuthInterceptor และ
+ * controller เดิมทั้งหมดทำงานต่อได้โดยไม่ต้องแก้อะไรเลย
+ */
+@Component
+public class OAuthLoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
+    private final OAuthAccountService oAuthAccountService;
+
+    public OAuthLoginSuccessHandler(OAuthAccountService oAuthAccountService) {
+        this.oAuthAccountService = oAuthAccountService;
+        setDefaultTargetUrl("/posts");
+        setAlwaysUseDefaultTargetUrl(true);
+    }
+
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+                                        Authentication authentication) throws IOException, jakarta.servlet.ServletException {
+        if (authentication instanceof OAuth2AuthenticationToken token) {
+            String provider = token.getAuthorizedClientRegistrationId();   // google / apple / thaid
+            OAuth2User oAuth2User = token.getPrincipal();
+
+            User user = oAuthAccountService.findOrCreate(provider, oAuth2User);
+            request.getSession(true).setAttribute("uid", user.getId());
+        }
+        super.onAuthenticationSuccess(request, response, authentication);
+    }
+}
