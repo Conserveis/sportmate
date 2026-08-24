@@ -1,37 +1,30 @@
-# SportMate 🏆
+# SportMate
 
-เว็บแอปนัดชวนเล่นกีฬา (Spring Boot + Thymeleaf + MySQL/Docker) ตามเอกสาร S1G3
+เว็บแอปนัดชวนเล่นกีฬา (Spring Boot + Thymeleaf + MySQL/Docker) 
 
-## ฟีเจอร์หลัก (4 หน้า)
+## ฟีเจอร์ (4 หน้า)
 
 | หน้า | คำอธิบาย |
 |------|----------|
-| **Post** (`/posts`) | โพสต์หาเพื่อนเล่นกีฬาที่คนอื่นจัด — **โพสต์หายไปเองเมื่อถึง/เลยเวลานัด** |
-| **Tournament** (`/tournaments`) | เหมือนหน้า Post แต่ **เฉพาะสมาชิกรายเดือนเท่านั้นที่สร้างได้** และ **ไม่หายแม้หมดเวลา** |
-| **จัดเก็บกิจกรรม** (`/archive`) | โพสต์ที่เราเข้าร่วมแล้วและหมดเวลาเข้าร่วม จะย้ายมาที่นี่ + รีวิวผู้จัดได้ |
+| **Post** (`/posts`) | โพสต์หาเพื่อนเล่นกีฬาที่คนอื่นจัด |
+| **Tournament** (`/tournaments`) | เฉพาะสมาชิกรายเดือนเท่านั้นที่สร้างได้และไม่หายแม้หมดเวลา |
+| **จัดเก็บกิจกรรม** (`/archive`) | โพสต์ที่เราเข้าร่วมแล้วและหมดเวลาเข้าร่วม จะย้ายมาที่นี่ + รีวิวผู้จัด |
 | **โปรไฟล์** (`/profile`) | ประวัติการเข้าร่วม, กีฬาที่สนใจ, ประวัติการจัดกิจกรรม, สมัครสมาชิก |
 
 ฟีเจอร์อื่น: สมัคร/เข้าสู่ระบบ, เข้าร่วม/ยกเลิกกิจกรรม, **คอมเมนต์ใต้โพสต์ที่เข้าร่วมแล้ว**,
-โพสต์สาธารณะ/ส่วนตัว (รออนุมัติ), โควตาโพสต์ 3 ครั้ง/สัปดาห์สำหรับผู้ใช้ทั่วไป, ให้คะแนนผู้จัด (อัปเดต AvgScore ผ่าน trigger)
+โพสต์สาธารณะ/ส่วนตัว (รออนุมัติ), โควตาโพสต์ 3 ครั้ง/สัปดาห์สำหรับผู้ใช้ทั่วไป, ให้คะแนนผู้จัด
 
-## เทคโนโลยี
-- Java 17+ (ทดสอบกับ 17/21), Spring Boot 3.3, Spring Data JPA, Thymeleaf
+## Technologies
+- Java 17+ , Spring Boot 3.3, Spring Data JPA, Thymeleaf
 - MySQL 8.0 รันบน Docker (localhost:3306)
-- โครงสร้างฐานข้อมูลตาม `sportmate_schema.sql` เดิม (มี trigger คำนวณ AvgScore)
+- `sportmate_schema.sql`
 
 ---
 
-> 🚀 **Deploy ขึ้นอินเทอร์เน็ตจริง:**
-> - **[DEPLOY-GCE.md](DEPLOY-GCE.md)** — Google Compute Engine (VM + Docker) ← *แนะนำ ใช้ docker compose เหมือนตอน dev*
-> - **[DOMAIN-HTTPS.md](DOMAIN-HTTPS.md)** — ขอโดเมน + เปิด HTTPS (ทำต่อจาก DEPLOY-GCE)
-> - **[DEPLOY.md](DEPLOY.md)** — Google Cloud Run + Cloud SQL (serverless)
-
-## วิธีรัน
-
-มี 2 โหมดให้เลือก:
-
-- **โหมด A — Dockerize ทั้งคู่ (แนะนำสำหรับ deploy จริง)**: รันทั้ง MySQL และตัวแอปใน Docker คำสั่งเดียวจบ ไม่ต้องลง Java/Maven บนเครื่องเลย
-- **โหมด B — Dev แบบเดิม**: MySQL อยู่ใน Docker แต่รันแอป Java ตรงจากเครื่อง (เหมาะตอนพัฒนา แก้โค้ดแล้วรันใหม่เร็วกว่า)
+> **Deploy:**
+> - **[DEPLOY-GCE.md](DEPLOY-GCE.md)** — Google Compute Engine
+> - **[DOMAIN-HTTPS.md](DOMAIN-HTTPS.md)** — ขอโดเมน + เปิด HTTPS 
+> - **[DEPLOY.md](DEPLOY.md)** — Google Cloud Run + Cloud SQL
 
 ---
 
@@ -169,15 +162,6 @@ docker compose up -d
 docker compose down -v
 docker compose up -d --build
 ```
-
-**ก่อนส่งโปรเจกต์ให้คนอื่น (เพื่อน/อาจารย์) ควรทดสอบแบบนี้ก่อนเสมอ:**
-```bash
-docker compose down -v          # จำลองเครื่องใหม่เอี่ยม ไม่มีข้อมูลเก่าเหลือ
-docker compose up -d --build    # build + รันใหม่ทั้งหมด
-docker compose ps               # ต้องเห็นทั้ง 2 container เป็น "healthy"
-```
-เปิด `http://localhost:8080` ทดสอบ login/สร้างโพสต์/join อย่างน้อย 1 รอบ ถ้าผ่านหมดแปลว่าปลอดภัยที่จะส่งต่อให้คนอื่น เพราะ Docker การันตีว่าเครื่องคนอื่นจะได้ environment เดียวกับที่คุณเทสผ่าน
-
 ---
 
 ## โครงสร้างโปรเจกต์
