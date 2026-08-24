@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('เข้าสู่ระบบ')}"></head>
+<body>
+<div class="auth-shell">
+    <div class="auth-card">
+        <div class="auth-brand"><span class="dot"></span>SPORTMATE</div>
+        <div class="auth-sub">หาเพื่อนเล่นกีฬา จัดทีม นัดหมาย จบในที่เดียว</div>
+
+        <div class="flash err" th:if="${error}" th:text="${error}"></div>
+
+        <form method="post" th:action="@{/login}">
+            <div class="field">
+                <label>ชื่อผู้ใช้ หรือ อีเมล</label>
+                <input name="username" th:value="${username}" required autofocus>
+            </div>
+            <div class="field">
+                <label>รหัสผ่าน</label>
+                <input type="password" name="password" required>
+            </div>
+            <button class="btn btn-primary" style="width:100%">เข้าสู่ระบบ</button>
+        </form>
+
+        <div class="auth-alt">ยังไม่มีบัญชี? <a th:href="@{/register}">สมัครสมาชิก</a></div>
+        <div class="locked-note" style="margin-top:18px">
+            ทดลองใช้: <b>demo</b> / <b>member</b> — รหัสผ่าน <b>password123</b>
+        </div>
+    </div>
+</div>
+</body>
+</html>

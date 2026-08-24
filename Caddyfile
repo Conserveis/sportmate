@@ -1,0 +1,26 @@
+# ===========================================================================
+#  Caddyfile — ตั้งค่า reverse proxy + HTTPS อัตโนมัติ
+#  ค่า {$DOMAIN} และ {$ACME_EMAIL} อ่านมาจากไฟล์ .env
+# ===========================================================================
+
+{
+	# อีเมลสำหรับแจ้งเตือนเรื่องใบรับรอง SSL จาก Let's Encrypt
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	# ส่งต่อ request ทั้งหมดไปให้ container ชื่อ "app" ที่พอร์ต 8080
+	reverse_proxy app:8080
+
+	# บีบอัดข้อมูลก่อนส่ง ทำให้เว็บโหลดเร็วขึ้น
+	encode gzip
+
+	# เก็บ log การเข้าใช้งาน
+	log {
+		output file /data/access.log
+		format console
+	}
+}
+sportmate.duckdns.org  {
+    reverse_proxy sportmate-app:8080
+}

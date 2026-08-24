@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('สมัครสมาชิก')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('profile')}"></nav>
+
+<div class="wrap" style="max-width:560px">
+    <div class="page-head">
+        <div>
+            <div class="eyebrow" style="color:var(--flare)">Upgrade</div>
+            <h1>สมัครสมาชิกรายเดือน</h1>
+        </div>
+    </div>
+
+    <div class="flash err" th:if="${error}" th:text="${error}"></div>
+
+    <div class="pay-summary">
+        <div style="font-size:.85rem;color:#aebbb2">แพ็กเกจ Paid Member (รายเดือน)</div>
+        <div class="amt">99฿ <small>/ เดือน</small></div>
+        <div style="font-size:.82rem;color:#cbd6cf;margin-top:6px">
+            ✓ โพสต์ได้ไม่จำกัด &nbsp; ✓ สร้างทัวร์นาเมนต์ได้ &nbsp; ✓ อีเวนต์แสดงถาวร
+        </div>
+    </div>
+
+    <div class="dev-note">
+        ⚙️ โหมดทดสอบ — ไม่มีการตัดเงินจริง ใส่เลขบัตรอะไรก็ได้ที่เป็นตัวเลข 16 หลัก
+        (เช่น <b>4111 1111 1111 1111</b>, วันหมดอายุ <b>12/28</b>, CVV <b>123</b>)
+    </div>
+
+    <div class="form-card">
+        <form method="post" th:action="@{/profile/subscribe}">
+            <div class="field">
+                <label>หมายเลขบัตร</label>
+                <input name="cardNumber" placeholder="4111 1111 1111 1111" maxlength="19" required
+                       inputmode="numeric">
+            </div>
+            <div class="field">
+                <label>ชื่อบนบัตร</label>
+                <input name="cardName" placeholder="SPORT MATE" required>
+            </div>
+            <div class="row2">
+                <div class="field">
+                    <label>วันหมดอายุ (MM/YY)</label>
+                    <input name="expiry" placeholder="12/28" maxlength="5" required>
+                </div>
+                <div class="field">
+                    <label>CVV</label>
+                    <input name="cvv" placeholder="123" maxlength="3" required inputmode="numeric">
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:8px">
+                <button class="btn btn-flare">ชำระเงิน 99฿</button>
+                <a class="btn btn-ghost" th:href="@{/profile}">ยกเลิก</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

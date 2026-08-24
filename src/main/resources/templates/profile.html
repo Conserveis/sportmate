@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('โปรไฟล์')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('profile')}"></nav>
+
+<div class="wrap">
+    <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
+    <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+    <!-- header -->
+    <div class="profile-head">
+        <div class="avatar" th:text="${#strings.substring(user.userName,0,1).toUpperCase()}">U</div>
+        <div style="flex:1">
+            <div class="uname">
+                <span th:text="${user.userName}">username</span>
+                <span class="badge-member" th:if="${user.member}">Member</span>
+            </div>
+            <div class="ustat" th:text="${user.gmail}">email</div>
+            <div class="ustat">
+                คะแนนผู้จัดเฉลี่ย:
+                <span class="stars" th:text="${#numbers.formatDecimal(user.avgScore,1,2)}">0.00</span> / 5.00
+            </div>
+        </div>
+        <!-- subscribe / member status -->
+        <div style="text-align:right">
+            <div th:unless="${user.member}">
+                <a class="btn btn-flare" th:href="@{/subscribe}">อัปเกรดเป็นสมาชิก · 99฿/เดือน</a>
+                <div class="ustat" style="margin-top:6px">ปลดล็อกโพสต์ไม่จำกัด + ทัวร์นาเมนต์</div>
+            </div>
+            <div th:if="${user.member}" class="ustat">
+                สมาชิกถึง
+                <b th:text="${#temporals.format(user.membershipExpireAt,'dd/MM/yyyy')}">-</b>
+            </div>
+        </div>
+    </div>
+
+    <!-- interested sports -->
+    <div class="section">
+        <h2>กีฬาที่สนใจ</h2>
+        <form method="post" th:action="@{/profile/sports}">
+            <div class="chips">
+                <span class="chip-toggle" th:each="s : ${allSports}">
+                    <input type="checkbox" name="sportIds" th:value="${s.id}" th:id="'sport'+${s.id}"
+                           th:checked="${user.interestedSports.contains(s)}">
+                    <label th:for="'sport'+${s.id}" th:text="${s.name}">Sport</label>
+                </span>
+            </div>
+            <button class="btn btn-primary btn-sm" style="margin-top:12px">บันทึกกีฬาที่สนใจ</button>
+        </form>
+    </div>
+
+    <!-- edit contact -->
+    <div class="section">
+        <h2>ข้อมูลติดต่อ</h2>
+        <form method="post" th:action="@{/profile/edit}" style="display:flex;gap:10px;align-items:flex-end;max-width:420px">
+            <div class="field" style="flex:1;margin:0">
+                <label>เบอร์โทรศัพท์</label>
+                <input name="phone" th:value="${user.phoneNumber}" placeholder="0xx-xxx-xxxx">
+            </div>
+            <button class="btn btn-ghost btn-sm">บันทึก</button>
+        </form>
+    </div>
+
+    <!-- upcoming -->
+    <div class="section">
+        <h2>กิจกรรมที่กำลังจะมาถึง</h2>
+        <div th:if="${upcoming.isEmpty()}" style="color:var(--muted);font-size:.9rem">ยังไม่มีกิจกรรมที่กำลังจะมาถึง</div>
+        <a class="list-row" th:each="e : ${upcoming}" th:href="@{'/posts/' + ${e.post.id}}" style="text-decoration:none">
+            <div>
+                <div class="l-title" th:text="${e.post.postName}">ชื่อ</div>
+                <div class="l-meta">
+                    <span th:text="${e.post.sport.name}">กีฬา</span> ·
+                    <span th:text="${#temporals.format(e.post.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</span> ·
+                    <span th:text="${e.post.location.name}">สถานที่</span>
+                </div>
+            </div>
+            <span class="pill" th:classappend="${e.status=='pending'}?'orange':'green'"
+                  th:text="${e.status=='pending'?'รออนุมัติ':'เข้าร่วมแล้ว'}">สถานะ</span>
+        </a>
+    </div>
+
+    <!-- participation history -->
+    <div class="section">
+        <h2>ประวัติการเข้าร่วมทั้งหมด</h2>
+        <div th:if="${history.isEmpty()}" style="color:var(--muted);font-size:.9rem">ยังไม่มีประวัติการเข้าร่วม</div>
+        <a class="list-row" th:each="e : ${history}" th:href="@{'/posts/' + ${e.post.id}}" style="text-decoration:none">
+            <div>
+                <div class="l-title" th:text="${e.post.postName}">ชื่อ</div>
+                <div class="l-meta">
+                    <span th:text="${e.post.sport.name}">กีฬา</span> ·
+                    <span th:text="${#temporals.format(e.post.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</span>
+                </div>
+            </div>
+            <span class="pill grey" th:if="${e.post.expired}">จบแล้ว</span>
+            <span class="pill green" th:unless="${e.post.expired}">กำลังจะถึง</span>
+        </a>
+    </div>
+
+    <!-- organized -->
+    <div class="section">
+        <h2>ประวัติการจัดกิจกรรมของฉัน</h2>
+        <div th:if="${organized.isEmpty()}" style="color:var(--muted);font-size:.9rem">คุณยังไม่เคยจัดกิจกรรม</div>
+        <div class="list-row" th:each="p : ${organized}">
+            <a th:href="@{'/posts/' + ${p.id}}" style="text-decoration:none;flex:1">
+                <div class="l-title" th:text="${p.postName}">ชื่อ</div>
+                <div class="l-meta">
+                    <span th:text="${p.postType.name=='Tournament'?'🏆 Tournament':'Post'}">Post</span> ·
+                    <span th:text="${p.sport.name}">กีฬา</span> ·
+                    <span th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</span>
+                </div>
+            </a>
+            <span class="pill orange" th:if="${p.status=='cancelled'}">ยกเลิกแล้ว</span>
+            <form th:if="${p.status!='cancelled' and !p.expired}" method="post"
+                  th:action="@{'/posts/' + ${p.id} + '/cancel'}"
+                  onsubmit="return confirm('ยกเลิกกิจกรรมนี้?')">
+                <button class="btn btn-ghost btn-sm">ยกเลิก</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

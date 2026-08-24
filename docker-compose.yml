@@ -1,0 +1,54 @@
+services:
+  # ==========================================================================
+  # ฐานข้อมูล MySQL
+  # ==========================================================================
+  mysql:
+    image: mysql:8.0
+    container_name: sportmate-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      TZ: Asia/Bangkok
+    command: --default-time-zone=+07:00 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"     # เปิดออกมาด้วยเผื่ออยากต่อจากเครื่อง host (เช่น MySQL Workbench)
+    volumes:
+      - sportmate_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - sportmate-net
+
+  # ==========================================================================
+  # ตัวแอป Spring Boot — build จาก Dockerfile ในโฟลเดอร์นี้
+  # ==========================================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sportmate-app
+    restart: unless-stopped
+    environment:
+      # ชี้ไปที่ "mysql" (ชื่อ service ด้านบน) ไม่ใช่ localhost
+      # เพราะภายใน Docker network แต่ละ container คุยกันด้วยชื่อ service
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sportmate?useSSL=false&serverTimezone=Asia/Bangkok&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpass
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy   # รอ MySQL พร้อม (healthy) ก่อนค่อยเริ่ม app
+    networks:
+      - sportmate-net
+
+volumes:
+  sportmate_data:
+
+networks:
+  sportmate-net:
+    driver: bridge

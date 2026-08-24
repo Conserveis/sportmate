@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${post.postName})}"></head>
+<body>
+<nav th:replace="~{fragments :: nav(${post.tournament?'tournaments':'posts'})}"></nav>
+
+<div class="wrap">
+    <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
+    <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+    <a th:href="@{${post.tournament?'/tournaments':'/posts'}}"
+       style="color:var(--muted);text-decoration:none;font-size:.88rem">&larr; กลับ</a>
+
+    <div class="detail-grid">
+        <!-- LEFT: details + comments -->
+        <div>
+            <div class="panel">
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+                    <span class="sport-tag" th:text="${post.sport.name}">Sport</span>
+                    <span class="pill grey" th:if="${post.expired}">หมดเวลาแล้ว</span>
+                    <span class="pill orange" th:if="${post.status=='cancelled'}">ยกเลิกแล้ว</span>
+                </div>
+                <div class="detail-title" th:text="${post.postName}">ชื่อกิจกรรม</div>
+
+                <div class="kv">
+                    <span class="k">วันเวลา</span>
+                    <span th:text="${#temporals.format(post.datePlay,'dd MMMM yyyy, HH:mm')}">-</span>
+                    <span class="k">สถานที่</span><span th:text="${post.location.name}">-</span>
+                    <span class="k">เจ้าของ</span><span th:text="${post.owner.userName}">-</span>
+                    <span class="k">การเข้าร่วม</span>
+                    <span th:text="${post.public}?'สาธารณะ (เข้าร่วมได้ทันที)':'ส่วนตัว (ต้องอนุมัติ)'">-</span>
+                    <span class="k" th:if="${post.description}">รายละเอียด</span>
+                    <span th:if="${post.description}" th:text="${post.description}">-</span>
+                </div>
+            </div>
+
+            <!-- comments -->
+            <div class="panel" style="margin-top:18px">
+                <h2 style="font-family:'Oswald';text-transform:uppercase;font-size:1.1rem;margin-bottom:6px">
+                    ความคิดเห็น (<span th:text="${comments.size()}">0</span>)</h2>
+
+                <div th:if="${comments.isEmpty()}" style="color:var(--muted);font-size:.9rem;padding:8px 0">
+                    ยังไม่มีความคิดเห็น
+                </div>
+
+                <div class="comment" th:each="c : ${comments}">
+                    <div class="c-avatar" th:text="${#strings.substring(c.user.userName,0,1).toUpperCase()}">U</div>
+                    <div class="c-body">
+                        <span class="c-name" th:text="${c.user.userName}">user</span>
+                        <span class="c-time" th:text="${#temporals.format(c.time,'dd/MM HH:mm')}">time</span>
+                        <div class="c-text" th:text="${c.text}">ข้อความ</div>
+                    </div>
+                </div>
+
+                <!-- comment form: only joined or owner -->
+                <form th:if="${hasJoined or isOwner}" class="comment-form" method="post"
+                      th:action="@{'/posts/' + ${post.id} + '/comment'}">
+                    <input name="text" placeholder="พิมพ์ความคิดเห็น..." required>
+                    <button class="btn btn-primary btn-sm">ส่ง</button>
+                </form>
+                <div th:unless="${hasJoined or isOwner}" class="locked-note">
+                    เข้าร่วมกิจกรรมก่อนจึงจะแสดงความคิดเห็นได้
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: scoreboard + join + participants -->
+        <div>
+            <div class="panel" style="text-align:center">
+                <div class="score-label">ผู้เข้าร่วม</div>
+                <div class="score" style="font-size:2.4rem;justify-content:center"
+                     th:classappend="${joinCount >= post.maxPlayer}?'full'">
+                    <span class="cur" th:text="${joinCount}">0</span><span class="sep">/</span><span th:text="${post.maxPlayer}">10</span>
+                </div>
+                <div style="color:var(--muted);font-size:.85rem;margin-bottom:16px"
+                     th:if="${joinCount < post.minPlayer}"
+                     th:text="|ต้องการอีก ${post.minPlayer - joinCount} คนให้ครบขั้นต่ำ|">-</div>
+
+                <!-- actions -->
+                <div th:if="${isOwner}" style="color:var(--muted);font-size:.85rem">คุณเป็นเจ้าของกิจกรรมนี้</div>
+
+                <div th:unless="${isOwner}">
+                    <form th:if="${!hasJoined and !post.expired and post.status!='cancelled'}" method="post"
+                          th:action="@{'/posts/' + ${post.id} + '/join'}">
+                        <button class="btn btn-flare" style="width:100%">เข้าร่วมกิจกรรม</button>
+                    </form>
+                    <form th:if="${hasJoined and !post.expired}" method="post"
+                          th:action="@{'/posts/' + ${post.id} + '/cancel-join'}">
+                        <div class="pill green" style="display:block;margin-bottom:8px;padding:8px">✓ คุณเข้าร่วมแล้ว</div>
+                        <button class="btn btn-ghost" style="width:100%">ยกเลิกการเข้าร่วม</button>
+                    </form>
+                    <div th:if="${post.expired}" class="locked-note" style="margin-top:0">กิจกรรมนี้หมดเวลารับสมัครแล้ว</div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top:18px">
+                <h2 style="font-family:'Oswald';text-transform:uppercase;font-size:1rem;margin-bottom:10px">รายชื่อผู้เข้าร่วม</h2>
+                <div th:if="${participants.isEmpty()}" style="color:var(--muted);font-size:.88rem">ยังไม่มีผู้เข้าร่วม</div>
+                <div class="comment" th:each="e : ${participants}" style="padding:9px 0">
+                    <div class="c-avatar" th:text="${#strings.substring(e.user.userName,0,1).toUpperCase()}">U</div>
+                    <div class="c-body">
+                        <span class="c-name" th:text="${e.user.userName}">user</span>
+                        <span class="pill grey" th:if="${e.status=='pending'}" style="margin-left:6px">รออนุมัติ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

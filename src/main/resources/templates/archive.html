@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('จัดเก็บกิจกรรม')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('archive')}"></nav>
+
+<div class="wrap">
+    <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
+    <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+    <div class="page-head">
+        <div>
+            <div class="eyebrow">Archive</div>
+            <h1>จัดเก็บกิจกรรม</h1>
+        </div>
+        <span class="sub">กิจกรรมที่คุณเข้าร่วมและหมดเวลาแล้ว</span>
+    </div>
+
+    <div th:if="${events.isEmpty()}" class="empty">
+        <div class="big">ยังไม่มีกิจกรรมที่จัดเก็บ</div>
+        <div>กิจกรรมที่คุณเข้าร่วมจะย้ายมาที่นี่เมื่อผ่านเวลานัดไปแล้ว</div>
+    </div>
+
+    <div class="grid">
+        <div class="card" th:each="e : ${events}">
+            <div class="stripe" style="background:var(--muted)"></div>
+            <div class="card-body">
+                <div style="display:flex;gap:6px;align-items:center">
+                    <span class="sport-tag" th:text="${e.post.sport.name}">Sport</span>
+                    <span class="pill" th:classappend="${e.post.tournament}?'orange':'grey'"
+                          th:text="${e.post.tournament?'Tournament':'จบแล้ว'}">จบแล้ว</span>
+                </div>
+                <h3 th:text="${e.post.postName}">ชื่อกิจกรรม</h3>
+                <div class="meta">
+                    <span>🗓 <b th:text="${#temporals.format(e.post.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
+                    <span>📍 <span th:text="${e.post.location.name}">สถานที่</span></span>
+                    <span>👤 จัดโดย <span th:text="${e.post.owner.userName}">เจ้าของ</span></span>
+                </div>
+
+                <!-- comment link -->
+                <a class="btn btn-ghost btn-sm" style="align-self:flex-start;margin-top:4px"
+                   th:href="@{'/posts/' + ${e.post.id}}">ดู / คอมเมนต์</a>
+
+                <!-- review the organizer -->
+                <div th:if="${reviewed[e.id]}" class="pill green" style="align-self:flex-start;margin-top:6px">✓ รีวิวแล้ว</div>
+                <form th:unless="${reviewed[e.id]}" method="post" th:action="@{/archive/review}"
+                      style="margin-top:8px;border-top:1px solid var(--line);padding-top:10px">
+                    <input type="hidden" name="eventId" th:value="${e.id}">
+                    <div style="font-size:.82rem;color:var(--muted);margin-bottom:4px">ให้คะแนนผู้จัด</div>
+                    <div class="rate">
+                        <input type="radio" th:id="'r5_'+${e.id}" name="score" value="5"><label th:for="'r5_'+${e.id}">★</label>
+                        <input type="radio" th:id="'r4_'+${e.id}" name="score" value="4"><label th:for="'r4_'+${e.id}">★</label>
+                        <input type="radio" th:id="'r3_'+${e.id}" name="score" value="3"><label th:for="'r3_'+${e.id}">★</label>
+                        <input type="radio" th:id="'r2_'+${e.id}" name="score" value="2"><label th:for="'r2_'+${e.id}">★</label>
+                        <input type="radio" th:id="'r1_'+${e.id}" name="score" value="1"><label th:for="'r1_'+${e.id}">★</label>
+                    </div>
+                    <input name="comment" placeholder="ความคิดเห็น (ไม่บังคับ)"
+                           style="width:100%;padding:7px 10px;border:1.5px solid var(--line);border-radius:8px;margin:6px 0;font:inherit">
+                    <button class="btn btn-primary btn-sm">ส่งรีวิว</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

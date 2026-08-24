@@ -1,0 +1,79 @@
+# ===========================================================================
+#  docker-compose สำหรับรันบน VM "พร้อมโดเมน + HTTPS อัตโนมัติ"
+#
+#  เพิ่มจาก docker-compose.prod.yml คือ container "caddy" ซึ่งทำหน้าที่:
+#   - รับ request จากอินเทอร์เน็ตที่พอร์ต 80/443 แล้วส่งต่อให้แอป (reverse proxy)
+#   - ขอใบรับรอง SSL จาก Let's Encrypt ให้ "อัตโนมัติ" และต่ออายุเองทุก 90 วัน
+#     (ไม่ต้องรันคำสั่ง certbot เอง)
+#
+#  ต้องมีก่อนใช้:
+#   1. โดเมนที่ตั้ง A record ชี้มาที่ External IP ของ VM เรียบร้อยแล้ว
+#   2. เปิด firewall พอร์ต 80 และ 443
+#   3. ไฟล์ .env มี DOMAIN และ ACME_EMAIL
+#
+#  วิธีใช้:  docker compose -f docker-compose.https.yml up -d --build
+# ===========================================================================
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: sportmate-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Bangkok
+    command: --default-time-zone=+07:00 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - sportmate_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - sportmate-net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sportmate-app
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sportmate?useSSL=false&serverTimezone=Asia/Bangkok&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    # ไม่ publish port ออกนอกเครื่อง — ให้ caddy เป็นด่านหน้าเพียงตัวเดียว
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sportmate-net
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: sportmate-caddy
+    restart: always
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    ports:
+      - "80:80"        # จำเป็นสำหรับการยืนยันตัวตนกับ Let's Encrypt + redirect ไป https
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data       # เก็บใบรับรอง SSL (ห้ามลบ ไม่งั้นต้องขอใหม่)
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - sportmate-net
+
+volumes:
+  sportmate_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  sportmate-net:
+    driver: bridge

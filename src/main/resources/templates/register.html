@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('สมัครสมาชิก')}"></head>
+<body>
+<div class="auth-shell">
+    <div class="auth-card">
+        <div class="auth-brand"><span class="dot"></span>SPORTMATE</div>
+        <div class="auth-sub">สร้างบัญชีใหม่เพื่อเริ่มหาเพื่อนเล่นกีฬา</div>
+
+        <div class="flash err" th:if="${error}" th:text="${error}"></div>
+
+        <form method="post" th:action="@{/register}">
+            <div class="field">
+                <label>ชื่อผู้ใช้งาน</label>
+                <input name="username" th:value="${username}" required autofocus>
+            </div>
+            <div class="field">
+                <label>อีเมล</label>
+                <input type="email" name="gmail" th:value="${gmail}" required>
+            </div>
+            <div class="field">
+                <label>รหัสผ่าน</label>
+                <input type="password" name="password" required>
+                <div class="hint">อย่างน้อย 8 ตัวอักษร</div>
+            </div>
+            <div class="field">
+                <label>ยืนยันรหัสผ่าน</label>
+                <input type="password" name="confirmPassword" required>
+            </div>
+            <button class="btn btn-primary" style="width:100%">สมัครสมาชิก</button>
+        </form>
+
+        <div class="auth-alt">มีบัญชีอยู่แล้ว? <a th:href="@{/login}">เข้าสู่ระบบ</a></div>
+    </div>
+</div>
+</body>
+</html>

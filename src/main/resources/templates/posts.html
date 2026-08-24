@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('โพสต์กีฬา')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('posts')}"></nav>
+
+<div class="wrap">
+    <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
+    <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+    <div class="page-head">
+        <div>
+            <div class="eyebrow">Find your team</div>
+            <h1>โพสต์หาเพื่อนเล่นกีฬา</h1>
+        </div>
+        <span class="sub">โพสต์จะหายไปเองเมื่อถึงเวลานัด</span>
+        <span class="spacer" style="flex:1"></span>
+        <a class="btn btn-flare" th:href="@{/posts/new(type='Post')}">+ สร้างโพสต์</a>
+    </div>
+
+    <!-- ตัวกรองค้นหา -->
+    <div th:replace="~{fragments :: filterBar('/posts')}"></div>
+
+    <div th:if="${posts.isEmpty()}" class="empty">
+        <div class="big">ไม่พบโพสต์ที่ตรงกับเงื่อนไข</div>
+        <div>ลองปรับตัวกรอง หรือเป็นคนแรกที่ชวนคนอื่นมาเล่นกีฬาสิ!</div>
+    </div>
+
+    <div class="grid">
+        <a class="card" th:each="p : ${posts}" th:href="@{'/posts/' + ${p.id}}" style="text-decoration:none">
+            <div class="stripe"></div>
+            <div class="card-body">
+                <span class="sport-tag" th:text="${p.sport.name}">Football</span>
+                <h3 th:text="${p.postName}">ชื่อกิจกรรม</h3>
+                <div class="meta">
+                    <span>🗓 <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
+                    <span>📍 <span th:text="${p.location.name}">สถานที่</span></span>
+                    <span>👤 โดย <span th:text="${p.owner.userName}">เจ้าของ</span></span>
+                </div>
+            </div>
+            <div class="card-foot">
+                <div>
+                    <div class="score-label">ผู้เข้าร่วม</div>
+                    <div class="score" th:classappend="${joinCounts[p.id] >= p.maxPlayer}?'full'">
+                        <span class="cur" th:text="${joinCounts[p.id]}">0</span><span class="sep">/</span><span th:text="${p.maxPlayer}">10</span>
+                    </div>
+                </div>
+                <span class="pill" th:classappend="${p.public}?'green':'orange'"
+                      th:text="${p.public}?'สาธารณะ':'ต้องอนุมัติ'">สาธารณะ</span>
+            </div>
+        </a>
+    </div>
+</div>
+</body>
+</html>

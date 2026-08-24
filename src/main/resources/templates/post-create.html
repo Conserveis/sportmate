@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('สร้างกิจกรรม')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav(${type=='Tournament'?'tournaments':'posts'})}"></nav>
+
+<div class="wrap">
+    <div class="page-head">
+        <div>
+            <div class="eyebrow" th:text="${type=='Tournament'?'New tournament':'New post'}">New</div>
+            <h1 th:text="${type=='Tournament'?'สร้างทัวร์นาเมนต์':'สร้างโพสต์หาเพื่อน'}">สร้างกิจกรรม</h1>
+        </div>
+    </div>
+
+    <div class="flash err" th:if="${error}" th:text="${error}"></div>
+
+    <div class="form-card">
+        <form method="post" th:action="@{/posts}">
+            <input type="hidden" name="type" th:value="${type}">
+
+            <div class="field">
+                <label>ชื่อกิจกรรม</label>
+                <input name="postName" required placeholder="เช่น หาเพื่อนเตะบอล 5v5">
+            </div>
+
+            <div class="row2">
+                <div class="field">
+                    <label>ประเภทกีฬา</label>
+                    <select name="sportId" required>
+                        <option th:each="s : ${sports}" th:value="${s.id}" th:text="${s.name}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>สถานที่</label>
+                    <select name="locationId" required>
+                        <option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.name}"></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>วันและเวลานัด</label>
+                <input type="datetime-local" name="datePlay" required>
+            </div>
+
+            <div class="row2">
+                <div class="field">
+                    <label>จำนวนขั้นต่ำ</label>
+                    <input type="number" name="minPlayer" min="3" value="4" required>
+                    <div class="hint">อย่างน้อย 3 คน</div>
+                </div>
+                <div class="field">
+                    <label>จำนวนสูงสุด</label>
+                    <input type="number" name="maxPlayer" min="3" value="10" required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>การเข้าร่วม</label>
+                <select name="isPublic">
+                    <option value="true">สาธารณะ — เข้าร่วมได้ทันที</option>
+                    <option value="false">ส่วนตัว — เจ้าของต้องอนุมัติก่อน</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>ตั้งเวลาเผยแพร่ล่วงหน้า <span style="font-weight:400;color:var(--muted)">(ไม่บังคับ)</span></label>
+                <input type="datetime-local" name="publishAt">
+                <div class="hint">เว้นว่างไว้ = เผยแพร่ทันที</div>
+            </div>
+
+            <div class="field">
+                <label>รายละเอียด</label>
+                <textarea name="description" rows="3" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:8px">
+                <button class="btn btn-primary">สร้างกิจกรรม</button>
+                <a class="btn btn-ghost" th:href="@{${type=='Tournament'?'/tournaments':'/posts'}}">ยกเลิก</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

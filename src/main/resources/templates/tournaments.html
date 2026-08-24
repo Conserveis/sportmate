@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('ทัวร์นาเมนต์')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('tournaments')}"></nav>
+
+<div class="wrap">
+    <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
+    <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+    <div class="page-head">
+        <div>
+            <div class="eyebrow" style="color:var(--flare)">Members only</div>
+            <h1>ทัวร์นาเมนต์</h1>
+        </div>
+        <span class="sub">กิจกรรมใหญ่ที่แสดงถาวร ไม่หายแม้หมดเวลา</span>
+        <span class="spacer" style="flex:1"></span>
+        <a th:if="${currentUser.member}" class="btn btn-flare" th:href="@{/posts/new(type='Tournament')}">+ สร้างทัวร์นาเมนต์</a>
+        <a th:unless="${currentUser.member}" class="btn btn-ghost" th:href="@{/profile}">🔒 สมัครสมาชิกเพื่อสร้าง</a>
+    </div>
+
+    <!-- ตัวกรองค้นหา -->
+    <div th:replace="~{fragments :: filterBar('/tournaments')}"></div>
+
+    <div th:if="${tournaments.isEmpty()}" class="empty">
+        <div class="big">ยังไม่มีทัวร์นาเมนต์</div>
+        <div>เฉพาะสมาชิกรายเดือนเท่านั้นที่สร้างทัวร์นาเมนต์ได้</div>
+    </div>
+
+    <div class="grid">
+        <a class="card tour" th:each="p : ${tournaments}" th:href="@{'/posts/' + ${p.id}}" style="text-decoration:none">
+            <div class="stripe"></div>
+            <div class="card-body">
+                <div style="display:flex;gap:6px;align-items:center">
+                    <span class="sport-tag" th:text="${p.sport.name}">Basketball</span>
+                    <span class="pill grey" th:if="${p.expired}">จบแล้ว</span>
+                </div>
+                <h3 th:text="${p.postName}">ชื่อทัวร์นาเมนต์</h3>
+                <div class="meta">
+                    <span>🗓 <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
+                    <span>📍 <span th:text="${p.location.name}">สถานที่</span></span>
+                    <span>👤 จัดโดย <span th:text="${p.owner.userName}">เจ้าของ</span></span>
+                </div>
+            </div>
+            <div class="card-foot">
+                <div>
+                    <div class="score-label">ผู้เข้าร่วม</div>
+                    <div class="score" th:classappend="${joinCounts[p.id] >= p.maxPlayer}?'full'">
+                        <span class="cur" th:text="${joinCounts[p.id]}">0</span><span class="sep">/</span><span th:text="${p.maxPlayer}">40</span>
+                    </div>
+                </div>
+                <span class="pill orange" style="background:#FDECE6;color:#B4340F">🏆 Tournament</span>
+            </div>
+        </a>
+    </div>
+</div>
+</body>
+</html>

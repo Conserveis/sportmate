@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('การแจ้งเตือน')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('notifications')}"></nav>
+
+<div class="wrap" style="max-width:720px">
+    <div class="page-head">
+        <div>
+            <div class="eyebrow">Notifications</div>
+            <h1>การแจ้งเตือน</h1>
+        </div>
+    </div>
+
+    <div th:if="${notifications.isEmpty()}" class="empty">
+        <div class="big">ยังไม่มีการแจ้งเตือน</div>
+        <div>เมื่อมีคนเข้าร่วมกิจกรรมของคุณ หรือมีกิจกรรมใหม่ในกีฬาที่คุณสนใจ จะแสดงที่นี่</div>
+    </div>
+
+    <div style="margin-top:18px">
+        <a class="notif-item" th:each="n : ${notifications}"
+           th:classappend="${!n.read}?'unread'"
+           th:href="${n.link != null} ? @{${n.link}} : '#'">
+            <div class="notif-ico" th:classappend="${n.type}" th:switch="${n.type}">
+                <span th:case="'join'">➕</span>
+                <span th:case="'cancel_join'">➖</span>
+                <span th:case="'new_post'">🏅</span>
+                <span th:case="'post_cancelled'">❌</span>
+                <span th:case="*">🔔</span>
+            </div>
+            <div class="notif-body">
+                <div class="n-msg" th:text="${n.message}">ข้อความแจ้งเตือน</div>
+                <div class="n-time" th:text="${#temporals.format(n.createdAt,'dd/MM/yyyy HH:mm')}">เวลา</div>
+            </div>
+        </a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,76 @@
+# ===========================================================================
+#  docker-compose สำหรับรันบนเซิร์ฟเวอร์จริง (Google Compute Engine VM)
+#
+#  ต่างจาก docker-compose.yml (ที่ใช้ตอน dev) 3 จุด:
+#   1. แอปเปิดที่พอร์ต 80  -> เข้าเว็บได้เลยโดยไม่ต้องพิมพ์ :8080 ต่อท้าย
+#   2. MySQL ไม่ publish พอร์ต 3306 ออกนอกเครื่อง -> ปลอดภัยขึ้นมาก
+#      (แอปยังคุยกับ MySQL ได้ผ่าน Docker network ภายในตามปกติ)
+#   3. อ่านรหัสผ่านจากไฟล์ .env แทนการเขียนตรงๆ ในไฟล์นี้
+#
+#  วิธีใช้:  docker compose -f docker-compose.prod.yml up -d --build
+# ===========================================================================
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: sportmate-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Bangkok
+    command: --default-time-zone=+07:00 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    # ไม่มี ports: -> ไม่เปิดพอร์ต 3306 สู่อินเทอร์เน็ต (เข้าถึงได้เฉพาะ container ในเครือข่ายเดียวกัน)
+    volumes:
+      - sportmate_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - sportmate-net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sportmate-app
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sportmate?useSSL=false&serverTimezone=Asia/Bangkok&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    expose:
+      - "8080"      # ภายนอกพอร์ต 80 -> ภายใน container พอร์ต 8080
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sportmate-net
+  caddy:
+    image: caddy:latest
+    container_name: sportmate-caddy
+    restart: always
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - sportmate-net
+volumes:
+  sportmate_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  sportmate-net:
+    driver: bridge

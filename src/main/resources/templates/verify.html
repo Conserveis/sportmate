@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('ยืนยัน OTP')}"></head>
+<body>
+<div class="auth-shell">
+    <div class="auth-card">
+        <div class="auth-brand"><span class="dot"></span>SPORTMATE</div>
+        <div class="auth-sub">ยืนยันตัวตนด้วยรหัส OTP</div>
+
+        <div class="flash err" th:if="${error}" th:text="${error}"></div>
+
+        <p style="font-size:.9rem;color:var(--muted)">
+            เราได้ส่งรหัส OTP 6 หลักไปที่
+            <b th:text="${gmail}" style="color:var(--ink)">email</b>
+        </p>
+
+        <!-- โหมดจำลอง: แสดง OTP บนหน้าจอ (ระบบจริงจะไม่แสดง ต้องเปิดอีเมลดู) -->
+        <div class="dev-note">
+            ⚙️ โหมดทดสอบ (ไม่มี mail server จริง) — รหัส OTP ของคุณคือ:
+        </div>
+        <div class="otp-box" th:text="${devOtp}">000000</div>
+
+        <form method="post" th:action="@{/verify}">
+            <div class="field">
+                <label>กรอกรหัส OTP</label>
+                <input name="otp" maxlength="6" pattern="\d{6}" required autofocus
+                       placeholder="______" style="letter-spacing:.3em;text-align:center;font-size:1.2rem">
+            </div>
+            <button class="btn btn-primary" style="width:100%">ยืนยัน</button>
+        </form>
+
+        <form method="post" th:action="@{/verify/resend}" style="margin-top:12px">
+            <button class="btn btn-ghost btn-sm" style="width:100%">ขอรหัส OTP ใหม่</button>
+        </form>
+
+        <div class="auth-alt"><a th:href="@{/login}">กลับไปหน้าเข้าสู่ระบบ</a></div>
+    </div>
+</div>
+</body>
+</html>
