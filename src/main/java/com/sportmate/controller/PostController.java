@@ -95,6 +95,7 @@ public class PostController {
         model.addAttribute("participants", eventService.participants(p));
         model.addAttribute("joinCount", eventService.countJoins(p));
         model.addAttribute("hasJoined", eventService.hasJoined(me, p));
+        model.addAttribute("isPending", eventService.isPending(me, p));
         model.addAttribute("isOwner", p.getOwner().getId().equals(me.getId()));
         model.addAttribute("comments", chatService.comments(p));
         return "post-detail";
@@ -103,8 +104,33 @@ public class PostController {
     @PostMapping("/posts/{id}/join")
     public String join(@PathVariable Integer id, HttpSession session, RedirectAttributes ra) {
         try {
-            eventService.join(me(session), postService.getById(id));
-            ra.addFlashAttribute("msg", "เข้าร่วมกิจกรรมสำเร็จ");
+            Post p = postService.getById(id);
+            eventService.join(me(session), p);
+            ra.addFlashAttribute("msg", p.isPublic() ? "เข้าร่วมกิจกรรมสำเร็จ" : "ส่งคำขอเข้าร่วมแล้ว กรุณารอการอนุมัติจากผู้จัด");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
+        }
+        return "redirect:/posts/" + id;
+    }
+
+    @PostMapping("/posts/{id}/approve/{userId}")
+    public String approve(@PathVariable Integer id, @PathVariable Integer userId,
+                          HttpSession session, RedirectAttributes ra) {
+        try {
+            eventService.approve(me(session), postService.getById(id), userId);
+            ra.addFlashAttribute("msg", "อนุมัติผู้เข้าร่วมเรียบร้อยแล้ว");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
+        }
+        return "redirect:/posts/" + id;
+    }
+
+    @PostMapping("/posts/{id}/reject/{userId}")
+    public String reject(@PathVariable Integer id, @PathVariable Integer userId,
+                         HttpSession session, RedirectAttributes ra) {
+        try {
+            eventService.reject(me(session), postService.getById(id), userId);
+            ra.addFlashAttribute("msg", "ปฏิเสธคำขอเรียบร้อยแล้ว");
         } catch (Exception e) {
             ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
@@ -115,7 +141,7 @@ public class PostController {
     public String cancelJoin(@PathVariable Integer id, HttpSession session, RedirectAttributes ra) {
         try {
             eventService.cancelJoin(me(session), postService.getById(id));
-            ra.addFlashAttribute("msg", "ยกเลิกการเข้าร่วมสำเร็จ");
+            ra.addFlashAttribute("msg", "ยกเลิกเรียบร้อยแล้ว");
         } catch (Exception e) {
             ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }

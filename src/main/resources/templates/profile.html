@@ -211,8 +211,9 @@
                     <span th:text="${#temporals.format(e.post.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</span>
                 </div>
             </div>
-            <span class="pill grey" th:if="${e.post.expired}">จบแล้ว</span>
-            <span class="pill green" th:unless="${e.post.expired}">กำลังจะถึง</span>
+            <span class="pill orange" th:if="${e.status=='pending'}">รออนุมัติ</span>
+            <span class="pill grey" th:if="${e.status=='approved' and e.post.expired}">จบแล้ว</span>
+            <span class="pill green" th:if="${e.status=='approved' and !e.post.expired}">เข้าร่วมแล้ว</span>
         </a>
     </div>
 

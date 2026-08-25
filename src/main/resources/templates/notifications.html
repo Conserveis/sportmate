@@ -23,6 +23,9 @@
            th:href="${n.link != null} ? @{${n.link}} : '#'">
             <div class="notif-ico" th:classappend="${n.type}" th:switch="${n.type}">
                 <span th:case="'join'">➕</span>
+                <span th:case="'join_request'">📩</span>
+                <span th:case="'join_approved'">✅</span>
+                <span th:case="'join_rejected'">🚫</span>
                 <span th:case="'cancel_join'">➖</span>
                 <span th:case="'new_post'">🏅</span>
                 <span th:case="'post_cancelled'">❌</span>

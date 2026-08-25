@@ -87,10 +87,22 @@
                 <div th:if="${isOwner}" style="color:var(--muted);font-size:.85rem">คุณเป็นเจ้าของกิจกรรมนี้</div>
 
                 <div th:unless="${isOwner}">
-                    <form th:if="${!hasJoined and !post.expired and post.status!='cancelled'}" method="post"
+                    <!-- ยังไม่ได้กดเข้าร่วม / ไม่ได้รออนุมัติ -->
+                    <form th:if="${!hasJoined and !isPending and !post.expired and post.status!='cancelled'}" method="post"
                           th:action="@{'/posts/' + ${post.id} + '/join'}">
-                        <button class="btn btn-flare" style="width:100%">เข้าร่วมกิจกรรม</button>
+                        <button class="btn btn-flare" style="width:100%"
+                                th:text="${post.public} ? 'เข้าร่วมกิจกรรม' : 'ขอเข้าร่วมกิจกรรม'">เข้าร่วมกิจกรรม</button>
                     </form>
+
+                    <!-- ส่งคำขอแล้ว รอเจ้าของโพสต์อนุมัติ -->
+                    <div th:if="${isPending and !post.expired}">
+                        <div class="pill orange" style="display:block;margin-bottom:8px;padding:8px">⏳ รอการอนุมัติจากผู้จัด</div>
+                        <form method="post" th:action="@{'/posts/' + ${post.id} + '/cancel-join'}">
+                            <button class="btn btn-ghost" style="width:100%">ยกเลิกคำขอ</button>
+                        </form>
+                    </div>
+
+                    <!-- ได้รับการอนุมัติ / เข้าร่วมแล้ว -->
                     <form th:if="${hasJoined and !post.expired}" method="post"
                           th:action="@{'/posts/' + ${post.id} + '/cancel-join'}">
                         <div class="pill green" style="display:block;margin-bottom:8px;padding:8px">✓ คุณเข้าร่วมแล้ว</div>
@@ -103,12 +115,25 @@
             <div class="panel" style="margin-top:18px">
                 <h2 style="font-family:'Noto Sans Thai',sans-serif;text-transform:uppercase;font-size:1rem;margin-bottom:10px">รายชื่อผู้เข้าร่วม</h2>
                 <div th:if="${participants.isEmpty()}" style="color:var(--muted);font-size:.88rem">ยังไม่มีผู้เข้าร่วม</div>
-                <div class="comment" th:each="e : ${participants}" style="padding:9px 0">
+                <div class="comment" th:each="e : ${participants}" style="padding:10px 0;align-items:center">
                     <div class="c-avatar" th:text="${#strings.substring(e.user.userName,0,1).toUpperCase()}">U</div>
-                    <div class="c-body">
-                        <a class="c-name user-link" th:href="@{'/users/' + ${e.user.id}}"
-                           th:text="${e.user.userName}">user</a>
-                        <span class="pill grey" th:if="${e.status=='pending'}" style="margin-left:6px">รออนุมัติ</span>
+                    <div class="c-body" style="flex:1">
+                        <div>
+                            <a class="c-name user-link" th:href="@{'/users/' + ${e.user.id}}"
+                               th:text="${e.user.userName}">user</a>
+                            <span class="pill orange" th:if="${e.status=='pending'}" style="margin-left:6px;font-size:.7rem">รออนุมัติ</span>
+                            <span class="pill green" th:if="${e.status=='approved'}" style="margin-left:6px;font-size:.7rem">เข้าร่วมแล้ว</span>
+                        </div>
+                    </div>
+                    <!-- ปุ่มอนุมัติ / ปฏิเสธ สำหรับผู้สร้างโพสต์เท่านั้น -->
+                    <div th:if="${isOwner and e.status=='pending'}" style="display:flex;gap:6px">
+                        <form method="post" th:action="@{'/posts/' + ${post.id} + '/approve/' + ${e.user.id}}" style="margin:0">
+                            <button class="btn btn-primary btn-sm" style="padding:4px 10px;font-size:.78rem">อนุมัติ</button>
+                        </form>
+                        <form method="post" th:action="@{'/posts/' + ${post.id} + '/reject/' + ${e.user.id}}" style="margin:0"
+                              onsubmit="return confirm('ต้องการปฏิเสธคำขอนี้ใช่หรือไม่?')">
+                            <button class="btn btn-ghost btn-sm" style="padding:4px 10px;font-size:.78rem;color:#B4340F;border-color:#F6C6B6">ปฏิเสธ</button>
+                        </form>
                     </div>
                 </div>
             </div>

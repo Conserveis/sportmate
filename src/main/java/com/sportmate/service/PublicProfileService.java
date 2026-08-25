@@ -66,7 +66,7 @@ public class PublicProfileService {
         long attended = eventRepo.countAttendedByUser(u, now);
         long upcoming = Math.max(0, joins - attended);
         List<SportCount> sportCounts = eventRepo.countJoinsBySport(u);
-        List<Event> recentJoined = limit(eventRepo.findJoinedByUser(u));
+        List<Event> recentJoined = limit(eventRepo.findApprovedJoinedByUser(u));
 
         return new PublicProfile(u,
                 organized, finished, cancelled, reviewCount, u.getAvgScore(),

@@ -17,22 +17,28 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
 
     Optional<Event> findByUserAndPost(User user, Post post);
 
-    // จำนวนผู้เข้าร่วมที่ยัง active (pending/approved) ของโพสต์หนึ่ง
+    // จำนวนผู้เข้าร่วมที่ได้รับการอนุมัติแล้ว (approved) ของโพสต์หนึ่ง
     @Query("""
         SELECT COUNT(e) FROM Event e
-        WHERE e.post = :post AND e.status IN ('pending','approved')
+        WHERE e.post = :post AND e.status = 'approved'
     """)
     long countActiveJoins(@Param("post") Post post);
 
-    // รายชื่อผู้เข้าร่วมของโพสต์
+    @Query("""
+        SELECT COUNT(e) FROM Event e
+        WHERE e.post = :post AND e.status = 'approved'
+    """)
+    long countApprovedJoins(@Param("post") Post post);
+
+    // รายชื่อผู้เข้าร่วมของโพสต์ (เรียง pending ขึ้นก่อนเพื่อให้ผู้จัดอนุมัติได้ง่าย)
     @Query("""
         SELECT e FROM Event e
         WHERE e.post = :post AND e.status IN ('pending','approved')
-        ORDER BY e.joinDate ASC
+        ORDER BY CASE WHEN e.status = 'pending' THEN 0 ELSE 1 END, e.joinDate ASC
     """)
     List<Event> findParticipants(@Param("post") Post post);
 
-    // ประวัติการเข้าร่วมทั้งหมดของผู้ใช้ (ยังไม่ยกเลิก)
+    // ประวัติการเข้าร่วมทั้งหมดของผู้ใช้ (ทั้ง pending และ approved)
     @Query("""
         SELECT e FROM Event e
         WHERE e.user = :user AND e.status IN ('pending','approved')
@@ -40,11 +46,19 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     """)
     List<Event> findJoinedByUser(@Param("user") User user);
 
-    // หน้า "จัดเก็บกิจกรรม": โพสต์ที่ user เข้าร่วมแล้วและ "หมดเวลาเข้าร่วม" (DatePlay < now)
+    // ประวัติการเข้าร่วมที่ได้รับอนุมัติแล้วของผู้ใช้
+    @Query("""
+        SELECT e FROM Event e
+        WHERE e.user = :user AND e.status = 'approved'
+        ORDER BY e.post.datePlay DESC
+    """)
+    List<Event> findApprovedJoinedByUser(@Param("user") User user);
+
+    // หน้า "จัดเก็บกิจกรรม": โพสต์ที่ user เข้าร่วมแล้ว (approved) และ "หมดเวลาเข้าร่วม" (DatePlay < now)
     @Query("""
         SELECT e FROM Event e
         WHERE e.user = :user
-          AND e.status IN ('pending','approved')
+          AND e.status = 'approved'
           AND e.post.datePlay < :now
         ORDER BY e.post.datePlay DESC
     """)
@@ -59,32 +73,33 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
         ORDER BY e.post.datePlay ASC
     """)
     List<Event> findUpcomingByUser(@Param("user") User user, @Param("now") LocalDateTime now);
-    // ===== โปรไฟล์สาธารณะ: สถิติฝั่งผู้เข้าร่วม =====
 
-    // จำนวนครั้งการเข้าร่วมทั้งหมด (ที่ยังไม่ยกเลิก)
+    // ===== โปรไฟล์สาธารณะ: สถิติฝั่งผู้เข้าร่วม (นับเฉพาะ approved) =====
+
+    // จำนวนครั้งการเข้าร่วมทั้งหมดที่ได้รับการอนุมัติ
     @Query("""
         SELECT COUNT(e) FROM Event e
-        WHERE e.user = :user AND e.status IN ('pending','approved')
+        WHERE e.user = :user AND e.status = 'approved'
     """)
     long countJoinsByUser(@Param("user") User user);
 
-    // เข้าร่วมและกิจกรรมจบไปแล้วกี่ครั้ง
+    // เข้าร่วมที่ได้รับอนุมัติและกิจกรรมจบไปแล้วกี่ครั้ง
     @Query("""
         SELECT COUNT(e) FROM Event e
         WHERE e.user = :user
-          AND e.status IN ('pending','approved')
+          AND e.status = 'approved'
           AND e.post.datePlay < :now
     """)
     long countAttendedByUser(@Param("user") User user, @Param("now") LocalDateTime now);
 
     /**
-     * นับการเข้าร่วมแยกตามชนิดกีฬา เรียงจากมากไปน้อย
+     * นับการเข้าร่วมแยกตามชนิดกีฬา เรียงจากมากไปน้อย (เฉพาะ approved)
      * แถวแรกของผลลัพธ์ = "กีฬาที่เข้าร่วมมากที่สุด"
      */
     @Query("""
         SELECT new com.sportmate.dto.SportCount(e.post.sport.name, COUNT(e))
         FROM Event e
-        WHERE e.user = :user AND e.status IN ('pending','approved')
+        WHERE e.user = :user AND e.status = 'approved'
         GROUP BY e.post.sport.name
         ORDER BY COUNT(e) DESC, e.post.sport.name ASC
     """)

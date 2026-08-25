@@ -302,6 +302,9 @@ h1,h2,h3,.display{
 .notif-item.unread{border-left:4px solid var(--flare);background:#FFF9F6}
 .notif-ico{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:1.1rem;flex-shrink:0;background:var(--chalk)}
 .notif-ico.join{background:#E3F5EC}
+.notif-ico.join_request{background:#FFF4E5}
+.notif-ico.join_approved{background:#E3F5EC}
+.notif-ico.join_rejected{background:#FDECE6}
 .notif-ico.cancel_join{background:#FDECE6}
 .notif-ico.new_post{background:#EAF1FF}
 .notif-ico.post_cancelled{background:#FDECE6}
