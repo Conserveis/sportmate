@@ -276,3 +276,31 @@ h1,h2,h3,.display{
   border-bottom:4px solid var(--flare)}
 .pay-summary .amt{font-family:"Oswald",sans-serif;font-size:2rem;font-weight:700}
 .pay-summary .amt small{font-size:1rem;color:#aebbb2}
+/* ===== public profile (/users/{id}) ===== */
+.user-link{color:var(--pitch-dark);font-weight:600;text-decoration:none;border-bottom:1.5px dotted var(--pitch)}
+.user-link:hover{color:var(--flare);border-bottom-color:var(--flare)}
+
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px;text-align:center;box-shadow:var(--shadow)}
+.stat-num{font-family:"Oswald",sans-serif;font-size:2rem;font-weight:700;color:var(--pitch-dark);line-height:1.1}
+.stat-label{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:4px}
+
+.review-item{margin-bottom:10px;padding:16px 18px}
+.review-top{display:flex;gap:12px;align-items:flex-start}
+
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:.85rem}
+.bar-name{width:110px;flex-shrink:0;color:var(--muted)}
+.bar-track{flex:1;height:9px;background:var(--chalk);border-radius:6px;overflow:hidden}
+.bar-fill{display:block;height:100%;background:var(--pitch);border-radius:6px}
+.bar-num{width:28px;text-align:right;font-weight:600}
+
+@media (max-width:720px){
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ===== dashboard บนหน้าโปรไฟล์ ===== */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dash-h{font-family:"Oswald",sans-serif;text-transform:uppercase;font-size:1rem;
+  letter-spacing:.04em;margin-bottom:12px;color:var(--pitch-dark)}
+@media (max-width:720px){ .dash-grid{grid-template-columns:1fr} }

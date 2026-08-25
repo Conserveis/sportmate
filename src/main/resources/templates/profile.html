@@ -32,6 +32,101 @@
                 สมาชิกถึง
                 <b th:text="${#temporals.format(user.membershipExpireAt,'dd/MM/yyyy')}">-</b>
             </div>
+            <a class="btn btn-ghost btn-sm" style="margin-top:8px"
+               th:href="@{'/users/' + ${user.id}(preview=true)}">ดูโปรไฟล์แบบที่คนอื่นเห็น</a>
+        </div>
+    </div>
+
+    <!-- ===== แดชบอร์ดสรุป (รวมมาไว้ในหน้าโปรไฟล์) ===== -->
+    <div class="stat-grid">
+        <div class="stat">
+            <div class="stat-num" th:text="${stats.organizedCount}">0</div>
+            <div class="stat-label">ครั้งที่จัดกิจกรรม</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" th:text="${stats.joinCount}">0</div>
+            <div class="stat-label">ครั้งที่เข้าร่วม</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" th:text="${#numbers.formatDecimal(stats.avgScore,1,2)}">0.00</div>
+            <div class="stat-label">คะแนนผู้จัดเฉลี่ย</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" style="font-size:1.35rem"
+                 th:text="${stats.topSport != null} ? ${stats.topSport.sportName} : '—'">—</div>
+            <div class="stat-label">กีฬาที่เข้าร่วมมากที่สุด</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>ภาพรวมของฉัน</h2>
+        <div class="dash-grid">
+            <!-- ฝั่งผู้จัด -->
+            <div class="panel">
+                <h3 class="dash-h">ในฐานะผู้จัด</h3>
+                <div class="kv">
+                    <span class="k">จัดจนจบแล้ว</span>
+                    <span><b th:text="${stats.organizedFinishedCount}">0</b> ครั้ง</span>
+                    <span class="k">ยกเลิกไป</span>
+                    <span><b th:text="${stats.organizedCancelledCount}">0</b> ครั้ง</span>
+                    <span class="k">รีวิวที่ได้รับ</span>
+                    <span><b th:text="${stats.reviewCount}">0</b> รีวิว</span>
+                    <span class="k">โควตาโพสต์สัปดาห์นี้</span>
+                    <span th:if="${quotaLeft < 0}" class="pill green">ไม่จำกัด (Member)</span>
+                    <span th:unless="${quotaLeft < 0}">
+                        เหลือ <b th:text="${quotaLeft}">0</b> / 3 โพสต์
+                    </span>
+                </div>
+            </div>
+
+            <!-- ฝั่งผู้เข้าร่วม -->
+            <div class="panel">
+                <h3 class="dash-h">ในฐานะผู้เข้าร่วม</h3>
+                <div class="kv">
+                    <span class="k">เข้าร่วมจนจบแล้ว</span>
+                    <span><b th:text="${stats.attendedCount}">0</b> ครั้ง</span>
+                    <span class="k">กำลังจะถึง</span>
+                    <span><b th:text="${stats.upcomingCount}">0</b> กิจกรรม</span>
+                </div>
+                <div th:if="${stats.sportCounts.isEmpty()}" style="color:var(--muted);font-size:.88rem;margin-top:10px">
+                    ยังไม่เคยเข้าร่วมกิจกรรม
+                </div>
+                <div th:unless="${stats.sportCounts.isEmpty()}" style="margin-top:12px">
+                    <div class="bar-row" th:each="sc : ${stats.sportCounts}">
+                        <span class="bar-name" th:text="${sc.sportName}">กีฬา</span>
+                        <span class="bar-track">
+                            <span class="bar-fill"
+                                  th:style="'width:' + ${sc.count * 100 / stats.topSport.count} + '%'"></span>
+                        </span>
+                        <span class="bar-num" th:text="${sc.count}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- รีวิวที่ได้รับ -->
+    <div class="section" th:if="${stats.organizer}">
+        <h2>รีวิวที่ฉันได้รับ (<span th:text="${stats.reviewCount}">0</span>)</h2>
+        <div th:if="${stats.reviews.isEmpty()}" style="color:var(--muted);font-size:.9rem">
+            ยังไม่มีผู้เข้าร่วมรีวิวกิจกรรมของคุณ
+        </div>
+        <div class="panel review-item" th:each="r : ${stats.reviews}">
+            <div class="review-top">
+                <div class="c-avatar" th:text="${#strings.substring(r.event.user.userName,0,1).toUpperCase()}">U</div>
+                <div style="flex:1">
+                    <a class="c-name user-link" th:href="@{'/users/' + ${r.event.user.id}}"
+                       th:text="${r.event.user.userName}">ผู้รีวิว</a>
+                    <span class="stars" style="margin-left:8px"
+                          th:text="${'★★★★★'.substring(0, r.reviewScore) + '☆☆☆☆☆'.substring(0, 5 - r.reviewScore)}">★★★★☆</span>
+                    <div class="l-meta">
+                        <span th:text="${r.event.post.postName}">ชื่อกิจกรรม</span> ·
+                        <span th:text="${#temporals.format(r.reviewDate,'dd/MM/yyyy')}">วันที่</span>
+                    </div>
+                </div>
+            </div>
+            <div class="c-text" th:if="${r.comment != null and !r.comment.isBlank()}"
+                 th:text="${r.comment}" style="margin-top:8px">ความคิดเห็น</div>
         </div>
     </div>
 

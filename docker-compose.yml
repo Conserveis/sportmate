@@ -40,6 +40,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: rootpass
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      TZ: Asia/Bangkok  
     ports:
       - "8080:8080"
     depends_on:

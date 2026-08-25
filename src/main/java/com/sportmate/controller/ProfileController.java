@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -12,6 +13,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.sportmate.entity.User;
 import com.sportmate.service.EventService;
 import com.sportmate.service.PostService;
+import com.sportmate.service.PublicProfileService;
 import com.sportmate.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
@@ -22,12 +24,14 @@ public class ProfileController {
     private final UserService userService;
     private final EventService eventService;
     private final PostService postService;
+    private final PublicProfileService publicProfileService;
 
     public ProfileController(UserService userService, EventService eventService,
-                             PostService postService) {
+                             PostService postService, PublicProfileService publicProfileService) {
         this.userService = userService;
         this.eventService = eventService;
         this.postService = postService;
+        this.publicProfileService = publicProfileService;
     }
 
     private User me(HttpSession session) {
@@ -43,7 +47,37 @@ public class ProfileController {
         model.addAttribute("organized", postService.ownedBy(me));           // ประวัติการจัด
         model.addAttribute("allSports", userService.allSports());
         model.addAttribute("hasPassword", userService.hasPassword(me.getId()));
+        // แดชบอร์ดสรุปสถิติของตัวเอง (ใช้ service ตัวเดียวกับโปรไฟล์สาธารณะ)
+        model.addAttribute("stats", publicProfileService.build(me));
+        model.addAttribute("quotaLeft", postService.remainingWeeklyQuota(me));
         return "profile";
+    }
+
+    /**
+     * โปรไฟล์สาธารณะของผู้ใช้คนอื่น
+     *
+     * ผู้เข้าร่วมเปิดดูผู้จัด  -> เห็นกิจกรรมที่เคยจัด, รีวิว, จำนวนครั้งการจัด, คะแนนเฉลี่ย
+     * ผู้จัดเปิดดูผู้เข้าร่วม  -> เห็นจำนวนครั้งการเข้าร่วม, กีฬาที่เข้าร่วมมากที่สุด, กิจกรรมล่าสุด
+     *
+     * ถ้ากดดูโปรไฟล์ตัวเอง จะพาไปหน้า /profile ที่แก้ไขข้อมูลได้แทน
+     */
+    @GetMapping("/users/{id}")
+    public String publicProfile(@PathVariable Integer id,
+                                @RequestParam(defaultValue = "false") boolean preview,
+                                HttpSession session, Model model, RedirectAttributes ra) {
+        Integer myId = (Integer) session.getAttribute("uid");
+        // ดูโปรไฟล์ตัวเอง -> ไปหน้า /profile ที่แก้ไขได้ ยกเว้นกด "ดูแบบที่คนอื่นเห็น"
+        if (myId != null && myId.equals(id) && !preview) {
+            return "redirect:/profile";
+        }
+        model.addAttribute("preview", myId != null && myId.equals(id));
+        try {
+            model.addAttribute("profile", publicProfileService.build(id));
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/posts";
+        }
+        return "user-profile";
     }
 
     @PostMapping("/profile/password")
@@ -77,7 +111,7 @@ public class ProfileController {
         return "redirect:/profile";
     }
 
-    // ---- ชำระเงินสมัครสมาชิก (UC-5) ----
+    // ---- ชำระเงินสมัครสมาชิก ----
     @GetMapping("/subscribe")
     public String subscribePage(HttpSession session, Model model) {
         User me = me(session);

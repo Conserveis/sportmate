@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${profile.user.userName})}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('')}"></nav>
+
+<div class="wrap">
+
+    <a href="javascript:history.back()" style="color:var(--muted);text-decoration:none;font-size:.88rem">&larr; กลับ</a>
+
+    <div th:if="${preview}" class="flash ok" style="margin-top:12px">
+        นี่คือมุมมองที่ผู้ใช้คนอื่นเห็นโปรไฟล์ของคุณ —
+        <a th:href="@{/profile}" style="text-decoration:underline">กลับไปหน้าโปรไฟล์ของฉัน</a>
+    </div>
+
+    <!-- ===== header ===== -->
+    <div class="profile-head" style="margin-top:12px">
+        <div class="avatar" th:text="${#strings.substring(profile.user.userName,0,1).toUpperCase()}">U</div>
+        <div style="flex:1">
+            <div class="uname">
+                <span th:text="${profile.user.userName}">username</span>
+                <span class="badge-member" th:if="${profile.user.member}">Member</span>
+            </div>
+            <div class="ustat">
+                เข้าร่วม SportMate เมื่อ
+                <span th:text="${#temporals.format(profile.user.createdAt,'dd MMMM yyyy')}">-</span>
+            </div>
+            <div class="ustat" th:if="${profile.organizer}">
+                คะแนนผู้จัดเฉลี่ย
+                <span class="stars"
+                      th:text="${'★★★★★'.substring(0, profile.avgScore.intValue()) + '☆☆☆☆☆'.substring(0, 5 - profile.avgScore.intValue())}">★★★★☆</span>
+                <b th:text="${#numbers.formatDecimal(profile.avgScore,1,2)}">0.00</b> / 5.00
+                (<span th:text="${profile.reviewCount}">0</span> รีวิว)
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== สรุปสถิติ ===== -->
+    <div class="stat-grid">
+        <div class="stat">
+            <div class="stat-num" th:text="${profile.organizedCount}">0</div>
+            <div class="stat-label">ครั้งที่จัดกิจกรรม</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" th:text="${profile.joinCount}">0</div>
+            <div class="stat-label">ครั้งที่เข้าร่วม</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" th:text="${profile.attendedCount}">0</div>
+            <div class="stat-label">เข้าร่วมจนจบแล้ว</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num"
+                 th:text="${profile.topSport != null} ? ${profile.topSport.sportName} : '—'"
+                 style="font-size:1.35rem">—</div>
+            <div class="stat-label">กีฬาที่เข้าร่วมมากที่สุด</div>
+        </div>
+    </div>
+
+    <!-- ================= ฝั่งผู้จัดกิจกรรม ================= -->
+    <div th:if="${profile.organizer}">
+
+        <div class="section">
+            <h2>ในฐานะผู้จัดกิจกรรม</h2>
+            <div class="panel">
+                <div class="kv">
+                    <span class="k">จัดกิจกรรมทั้งหมด</span>
+                    <span><b th:text="${profile.organizedCount}">0</b> ครั้ง</span>
+                    <span class="k">จัดจนจบแล้ว</span>
+                    <span><b th:text="${profile.organizedFinishedCount}">0</b> ครั้ง</span>
+                    <span class="k">ยกเลิกกิจกรรม</span>
+                    <span><b th:text="${profile.organizedCancelledCount}">0</b> ครั้ง</span>
+                    <span class="k">คะแนนเฉลี่ย</span>
+                    <span>
+                        <b th:text="${#numbers.formatDecimal(profile.avgScore,1,2)}">0.00</b> / 5.00
+                        จาก <span th:text="${profile.reviewCount}">0</span> รีวิว
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- กิจกรรมที่เคยจัด -->
+        <div class="section">
+            <h2>กิจกรรมที่เคยจัด</h2>
+            <div th:if="${profile.organizedPosts.isEmpty()}" style="color:var(--muted);font-size:.9rem">
+                ยังไม่มีกิจกรรมที่เผยแพร่
+            </div>
+            <a class="list-row" th:each="p : ${profile.organizedPosts}"
+               th:href="@{'/posts/' + ${p.id}}" style="text-decoration:none">
+                <div>
+                    <div class="l-title" th:text="${p.postName}">ชื่อกิจกรรม</div>
+                    <div class="l-meta">
+                        <span th:text="${p.postType.name == 'Tournament'} ? '🏆 Tournament' : 'Post'">Post</span> ·
+                        <span th:text="${p.sport.name}">กีฬา</span> ·
+                        <span th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</span> ·
+                        <span th:text="${p.location.name}">สถานที่</span>
+                    </div>
+                </div>
+                <span class="pill grey" th:if="${p.expired}">จบแล้ว</span>
+                <span class="pill green" th:unless="${p.expired}">กำลังจะถึง</span>
+            </a>
+        </div>
+
+        <!-- รีวิวที่ได้รับ -->
+        <div class="section">
+            <h2>รีวิวจากผู้เข้าร่วม (<span th:text="${profile.reviewCount}">0</span>)</h2>
+            <div th:if="${profile.reviews.isEmpty()}" style="color:var(--muted);font-size:.9rem">
+                ยังไม่มีรีวิว
+            </div>
+            <div class="panel review-item" th:each="r : ${profile.reviews}">
+                <div class="review-top">
+                    <div class="c-avatar"
+                         th:text="${#strings.substring(r.event.user.userName,0,1).toUpperCase()}">U</div>
+                    <div style="flex:1">
+                        <span class="c-name" th:text="${r.event.user.userName}">ผู้รีวิว</span>
+                        <span class="stars" style="margin-left:8px"
+                              th:text="${'★★★★★'.substring(0, r.reviewScore) + '☆☆☆☆☆'.substring(0, 5 - r.reviewScore)}">★★★★☆</span>
+                        <div class="l-meta">
+                            <span th:text="${r.event.post.postName}">ชื่อกิจกรรม</span> ·
+                            <span th:text="${#temporals.format(r.reviewDate,'dd/MM/yyyy')}">วันที่</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="c-text" th:if="${r.comment != null and !r.comment.isBlank()}"
+                     th:text="${r.comment}" style="margin-top:8px">ความคิดเห็น</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ฝั่งผู้เข้าร่วม ================= -->
+    <div class="section">
+        <h2>ในฐานะผู้เข้าร่วม</h2>
+        <div class="panel">
+            <div class="kv">
+                <span class="k">เข้าร่วมทั้งหมด</span>
+                <span><b th:text="${profile.joinCount}">0</b> ครั้ง</span>
+                <span class="k">เข้าร่วมจนจบแล้ว</span>
+                <span><b th:text="${profile.attendedCount}">0</b> ครั้ง</span>
+                <span class="k">กำลังจะถึง</span>
+                <span><b th:text="${profile.upcomingCount}">0</b> กิจกรรม</span>
+                <span class="k">กีฬาที่เข้าร่วมมากที่สุด</span>
+                <span th:if="${profile.topSport != null}">
+                    <b th:text="${profile.topSport.sportName}">กีฬา</b>
+                    (<span th:text="${profile.topSport.count}">0</span> ครั้ง)
+                </span>
+                <span th:if="${profile.topSport == null}" style="color:var(--muted)">ยังไม่เคยเข้าร่วม</span>
+            </div>
+
+            <!-- สัดส่วนกีฬาที่เข้าร่วม -->
+            <div th:unless="${profile.sportCounts.isEmpty()}" style="margin-top:16px">
+                <div class="bar-row" th:each="sc : ${profile.sportCounts}">
+                    <span class="bar-name" th:text="${sc.sportName}">กีฬา</span>
+                    <span class="bar-track">
+                        <span class="bar-fill"
+                              th:style="'width:' + ${sc.count * 100 / profile.topSport.count} + '%'"></span>
+                    </span>
+                    <span class="bar-num" th:text="${sc.count}">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- กีฬาที่สนใจ -->
+    <div class="section" th:unless="${profile.user.interestedSports.isEmpty()}">
+        <h2>กีฬาที่สนใจ</h2>
+        <div class="chips">
+            <span class="sport-tag" th:each="s : ${profile.user.interestedSports}" th:text="${s.name}">กีฬา</span>
+        </div>
+    </div>
+
+    <!-- กิจกรรมที่เข้าร่วมล่าสุด -->
+    <div class="section">
+        <h2>กิจกรรมที่เข้าร่วมล่าสุด</h2>
+        <div th:if="${profile.recentJoined.isEmpty()}" style="color:var(--muted);font-size:.9rem">
+            ยังไม่มีประวัติการเข้าร่วม
+        </div>
+        <a class="list-row" th:each="e : ${profile.recentJoined}"
+           th:href="@{'/posts/' + ${e.post.id}}" style="text-decoration:none">
+            <div>
+                <div class="l-title" th:text="${e.post.postName}">ชื่อกิจกรรม</div>
+                <div class="l-meta">
+                    <span th:text="${e.post.sport.name}">กีฬา</span> ·
+                    <span th:text="${#temporals.format(e.post.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</span> ·
+                    จัดโดย <span th:text="${e.post.owner.userName}">ผู้จัด</span>
+                </div>
+            </div>
+            <span class="pill grey" th:if="${e.post.expired}">จบแล้ว</span>
+            <span class="pill green" th:unless="${e.post.expired}">กำลังจะถึง</span>
+        </a>
+    </div>
+
+    <div style="color:var(--muted);font-size:.8rem;margin:24px 0 40px">
+        โปรไฟล์สาธารณะแสดงเฉพาะประวัติกิจกรรมและคะแนนเท่านั้น ไม่แสดงอีเมลหรือเบอร์โทรศัพท์
+    </div>
+</div>
+</body>
+</html>

@@ -1,13 +1,14 @@
 package com.sportmate.repository;
 
-import com.sportmate.entity.Post;
-import com.sportmate.entity.User;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.sportmate.entity.Post;
+import com.sportmate.entity.User;
 
 public interface PostRepository extends JpaRepository<Post, Integer> {
 
@@ -36,6 +37,33 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     // ประวัติการจัดกิจกรรมของผู้ใช้
     List<Post> findByOwnerOrderByDateCreateDesc(User owner);
 
+    @Query("""
+        SELECT p FROM Post p
+        WHERE p.owner = :owner
+          AND p.status <> 'cancelled'
+          AND (p.publishAt IS NULL OR p.publishAt <= :now)
+        ORDER BY p.datePlay DESC
+    """)
+    List<Post> findPublicOrganizedBy(@Param("owner") User owner, @Param("now") LocalDateTime now);
+
+    // จำนวนครั้งการจัดกิจกรรม (ไม่นับที่ยกเลิก)
+    @Query("""
+        SELECT COUNT(p) FROM Post p
+        WHERE p.owner = :owner AND p.status <> 'cancelled'
+    """)
+    long countOrganizedBy(@Param("owner") User owner);
+
+    // จัดจนจบแล้วกี่ครั้ง (เลยวันเล่นมาแล้ว)
+    @Query("""
+        SELECT COUNT(p) FROM Post p
+        WHERE p.owner = :owner AND p.status <> 'cancelled' AND p.datePlay < :now
+    """)
+    long countFinishedBy(@Param("owner") User owner, @Param("now") LocalDateTime now);
+
+    // ยกเลิกไปกี่ครั้ง (ใช้ประกอบการตัดสินใจของผู้เข้าร่วม)
+    @Query("SELECT COUNT(p) FROM Post p WHERE p.owner = :owner AND p.status = 'cancelled'")
+    long countCancelledBy(@Param("owner") User owner);
+    
     // นับจำนวนโพสต์ของผู้ใช้ในช่วงเวลา (ใช้ตรวจโควตา 3 โพสต์/สัปดาห์)
     @Query("""
         SELECT COUNT(p) FROM Post p

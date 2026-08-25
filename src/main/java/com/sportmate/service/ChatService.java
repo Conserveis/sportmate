@@ -1,14 +1,15 @@
 package com.sportmate.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.sportmate.entity.Chat;
 import com.sportmate.entity.Post;
 import com.sportmate.entity.User;
 import com.sportmate.repository.ChatRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class ChatService {

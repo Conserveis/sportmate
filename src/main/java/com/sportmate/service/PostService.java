@@ -1,12 +1,23 @@
 package com.sportmate.service;
 
-import com.sportmate.entity.*;
-import com.sportmate.repository.*;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.sportmate.entity.Event;
+import com.sportmate.entity.Location;
+import com.sportmate.entity.Post;
+import com.sportmate.entity.PostType;
+import com.sportmate.entity.Sport;
+import com.sportmate.entity.User;
+import com.sportmate.repository.EventRepository;
+import com.sportmate.repository.LocationRepository;
+import com.sportmate.repository.PostRepository;
+import com.sportmate.repository.PostTypeRepository;
+import com.sportmate.repository.SportRepository;
+import com.sportmate.repository.UserRepository;
 
 @Service
 public class PostService {
@@ -70,10 +81,17 @@ public class PostService {
         return postRepo.findByOwnerOrderByDateCreateDesc(owner);
     }
 
+    /** โควตาโพสต์คงเหลือในสัปดาห์นี้ — Member ไม่จำกัด (คืน -1) */
+    public int remainingWeeklyQuota(User owner) {
+        if (owner.isMember()) return -1;
+        long used = postRepo.countByOwnerSince(owner, LocalDateTime.now().minusWeeks(1));
+        return (int) Math.max(0, 3 - used);
+    }
+
     /**
-     * สร้างโพสต์ (UC-3) หรือทัวร์นาเมนต์
-     * - Tournament: เฉพาะ Paid Member เท่านั้น (US30)
-     * - Post ของ Normal User: จำกัด 3 โพสต์/สัปดาห์ (FR29), Member ไม่จำกัด
+     * สร้างโพสต์หรือทัวร์นาเมนต์
+     * - Tournament: เฉพาะ Member 
+     * - Post Normal User จำกัด 3 โพสต์/สัปดาห์, Member ไม่จำกัด
      */
     @Transactional
     public Post create(User owner, String type, Integer sportId, Integer locationId,
@@ -122,8 +140,7 @@ public class PostService {
         p.setStatus("open");
         Post saved = postRepo.save(p);
 
-        // แจ้งเตือนผู้ที่ติดตามหมวดกีฬานี้ว่ามีกิจกรรมใหม่ (UC-4 FR18)
-        // (เฉพาะโพสต์ที่เผยแพร่ทันที เพื่อไม่ให้แจ้งก่อนเวลาเผยแพร่ที่ตั้งไว้)
+        // แจ้งเตือนผู้ที่ติดตามหมวดกีฬานี้ว่ามีกิจกรรมใหม่ 
         if (publishAt == null) {
             String label = tournament ? "ทัวร์นาเมนต์" : "กิจกรรม";
             for (User follower : userRepo.findFollowersOfSport(sportId)) {
@@ -146,7 +163,7 @@ public class PostService {
         p.setStatus("cancelled");
         postRepo.save(p);
 
-        // แจ้งเตือนผู้เข้าร่วมทุกคนว่ากิจกรรมถูกยกเลิก (UC-4)
+        // แจ้งเตือนผู้เข้าร่วมทุกคนว่ากิจกรรมถูกยกเลิก
         for (Event ev : eventRepo.findParticipants(p)) {
             notificationService.push(ev.getUser(),
                     "กิจกรรม \"" + p.getPostName() + "\" ถูกยกเลิกโดยผู้จัด",

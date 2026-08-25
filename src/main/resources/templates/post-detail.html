@@ -26,7 +26,13 @@
                     <span class="k">วันเวลา</span>
                     <span th:text="${#temporals.format(post.datePlay,'dd MMMM yyyy, HH:mm')}">-</span>
                     <span class="k">สถานที่</span><span th:text="${post.location.name}">-</span>
-                    <span class="k">เจ้าของ</span><span th:text="${post.owner.userName}">-</span>
+                    <span class="k">ผู้จัดกิจกรรม</span>
+                    <span>
+                        <a class="user-link" th:href="@{'/users/' + ${post.owner.id}}"
+                           th:text="${post.owner.userName}">-</a>
+                        <span class="stars" th:if="${post.owner.avgScore.doubleValue() > 0}"
+                              th:text="'★ ' + ${#numbers.formatDecimal(post.owner.avgScore,1,2)}">★</span>
+                    </span>
                     <span class="k">การเข้าร่วม</span>
                     <span th:text="${post.public}?'สาธารณะ (เข้าร่วมได้ทันที)':'ส่วนตัว (ต้องอนุมัติ)'">-</span>
                     <span class="k" th:if="${post.description}">รายละเอียด</span>
@@ -46,7 +52,8 @@
                 <div class="comment" th:each="c : ${comments}">
                     <div class="c-avatar" th:text="${#strings.substring(c.user.userName,0,1).toUpperCase()}">U</div>
                     <div class="c-body">
-                        <span class="c-name" th:text="${c.user.userName}">user</span>
+                        <a class="c-name user-link" th:href="@{'/users/' + ${c.user.id}}"
+                           th:text="${c.user.userName}">user</a>
                         <span class="c-time" th:text="${#temporals.format(c.time,'dd/MM HH:mm')}">time</span>
                         <div class="c-text" th:text="${c.text}">ข้อความ</div>
                     </div>
@@ -99,7 +106,8 @@
                 <div class="comment" th:each="e : ${participants}" style="padding:9px 0">
                     <div class="c-avatar" th:text="${#strings.substring(e.user.userName,0,1).toUpperCase()}">U</div>
                     <div class="c-body">
-                        <span class="c-name" th:text="${e.user.userName}">user</span>
+                        <a class="c-name user-link" th:href="@{'/users/' + ${e.user.id}}"
+                           th:text="${e.user.userName}">user</a>
                         <span class="pill grey" th:if="${e.status=='pending'}" style="margin-left:6px">รออนุมัติ</span>
                     </div>
                 </div>

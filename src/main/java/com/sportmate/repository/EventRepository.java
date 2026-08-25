@@ -1,15 +1,17 @@
 package com.sportmate.repository;
 
-import com.sportmate.entity.Event;
-import com.sportmate.entity.Post;
-import com.sportmate.entity.User;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import com.sportmate.dto.SportCount;
+import com.sportmate.entity.Event;
+import com.sportmate.entity.Post;
+import com.sportmate.entity.User;
 
 public interface EventRepository extends JpaRepository<Event, Integer> {
 
@@ -57,4 +59,34 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
         ORDER BY e.post.datePlay ASC
     """)
     List<Event> findUpcomingByUser(@Param("user") User user, @Param("now") LocalDateTime now);
+    // ===== โปรไฟล์สาธารณะ: สถิติฝั่งผู้เข้าร่วม =====
+
+    // จำนวนครั้งการเข้าร่วมทั้งหมด (ที่ยังไม่ยกเลิก)
+    @Query("""
+        SELECT COUNT(e) FROM Event e
+        WHERE e.user = :user AND e.status IN ('pending','approved')
+    """)
+    long countJoinsByUser(@Param("user") User user);
+
+    // เข้าร่วมและกิจกรรมจบไปแล้วกี่ครั้ง
+    @Query("""
+        SELECT COUNT(e) FROM Event e
+        WHERE e.user = :user
+          AND e.status IN ('pending','approved')
+          AND e.post.datePlay < :now
+    """)
+    long countAttendedByUser(@Param("user") User user, @Param("now") LocalDateTime now);
+
+    /**
+     * นับการเข้าร่วมแยกตามชนิดกีฬา เรียงจากมากไปน้อย
+     * แถวแรกของผลลัพธ์ = "กีฬาที่เข้าร่วมมากที่สุด"
+     */
+    @Query("""
+        SELECT new com.sportmate.dto.SportCount(e.post.sport.name, COUNT(e))
+        FROM Event e
+        WHERE e.user = :user AND e.status IN ('pending','approved')
+        GROUP BY e.post.sport.name
+        ORDER BY COUNT(e) DESC, e.post.sport.name ASC
+    """)
+    List<SportCount> countJoinsBySport(@Param("user") User user);
 }

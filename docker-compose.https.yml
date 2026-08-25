@@ -45,6 +45,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}          # ← เพิ่ม
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      TZ: Asia/Bangkok  
     # ไม่ publish port ออกนอกเครื่อง — ให้ caddy เป็นด่านหน้าเพียงตัวเดียว
     depends_on:
       mysql:
