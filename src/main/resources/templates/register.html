@@ -20,12 +20,12 @@
             </div>
             <div class="field">
                 <label>รหัสผ่าน</label>
-                <input type="password" name="password" required>
-                <div class="hint">อย่างน้อย 8 ตัวอักษร</div>
+                <input type="password" name="password" minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z]).{8,}" title="รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร และต้องมีทั้งตัวพิมพ์ใหญ่ (A-Z) และพิมพ์เล็ก (a-z)" required>
+                <div class="hint">อย่างน้อย 8 ตัวอักษร (ต้องมีทั้งตัวพิมพ์ใหญ่และตัวพิมพ์เล็ก A-Z, a-z)</div>
             </div>
             <div class="field">
                 <label>ยืนยันรหัสผ่าน</label>
-                <input type="password" name="confirmPassword" required>
+                <input type="password" name="confirmPassword" minlength="8" required>
             </div>
             <button class="btn btn-primary" style="width:100%">สมัครสมาชิก</button>
         </form>

@@ -50,8 +50,7 @@ public class UserService {
             throw new IllegalArgumentException("ชื่อผู้ใช้งานนี้มีผู้ใช้แล้ว");
         if (userRepo.existsByGmail(gmail))
             throw new IllegalArgumentException("อีเมลนี้มีผู้ใช้แล้ว");
-        if (rawPassword == null || rawPassword.length() < 8)
-            throw new IllegalArgumentException("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร");
+        validatePassword(rawPassword);
 
         UserType normal = userTypeRepo.findByName(UserType.NORMAL)
                 .orElseThrow(() -> new IllegalStateException("ไม่พบ UserType 'Normal'"));
@@ -132,13 +131,28 @@ public void setPassword(Integer userId, String currentPassword, String newPasswo
     // บัญชีที่มีรหัสผ่านอยู่แล้ว ต้องยืนยันรหัสเดิมก่อน
     if (hasPassword && !encoder.matches(currentPassword, u.getPassword()))
         throw new IllegalArgumentException("รหัสผ่านเดิมไม่ถูกต้อง");
-    if (newPassword == null || newPassword.length() < 8)
-        throw new IllegalArgumentException("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร");
+    validatePassword(newPassword);
     if (!newPassword.equals(confirmPassword))
         throw new IllegalArgumentException("รหัสผ่านและการยืนยันไม่ตรงกัน");
 
     u.setPassword(encoder.encode(newPassword));
     userRepo.save(u);
+}
+
+/**
+ * ตรวจสอบความถูกต้องของรหัสผ่าน:
+ * - ความยาวอย่างน้อย 8 ตัวอักษร
+ * - มีทั้งตัวพิมพ์ใหญ่ (A-Z) และตัวพิมพ์เล็ก (a-z)
+ */
+public static void validatePassword(String password) {
+    if (password == null || password.length() < 8) {
+        throw new IllegalArgumentException("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร");
+    }
+    boolean hasUpper = password.chars().anyMatch(ch -> ch >= 'A' && ch <= 'Z');
+    boolean hasLower = password.chars().anyMatch(ch -> ch >= 'a' && ch <= 'z');
+    if (!hasUpper || !hasLower) {
+        throw new IllegalArgumentException("รหัสผ่านต้องมีทั้งตัวอักษรพิมพ์ใหญ่ (A-Z) และพิมพ์เล็ก (a-z)");
+    }
 }
 
 /** บัญชีนี้ตั้งรหัสผ่านไว้หรือยัง (ให้หน้าโปรไฟล์เลือกแสดงข้อความ) */
