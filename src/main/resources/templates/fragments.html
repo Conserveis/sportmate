@@ -6,7 +6,7 @@
     <title th:text="${title} + ' · SportMate'">SportMate</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -229,19 +229,24 @@
 <nav class="nav" th:fragment="nav(active)">
     <div class="nav-inner">
         <a class="brand" th:href="@{/posts}"><span class="dot"></span>SportMate</a>
-        <a class="link" th:classappend="${active=='posts'}?'active'" th:href="@{/posts}">Post</a>
-        <a class="link" th:classappend="${active=='tournaments'}?'active'" th:href="@{/tournaments}">Tournament</a>
-        <a class="link" th:classappend="${active=='archive'}?'active'" th:href="@{/archive}">จัดเก็บกิจกรรม</a>
-        <a class="link" th:classappend="${active=='profile'}?'active'" th:href="@{/profile}">โปรไฟล์</a>
-        <span class="spacer"></span>
-        <a class="bell" th:classappend="${active=='notifications'}?'active'" th:href="@{/notifications}" title="การแจ้งเตือน">
-            🔔<span class="bell-badge" th:if="${unreadCount != null and unreadCount > 0}" th:text="${unreadCount}">0</span>
-        </a>
-        <span class="who" th:if="${currentUser}">
-            <span th:text="${currentUser.userName}">user</span>
-            <span class="badge-member" th:if="${currentUser.member}">Member</span>
-        </span>
-        <a class="link" th:href="@{/logout}">ออกจากระบบ</a>
+        <button class="hamburger" aria-label="เมนู" onclick="document.querySelector('.nav-links').classList.toggle('open');this.classList.toggle('open')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="nav-links">
+            <a class="link" th:classappend="${active=='posts'}?'active'" th:href="@{/posts}">Post</a>
+            <a class="link" th:classappend="${active=='tournaments'}?'active'" th:href="@{/tournaments}">Tournament</a>
+            <a class="link" th:classappend="${active=='archive'}?'active'" th:href="@{/archive}">จัดเก็บกิจกรรม</a>
+            <a class="link" th:classappend="${active=='profile'}?'active'" th:href="@{/profile}">โปรไฟล์</a>
+            <span class="spacer"></span>
+            <a class="bell" th:classappend="${active=='notifications'}?'active'" th:href="@{/notifications}" title="การแจ้งเตือน">
+                🔔<span class="bell-badge" th:if="${unreadCount != null and unreadCount > 0}" th:text="${unreadCount}">0</span>
+            </a>
+            <span class="who" th:if="${currentUser}">
+                <span th:text="${currentUser.userName}">user</span>
+                <span class="badge-member" th:if="${currentUser.member}">Member</span>
+            </span>
+            <a class="link" th:href="@{/logout}">ออกจากระบบ</a>
+        </div>
     </div>
 </nav>
 

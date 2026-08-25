@@ -13,7 +13,6 @@
             <div class="eyebrow" style="color:var(--flare)">Members only</div>
             <h1>ทัวร์นาเมนต์</h1>
         </div>
-        <span class="sub">กิจกรรมใหญ่ที่แสดงถาวร ไม่หายแม้หมดเวลา</span>
         <span class="spacer" style="flex:1"></span>
         <a th:if="${currentUser.member}" class="btn btn-flare" th:href="@{/posts/new(type='Tournament')}">+ สร้างทัวร์นาเมนต์</a>
         <a th:unless="${currentUser.member}" class="btn btn-ghost" th:href="@{/profile}">🔒 สมัครสมาชิกเพื่อสร้าง</a>

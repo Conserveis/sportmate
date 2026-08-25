@@ -54,6 +54,15 @@ public class ProfileController {
         return "profile";
     }
 
+    @GetMapping("/profile/edit")
+    public String editProfilePage(HttpSession session, Model model) {
+        User me = me(session);
+        model.addAttribute("user", me);
+        model.addAttribute("allSports", userService.allSports());
+        model.addAttribute("hasPassword", userService.hasPassword(me.getId()));
+        return "profile-edit";
+    }
+
     /**
      * โปรไฟล์สาธารณะของผู้ใช้คนอื่น
      *
@@ -93,7 +102,7 @@ public class ProfileController {
         } catch (Exception e) {
             ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
-        return "redirect:/profile";
+        return "redirect:/profile/edit";
     }
 
     @PostMapping("/profile/sports")
@@ -101,7 +110,7 @@ public class ProfileController {
                                HttpSession session, RedirectAttributes ra) {
         userService.updateInterestedSports((Integer) session.getAttribute("uid"), sportIds);
         ra.addFlashAttribute("msg", "บันทึกกีฬาที่สนใจแล้ว");
-        return "redirect:/profile";
+        return "redirect:/profile/edit";
     }
 
         @PostMapping("/profile/edit")
@@ -115,7 +124,7 @@ public class ProfileController {
         } catch (Exception e) {
             ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
-        return "redirect:/profile";
+        return "redirect:/profile/edit";
     }
 
     // ---- ชำระเงินสมัครสมาชิก ----
