@@ -32,9 +32,9 @@
                 <span class="sport-tag" th:text="${p.sport.name}">Football</span>
                 <h3 th:text="${p.postName}">ชื่อกิจกรรม</h3>
                 <div class="meta">
-                    <span>🗓 <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
-                    <span>📍 <span th:text="${p.location.name}">สถานที่</span></span>
-                    <span>👤 โดย <span th:text="${p.owner.userName}">เจ้าของ</span></span>
+                    <span><span class="line-icon calendar" aria-hidden="true"></span> <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
+                    <span><span class="line-icon pin" aria-hidden="true"></span> <span th:text="${p.location.name}">สถานที่</span></span>
+                    <span><span class="line-icon person" aria-hidden="true"></span> โดย <span th:text="${p.owner.userName}">เจ้าของ</span></span>
                 </div>
             </div>
             <div class="card-foot">

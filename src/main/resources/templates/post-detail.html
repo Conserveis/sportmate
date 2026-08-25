@@ -9,7 +9,7 @@
     <div th:if="${error}" class="flash err" th:text="${error}"></div>
 
     <a th:href="@{${post.tournament?'/tournaments':'/posts'}}"
-       style="color:var(--muted);text-decoration:none;font-size:.88rem">&larr; กลับ</a>
+    style="color:var(--muted);text-decoration:none;font-size:.88rem"><span class="line-icon arrow" aria-hidden="true"></span> กลับ</a>
 
     <div class="detail-grid">
         <!-- LEFT: details + comments -->
@@ -31,7 +31,7 @@
                         <a class="user-link" th:href="@{'/users/' + ${post.owner.id}}"
                            th:text="${post.owner.userName}">-</a>
                         <span class="stars" th:if="${post.owner.avgScore.doubleValue() > 0}"
-                              th:text="'★ ' + ${#numbers.formatDecimal(post.owner.avgScore,1,2)}">★</span>
+                              th:text="'คะแนน ' + ${#numbers.formatDecimal(post.owner.avgScore,1,2)}">คะแนน</span>
                     </span>
                     <span class="k">การเข้าร่วม</span>
                     <span th:text="${post.public}?'สาธารณะ (เข้าร่วมได้ทันที)':'ส่วนตัว (ต้องอนุมัติ)'">-</span>
