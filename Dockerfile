@@ -33,8 +33,10 @@ USER sportmate
 
 EXPOSE 8080
 
+
 # healthcheck ให้ Docker รู้ว่า container พร้อมรับ request จริงหรือยัง
 HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/login || exit 1
 
+ENV TZ=Asia/Bangkok
 ENTRYPOINT ["java", "-jar", "app.jar"]
