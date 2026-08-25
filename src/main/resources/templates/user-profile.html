@@ -85,7 +85,9 @@
             <div th:if="${profile.organizedPosts.isEmpty()}" style="color:var(--muted);font-size:.9rem">
                 ยังไม่มีกิจกรรมที่เผยแพร่
             </div>
-            <a class="list-row" th:each="p : ${profile.organizedPosts}"
+            <div id="postsBox" th:classappend="${profile.organizedPosts.size() > 5} ? 'collapsed' : ''">
+            <a class="list-row" th:each="p, it : ${profile.organizedPosts}"
+               th:classappend="${it.index >= 5} ? ' collapse-hidden' : ''"
                th:href="@{'/posts/' + ${p.id}}" style="text-decoration:none">
                 <div>
                     <div class="l-title" th:text="${p.postName}">ชื่อกิจกรรม</div>
@@ -99,6 +101,14 @@
                 <span class="pill grey" th:if="${p.expired}">จบแล้ว</span>
                 <span class="pill green" th:unless="${p.expired}">กำลังจะถึง</span>
             </a>
+            </div>
+            <div th:if="${profile.organizedPosts.size() > 5}" style="text-align:center;margin-top:4px">
+                <button type="button" class="btn btn-sm btn-ghost"
+                        th:attr="data-target=postsBox,data-more=${profile.organizedPosts.size() - 5}"
+                        onclick="toggleCollapse(this)">
+                    แสดงเพิ่มเติม (<span th:text="${profile.organizedPosts.size() - 5}">0</span>)
+                </button>
+            </div>
         </div>
 
         <!-- รีวิวที่ได้รับ -->
@@ -107,7 +117,9 @@
             <div th:if="${profile.reviews.isEmpty()}" style="color:var(--muted);font-size:.9rem">
                 ยังไม่มีรีวิว
             </div>
-            <div class="panel review-item" th:each="r : ${profile.reviews}">
+            <div id="reviewsBox" th:classappend="${profile.reviews.size() > 5} ? 'collapsed' : ''">
+            <div class="panel review-item" th:each="r, it : ${profile.reviews}"
+                 th:classappend="${it.index >= 5} ? ' collapse-hidden' : ''">
                 <div class="review-top">
                     <div class="c-avatar"
                          th:text="${#strings.substring(r.event.user.userName,0,1).toUpperCase()}">U</div>
@@ -124,7 +136,25 @@
                 <div class="c-text" th:if="${r.comment != null and !r.comment.isBlank()}"
                      th:text="${r.comment}" style="margin-top:8px">ความคิดเห็น</div>
             </div>
+            </div>
+            <div th:if="${profile.reviews.size() > 5}" style="text-align:center;margin-top:4px">
+                <button type="button" class="btn btn-sm btn-ghost"
+                        th:attr="data-target=reviewsBox,data-more=${profile.reviews.size() - 5}"
+                        onclick="toggleCollapse(this)">
+                    แสดงเพิ่มเติม (<span th:text="${profile.reviews.size() - 5}">0</span>)
+                </button>
+            </div>
         </div>
+
+        <script>
+            function toggleCollapse(btn) {
+                var box = document.getElementById(btn.dataset.target);
+                var collapsed = box.classList.toggle('collapsed');
+                btn.textContent = collapsed
+                    ? 'แสดงเพิ่มเติม (' + btn.dataset.more + ')'
+                    : 'ย่อรายการ';
+            }
+        </script>
     </div>
 
     <!-- ================= ฝั่งผู้เข้าร่วม ================= -->

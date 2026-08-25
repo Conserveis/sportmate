@@ -401,6 +401,7 @@ h1,h2,h3,.display{
 
 .review-item{margin-bottom:10px;padding:16px 18px}
 .review-item.review-hidden{display:none}
+.collapsed .collapse-hidden{display:none !important}
 .review-top{display:flex;gap:12px;align-items:flex-start}
 
 .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:.85rem}
