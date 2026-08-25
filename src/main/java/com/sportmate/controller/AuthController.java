@@ -11,6 +11,8 @@ import com.sportmate.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
 
+import com.sportmate.util.ErrorMessage;
+
 @Controller
 public class AuthController {
 

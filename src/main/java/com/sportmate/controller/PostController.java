@@ -1,5 +1,6 @@
 package com.sportmate.controller;
 
+import com.sportmate.util.ErrorMessage;
 import com.sportmate.entity.Post;
 import com.sportmate.entity.User;
 import com.sportmate.service.*;

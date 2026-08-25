@@ -15,6 +15,7 @@ import com.sportmate.service.EventService;
 import com.sportmate.service.PostService;
 import com.sportmate.service.PublicProfileService;
 import com.sportmate.service.UserService;
+import com.sportmate.util.ErrorMessage;
 
 import jakarta.servlet.http.HttpSession;
 
