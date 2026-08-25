@@ -104,11 +104,17 @@ public class ProfileController {
         return "redirect:/profile";
     }
 
-    @PostMapping("/profile/edit")
-    public String editProfile(@RequestParam(required = false) String phone,
+        @PostMapping("/profile/edit")
+    public String editProfile(@RequestParam String userName,
+                              @RequestParam String gmail,
+                              @RequestParam(required = false) String phone,
                               HttpSession session, RedirectAttributes ra) {
-        userService.updateProfile((Integer) session.getAttribute("uid"), phone);
-        ra.addFlashAttribute("msg", "อัปเดตข้อมูลส่วนตัวแล้ว");
+        try {
+            userService.updateProfile((Integer) session.getAttribute("uid"), userName, gmail, phone);
+            ra.addFlashAttribute("msg", "อัปเดตข้อมูลส่วนตัวแล้ว");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
+        }
         return "redirect:/profile";
     }
 

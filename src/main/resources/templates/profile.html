@@ -145,15 +145,29 @@
         </form>
     </div>
 
-    <!-- edit contact -->
+        <!-- edit personal info -->
     <div class="section">
-        <h2>ข้อมูลติดต่อ</h2>
-        <form method="post" th:action="@{/profile/edit}" style="display:flex;gap:10px;align-items:flex-end;max-width:420px">
-            <div class="field" style="flex:1;margin:0">
-                <label>เบอร์โทรศัพท์</label>
-                <input name="phone" th:value="${user.phoneNumber}" placeholder="0xx-xxx-xxxx">
+        <h2>ข้อมูลส่วนตัว</h2>
+        <form method="post" th:action="@{/profile/edit}" style="max-width:520px">
+            <div class="field">
+                <label>ชื่อผู้ใช้งาน</label>
+                <input name="userName" th:value="${user.userName}" required minlength="3" maxlength="50">
             </div>
-            <button class="btn btn-ghost btn-sm">บันทึก</button>
+            <div class="field">
+                <label>อีเมล</label>
+                <input type="email" name="gmail" th:value="${user.gmail}" maxlength="255" required>
+                <div th:if="${user.externalAccount}"
+                     style="color:var(--muted);font-size:.85rem;margin-top:4px">
+                    บัญชีนี้เข้าสู่ระบบผ่าน <span th:text="${user.authProvider}">google</span> —
+                    เปลี่ยนอีเมลที่นี่ได้ ไม่กระทบการเข้าสู่ระบบ
+                </div>
+            </div>
+            <div class="field">
+                <label>เบอร์โทรศัพท์</label>
+                <input name="phone" th:value="${user.phoneNumber}" placeholder="08xxxxxxxx"
+                       pattern="0[0-9\-\s]{8,13}" title="ตัวเลข 9–10 หลัก ขึ้นต้นด้วย 0">
+            </div>
+            <button class="btn btn-primary btn-sm">บันทึกข้อมูลส่วนตัว</button>
         </form>
     </div>
 

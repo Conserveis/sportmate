@@ -40,7 +40,9 @@
 
             <div class="field">
                 <label>วันและเวลานัด</label>
-                <input type="datetime-local" name="datePlay" max="9999-12-31T23:59" required>
+                                <input type="datetime-local" name="datePlay"
+                       min="2026-01-01T00:00" max="2028-12-31T23:59" required>
+                <div class="hint">ตั้งได้ระหว่าง 01/01/2026 – 31/12/2028</div>
             </div>
 
             <div class="row2">
@@ -65,7 +67,8 @@
 
             <div class="field">
                 <label>ตั้งเวลาเผยแพร่ล่วงหน้า <span style="font-weight:400;color:var(--muted)">(ไม่บังคับ)</span></label>
-                <input type="datetime-local" name="publishAt" max="9999-12-31T23:59">
+                                <input type="datetime-local" name="publishAt"
+                       min="2026-01-01T00:00" max="2028-12-31T23:59">
                 <div class="hint">เว้นว่างไว้ = เผยแพร่ทันที</div>
             </div>
 

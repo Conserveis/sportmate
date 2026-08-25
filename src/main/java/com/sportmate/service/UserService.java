@@ -195,10 +195,42 @@ private String providerLabel(String provider) {
     }
 
     /** แก้ไขข้อมูลส่วนตัว */
+    /** แก้ไขข้อมูลส่วนตัว: ชื่อผู้ใช้ / อีเมล / เบอร์โทร */
     @Transactional
-    public void updateProfile(Integer userId, String phone) {
+    public void updateProfile(Integer userId, String userName, String gmail, String phone) {
         User u = getById(userId);
-        u.setPhoneNumber(phone);
+
+        String newName  = userName == null ? "" : userName.trim();
+        String newMail  = gmail == null ? "" : gmail.trim().toLowerCase();
+        String newPhone = phone == null ? "" : phone.trim();
+
+        // --- ชื่อผู้ใช้งาน ---
+        if (newName.isBlank())
+            throw new IllegalArgumentException("กรุณากรอกชื่อผู้ใช้งาน");
+        if (newName.length() < 3 || newName.length() > 50)
+            throw new IllegalArgumentException("ชื่อผู้ใช้งานต้องยาว 3–50 ตัวอักษร");
+        if (!newName.equals(u.getUserName()) && userRepo.existsByUserName(newName))
+            throw new IllegalArgumentException("ชื่อผู้ใช้งานนี้มีผู้ใช้แล้ว");
+
+        // --- อีเมล ---
+        if (newMail.isBlank())
+            throw new IllegalArgumentException("กรุณากรอกอีเมล");
+        if (!newMail.matches("^[\\w.+-]+@[\\w-]+\\.[\\w.-]+$"))
+            throw new IllegalArgumentException("รูปแบบอีเมลไม่ถูกต้อง");
+        if (!newMail.equalsIgnoreCase(u.getGmail()) && userRepo.existsByGmail(newMail))
+            throw new IllegalArgumentException("อีเมลนี้มีผู้ใช้แล้ว");
+
+        // --- เบอร์โทร (ไม่บังคับกรอก) ---
+        if (!newPhone.isBlank()) {
+            String digits = newPhone.replaceAll("[\\s-]", "");
+            if (!digits.matches("0\\d{8,9}"))
+                throw new IllegalArgumentException("เบอร์โทรศัพท์ต้องเป็นตัวเลข 9–10 หลัก และขึ้นต้นด้วย 0");
+            newPhone = digits;
+        }
+
+        u.setUserName(newName);
+        u.setGmail(newMail);
+        u.setPhoneNumber(newPhone.isBlank() ? null : newPhone);
         userRepo.save(u);
     }
 

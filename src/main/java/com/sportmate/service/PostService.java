@@ -22,6 +22,11 @@ import com.sportmate.repository.UserRepository;
 @Service
 public class PostService {
 
+    /** ช่วงเวลาที่อนุญาตให้ตั้งกิจกรรม: 1 ม.ค. 2026 – 31 ธ.ค. 2028 */
+    public static final LocalDateTime ALLOWED_FROM = LocalDateTime.of(2026, 1, 1, 0, 0);
+    public static final LocalDateTime ALLOWED_TO   = LocalDateTime.of(2028, 12, 31, 23, 59, 59);
+    private static final String RANGE_TEXT = "01/01/2026 ถึง 31/12/2028";
+
     private final PostRepository postRepo;
     private final PostTypeRepository postTypeRepo;
     private final SportRepository sportRepo;
@@ -88,6 +93,23 @@ public class PostService {
         return (int) Math.max(0, 3 - used);
     }
 
+        /** ตรวจว่าวันเวลานัด/เวลาเผยแพร่ อยู่ในช่วงปี 2026–2028 และไม่ใช่อดีต */
+    private void validateSchedule(LocalDateTime datePlay, LocalDateTime publishAt) {
+        if (datePlay == null)
+            throw new IllegalArgumentException("กรุณาระบุวันและเวลานัด");
+        if (datePlay.isBefore(ALLOWED_FROM) || datePlay.isAfter(ALLOWED_TO))
+            throw new IllegalArgumentException("วันและเวลานัดต้องอยู่ระหว่าง " + RANGE_TEXT);
+        if (datePlay.isBefore(LocalDateTime.now()))
+            throw new IllegalArgumentException("ไม่สามารถตั้งวันและเวลานัดย้อนหลังได้");
+
+        if (publishAt != null) {
+            if (publishAt.isBefore(ALLOWED_FROM) || publishAt.isAfter(ALLOWED_TO))
+                throw new IllegalArgumentException("วันเวลาเผยแพร่ต้องอยู่ระหว่าง " + RANGE_TEXT);
+            if (!publishAt.isBefore(datePlay))
+                throw new IllegalArgumentException("วันเวลาเผยแพร่ต้องมาก่อนวันและเวลานัด");
+        }
+    }
+
     /**
      * สร้างโพสต์หรือทัวร์นาเมนต์
      * - Tournament: เฉพาะ Member 
@@ -99,6 +121,7 @@ public class PostService {
                        Integer maxPlayer, Integer minPlayer, boolean isPublic,
                        LocalDateTime publishAt) {
 
+        validateSchedule(datePlay, publishAt);
         boolean tournament = PostType.TOURNAMENT.equals(type);
 
         if (tournament && !owner.isMember()) {
