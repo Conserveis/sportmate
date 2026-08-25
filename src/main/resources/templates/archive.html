@@ -32,9 +32,9 @@
                 </div>
                 <h3 th:text="${e.post.postName}">ชื่อกิจกรรม</h3>
                 <div class="meta">
-                    <span>🗓 <b th:text="${#temporals.format(e.post.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
-                    <span>📍 <span th:text="${e.post.location.name}">สถานที่</span></span>
-                    <span>👤 จัดโดย <a class="user-link" th:href="@{'/users/' + ${e.post.owner.id}}"
+                    <span><span class="line-icon calendar" aria-hidden="true"></span> <b th:text="${#temporals.format(e.post.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
+                    <span><span class="line-icon pin" aria-hidden="true"></span> <span th:text="${e.post.location.name}">สถานที่</span></span>
+                    <span><span class="line-icon person" aria-hidden="true"></span> จัดโดย <a class="user-link" th:href="@{'/users/' + ${e.post.owner.id}}"
                                      th:text="${e.post.owner.userName}">เจ้าของ</a></span>
                 </div>
 
