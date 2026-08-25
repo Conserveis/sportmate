@@ -21,6 +21,10 @@
                 <label>รหัสผ่าน</label>
                 <input type="password" name="password" required>
             </div>
+            <label style="display:flex;align-items:center;gap:8px;margin:-2px 0 16px;color:var(--muted);font-size:.9rem;cursor:pointer">
+                <input type="checkbox" name="rememberMe" value="true" th:checked="${rememberMe}">
+                จดจำบัญชีของฉันเป็นเวลา 30 วัน
+            </label>
             <button class="btn btn-primary" style="width:100%">เข้าสู่ระบบ</button>
         </form>
 

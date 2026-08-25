@@ -10,18 +10,24 @@ import com.sportmate.entity.User;
 import com.sportmate.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.sportmate.util.ErrorMessage;
+import com.sportmate.config.RememberMeService;
 
 @Controller
 public class AuthController {
 
     private final UserService userService;
+    private final RememberMeService rememberMeService;
     private final org.springframework.security.oauth2.client.registration.ClientRegistrationRepository clientRegistrations;
 
     public AuthController(UserService userService,
-                          org.springframework.security.oauth2.client.registration.ClientRegistrationRepository clientRegistrations) {
+                          org.springframework.security.oauth2.client.registration.ClientRegistrationRepository clientRegistrations,
+                          RememberMeService rememberMeService) {
         this.userService = userService;
+        this.rememberMeService = rememberMeService;
         this.clientRegistrations = clientRegistrations;
     }
 
@@ -53,19 +59,28 @@ public class AuthController {
     @PostMapping("/login")
     public String login(@RequestParam String username,
                         @RequestParam String password,
-                        HttpSession session, Model model) {
+                        @RequestParam(defaultValue = "false") boolean rememberMe,
+                        HttpSession session, HttpServletRequest request,
+                        HttpServletResponse response, Model model) {
         try {
             User u = userService.login(username, password);
             session.setAttribute("uid", u.getId());
+            if (rememberMe) {
+                rememberMeService.remember(request, response, u.getId());
+            } else {
+                rememberMeService.clear(request, response);
+            }
             return "redirect:/posts";
         } catch (UserService.UnverifiedUserException ue) {
             // บัญชียังไม่ยืนยัน OTP -> พาไปหน้ายืนยัน
             session.setAttribute("pendingUserId", ue.getUserId());
+            session.setAttribute("pendingRememberMe", rememberMe);
             userService.resendOtp(ue.getUserId());
             return "redirect:/verify";
         } catch (Exception e) {
             model.addAttribute("error", ErrorMessage.forUser(e));
             model.addAttribute("username", username);
+            model.addAttribute("rememberMe", rememberMe);
             model.addAttribute("oauthProviders", availableProviders());
             return "login";
         }
@@ -114,13 +129,21 @@ public class AuthController {
     }
 
     @PostMapping("/verify")
-    public String verify(@RequestParam String otp, HttpSession session, Model model) {
+    public String verify(@RequestParam String otp, HttpSession session,
+                         HttpServletRequest request, HttpServletResponse response, Model model) {
         Integer pendingId = (Integer) session.getAttribute("pendingUserId");
         if (pendingId == null) return "redirect:/register";
         try {
             userService.verifyOtp(pendingId, otp);
             session.removeAttribute("pendingUserId");
+            boolean rememberMe = Boolean.TRUE.equals(session.getAttribute("pendingRememberMe"));
+            session.removeAttribute("pendingRememberMe");
             session.setAttribute("uid", pendingId);   // ยืนยันสำเร็จ -> ล็อกอินเลย
+            if (rememberMe) {
+                rememberMeService.remember(request, response, pendingId);
+            } else {
+                rememberMeService.clear(request, response);
+            }
             return "redirect:/posts";
         } catch (Exception e) {
             User u = userService.getById(pendingId);
@@ -140,8 +163,9 @@ public class AuthController {
     }
 
     @GetMapping("/logout")
-    public String logout(HttpSession session) {
+    public String logout(HttpSession session, HttpServletRequest request, HttpServletResponse response) {
         session.invalidate();
+        rememberMeService.clear(request, response);
         return "redirect:/login";
     }
 

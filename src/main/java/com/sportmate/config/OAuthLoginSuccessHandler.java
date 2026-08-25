@@ -23,9 +23,12 @@ import java.io.IOException;
 public class OAuthLoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final OAuthAccountService oAuthAccountService;
+    private final RememberMeService rememberMeService;
 
-    public OAuthLoginSuccessHandler(OAuthAccountService oAuthAccountService) {
+    public OAuthLoginSuccessHandler(OAuthAccountService oAuthAccountService,
+                                    RememberMeService rememberMeService) {
         this.oAuthAccountService = oAuthAccountService;
+        this.rememberMeService = rememberMeService;
         setDefaultTargetUrl("/posts");
         setAlwaysUseDefaultTargetUrl(true);
     }
@@ -39,6 +42,7 @@ public class OAuthLoginSuccessHandler extends SimpleUrlAuthenticationSuccessHand
 
             User user = oAuthAccountService.findOrCreate(provider, oAuth2User);
             request.getSession(true).setAttribute("uid", user.getId());
+            rememberMeService.remember(request, response, user.getId());
         }
         super.onAuthenticationSuccess(request, response, authentication);
     }
