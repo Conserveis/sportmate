@@ -4,11 +4,16 @@ import com.sportmate.entity.User;
 import com.sportmate.service.NotificationService;
 import com.sportmate.service.UserService;
 import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 @ControllerAdvice
 public class GlobalControllerAdvice {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalControllerAdvice.class);
 
     private final UserService userService;
     private final NotificationService notificationService;
@@ -39,5 +44,12 @@ public class GlobalControllerAdvice {
         } catch (Exception e) {
             return 0;
         }
+    }
+
+    @ExceptionHandler(Exception.class)
+    public String handleUnexpectedError(Exception exception, org.springframework.ui.Model model) {
+        log.error("Unhandled application error", exception);
+        model.addAttribute("errorMessage", "ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง");
+        return "error";
     }
 }

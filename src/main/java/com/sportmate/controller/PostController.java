@@ -77,7 +77,7 @@ public class PostController {
             ra.addFlashAttribute("msg", "สร้าง" + ("Tournament".equals(type) ? "ทัวร์นาเมนต์" : "โพสต์") + "สำเร็จ");
             return "redirect:/" + ("Tournament".equals(type) ? "tournaments" : "posts");
         } catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("error", ErrorMessage.forUser(e));
             model.addAttribute("type", type);
             model.addAttribute("sports", userService.allSports());
             model.addAttribute("locations", postLocations());
@@ -105,7 +105,7 @@ public class PostController {
             eventService.join(me(session), postService.getById(id));
             ra.addFlashAttribute("msg", "เข้าร่วมกิจกรรมสำเร็จ");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
         return "redirect:/posts/" + id;
     }
@@ -116,7 +116,7 @@ public class PostController {
             eventService.cancelJoin(me(session), postService.getById(id));
             ra.addFlashAttribute("msg", "ยกเลิกการเข้าร่วมสำเร็จ");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
         return "redirect:/posts/" + id;
     }
@@ -127,7 +127,7 @@ public class PostController {
         try {
             chatService.addComment(me(session), postService.getById(id), text);
         } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
         return "redirect:/posts/" + id;
     }
@@ -138,7 +138,7 @@ public class PostController {
             postService.cancel(id, me(session));
             ra.addFlashAttribute("msg", "ยกเลิกกิจกรรมสำเร็จ");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
         return "redirect:/profile";
     }

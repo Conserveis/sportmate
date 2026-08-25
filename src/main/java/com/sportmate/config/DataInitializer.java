@@ -3,6 +3,7 @@ package com.sportmate.config;
 import com.sportmate.entity.*;
 import com.sportmate.repository.*;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -19,11 +20,12 @@ public class DataInitializer implements CommandLineRunner {
     private final PostTypeRepository postTypeRepo;
     private final PostRepository postRepo;
     private final PasswordEncoder encoder;
+        private final JdbcTemplate jdbcTemplate;
 
     public DataInitializer(UserRepository userRepo, UserTypeRepository userTypeRepo,
                            SportRepository sportRepo, LocationRepository locationRepo,
                            PostTypeRepository postTypeRepo, PostRepository postRepo,
-                           PasswordEncoder encoder) {
+                           PasswordEncoder encoder, JdbcTemplate jdbcTemplate) {
         this.userRepo = userRepo;
         this.userTypeRepo = userTypeRepo;
         this.sportRepo = sportRepo;
@@ -31,10 +33,12 @@ public class DataInitializer implements CommandLineRunner {
         this.postTypeRepo = postTypeRepo;
         this.postRepo = postRepo;
         this.encoder = encoder;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public void run(String... args) {
+                ensureOAuthColumns();
         if (userRepo.count() > 0) return;   // seed เฉพาะครั้งแรก
 
         UserType normal = userTypeRepo.findByName(UserType.NORMAL).orElseThrow();
@@ -85,6 +89,22 @@ public class DataInitializer implements CommandLineRunner {
                 "บาสเกตบอลทัวร์นาเมนต์ประจำเดือน", "ทีมละ 5 คน ชิงถ้วยรางวัล",
                 LocalDateTime.now().plusDays(7), 40, 10, true);
     }
+
+        private void ensureOAuthColumns() {
+                addColumnIfMissing("AuthProvider", "VARCHAR(20) NOT NULL DEFAULT 'local'");
+                addColumnIfMissing("ProviderId", "VARCHAR(255) NULL");
+                jdbcTemplate.execute("ALTER TABLE `User` MODIFY COLUMN Password VARCHAR(255) NULL");
+        }
+
+        private void addColumnIfMissing(String columnName, String definition) {
+                Integer count = jdbcTemplate.queryForObject(
+                                "SELECT COUNT(*) FROM information_schema.columns "
+                                                + "WHERE table_schema = DATABASE() AND table_name = 'User' AND column_name = ?",
+                                Integer.class, columnName);
+                if (count != null && count == 0) {
+                        jdbcTemplate.execute("ALTER TABLE `User` ADD COLUMN " + columnName + " " + definition);
+                }
+        }
 
     private void savePost(User owner, PostType type, Sport sport, Location loc,
                           String name, String desc, LocalDateTime datePlay,

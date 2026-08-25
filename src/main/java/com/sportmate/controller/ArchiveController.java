@@ -54,7 +54,7 @@ public class ArchiveController {
             reviewService.review(me(session), eventId, score, comment);
             ra.addFlashAttribute("msg", "ส่งรีวิวสำเร็จ");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
         return "redirect:/archive";
     }

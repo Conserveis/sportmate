@@ -62,7 +62,7 @@ public class AuthController {
             userService.resendOtp(ue.getUserId());
             return "redirect:/verify";
         } catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("error", ErrorMessage.forUser(e));
             model.addAttribute("username", username);
             model.addAttribute("oauthProviders", availableProviders());
             return "login";
@@ -92,7 +92,7 @@ public class AuthController {
             session.setAttribute("pendingUserId", u.getId());
             return "redirect:/verify";
         } catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("error", ErrorMessage.forUser(e));
             model.addAttribute("username", username);
             model.addAttribute("gmail", gmail);
             return "register";
@@ -122,7 +122,7 @@ public class AuthController {
             return "redirect:/posts";
         } catch (Exception e) {
             User u = userService.getById(pendingId);
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("error", ErrorMessage.forUser(e));
             model.addAttribute("gmail", u.getGmail());
             model.addAttribute("devOtp", u.getOtpCode());
             return "verify";

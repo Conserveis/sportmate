@@ -42,7 +42,7 @@
 
             <!-- comments -->
             <div class="panel" style="margin-top:18px">
-                <h2 style="font-family:'Oswald';text-transform:uppercase;font-size:1.1rem;margin-bottom:6px">
+                <h2 style="font-family:'Noto Sans Thai',sans-serif;text-transform:uppercase;font-size:1.1rem;margin-bottom:6px">
                     ความคิดเห็น (<span th:text="${comments.size()}">0</span>)</h2>
 
                 <div th:if="${comments.isEmpty()}" style="color:var(--muted);font-size:.9rem;padding:8px 0">
@@ -101,7 +101,7 @@
             </div>
 
             <div class="panel" style="margin-top:18px">
-                <h2 style="font-family:'Oswald';text-transform:uppercase;font-size:1rem;margin-bottom:10px">รายชื่อผู้เข้าร่วม</h2>
+                <h2 style="font-family:'Noto Sans Thai',sans-serif;text-transform:uppercase;font-size:1rem;margin-bottom:10px">รายชื่อผู้เข้าร่วม</h2>
                 <div th:if="${participants.isEmpty()}" style="color:var(--muted);font-size:.88rem">ยังไม่มีผู้เข้าร่วม</div>
                 <div class="comment" th:each="e : ${participants}" style="padding:9px 0">
                     <div class="c-avatar" th:text="${#strings.substring(e.user.userName,0,1).toUpperCase()}">U</div>

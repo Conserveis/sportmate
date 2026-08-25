@@ -74,7 +74,7 @@ public class ProfileController {
         try {
             model.addAttribute("profile", publicProfileService.build(id));
         } catch (IllegalArgumentException e) {
-            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
             return "redirect:/posts";
         }
         return "user-profile";
@@ -90,7 +90,7 @@ public class ProfileController {
                     currentPassword, newPassword, confirmPassword);
             ra.addFlashAttribute("msg", "ตั้งรหัสผ่านเรียบร้อยแล้ว");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
         return "redirect:/profile";
     }
@@ -146,7 +146,7 @@ public class ProfileController {
             userService.subscribeMonthly((Integer) session.getAttribute("uid"), last4);
             ra.addFlashAttribute("msg", "ชำระเงินสำเร็จ! อัปเกรดเป็นสมาชิกแล้ว — ปลดล็อกโพสต์ไม่จำกัด + สร้างทัวร์นาเมนต์");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
         return "redirect:/profile";
     }

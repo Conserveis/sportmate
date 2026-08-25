@@ -6,8 +6,185 @@
     <title th:text="${title} + ' · SportMate'">SportMate</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('select').forEach(function (select) {
+                if (select.parentElement.classList.contains('select-wrap')) return;
+
+                var wrapper = document.createElement('div');
+                wrapper.className = 'select-wrap';
+                select.parentNode.insertBefore(wrapper, select);
+                wrapper.appendChild(select);
+
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'select-button';
+                button.setAttribute('aria-haspopup', 'listbox');
+                button.setAttribute('aria-expanded', 'false');
+                wrapper.appendChild(button);
+
+                var menu = document.createElement('div');
+                menu.className = 'select-menu';
+                menu.setAttribute('role', 'listbox');
+                wrapper.appendChild(menu);
+
+                function syncSelection() {
+                    var selected = select.options[select.selectedIndex];
+                    button.firstChild && button.removeChild(button.firstChild);
+                    button.insertBefore(document.createTextNode(selected ? selected.text : ''), button.firstChild);
+                    menu.querySelectorAll('.select-option').forEach(function (option, index) {
+                        option.classList.toggle('selected', index === select.selectedIndex);
+                        option.setAttribute('aria-selected', index === select.selectedIndex);
+                    });
+                }
+
+                Array.from(select.options).forEach(function (option, index) {
+                    var item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'select-option';
+                    item.textContent = option.text;
+                    item.setAttribute('role', 'option');
+                    item.addEventListener('click', function () {
+                        select.selectedIndex = index;
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        syncSelection();
+                        wrapper.classList.remove('open');
+                        button.setAttribute('aria-expanded', 'false');
+                    });
+                    menu.appendChild(item);
+                });
+
+                button.addEventListener('click', function () {
+                    var isOpen = wrapper.classList.toggle('open');
+                    button.setAttribute('aria-expanded', isOpen);
+                });
+                select.addEventListener('change', syncSelection);
+                syncSelection();
+            });
+
+            var monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            var weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+            document.querySelectorAll('input[type="date"]').forEach(function (input) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'date-wrap';
+                input.parentNode.insertBefore(wrapper, input);
+                wrapper.appendChild(input);
+
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'date-button';
+                wrapper.appendChild(button);
+
+                var popup = document.createElement('div');
+                popup.className = 'calendar-popup';
+                wrapper.appendChild(popup);
+                var today = new Date();
+                var view = input.value ? new Date(input.value + 'T00:00:00') : today;
+
+                function renderCalendar() {
+                    var year = Math.min(9999, Math.max(1, view.getFullYear()));
+                    var month = view.getMonth();
+                    var firstDay = new Date(year, month, 1).getDay();
+                    var daysInMonth = new Date(year, month + 1, 0).getDate();
+                    popup.innerHTML = '';
+                    var head = document.createElement('div');
+                    head.className = 'calendar-head';
+                    head.innerHTML = '<strong class="calendar-title">' + monthNames[month] + '</strong>'
+                        + '<input class="calendar-year" type="number" min="1" max="9999" value="' + year + '">';
+                    var nav = document.createElement('div');
+                    nav.className = 'calendar-nav';
+                    nav.innerHTML = '<button type="button" data-step="-1">‹</button><button type="button" data-step="1">›</button>';
+                    head.appendChild(nav);
+                    popup.appendChild(head);
+                    head.querySelector('.calendar-year').addEventListener('input', function (event) {
+                        if (event.target.value.length > 4) event.target.value = event.target.value.slice(0, 4);
+                    });
+                    var grid = document.createElement('div');
+                    grid.className = 'calendar-grid';
+                    weekDays.forEach(function (day) {
+                        var label = document.createElement('span');
+                        label.className = 'calendar-weekday';
+                        label.textContent = day;
+                        grid.appendChild(label);
+                    });
+                    for (var blank = 0; blank < firstDay; blank++) grid.appendChild(document.createElement('span'));
+                    for (var dayNumber = 1; dayNumber <= daysInMonth; dayNumber++) {
+                        var day = document.createElement('button');
+                        day.type = 'button';
+                        day.className = 'calendar-day';
+                        var iso = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(dayNumber).padStart(2, '0');
+                        day.textContent = dayNumber;
+                        day.dataset.value = iso;
+                        if (input.value === iso) day.classList.add('selected');
+                        grid.appendChild(day);
+                    }
+                    popup.appendChild(grid);
+                    var footer = document.createElement('div');
+                    footer.className = 'calendar-footer';
+                    footer.innerHTML = '<button type="button" data-action="clear">Clear</button><button type="button" data-action="today">Today</button>';
+                    popup.appendChild(footer);
+                }
+
+                function syncDate() {
+                    button.firstChild && button.removeChild(button.firstChild);
+                    button.insertBefore(document.createTextNode(input.value || 'mm/dd/yyyy'), button.firstChild);
+                }
+                button.addEventListener('click', function () {
+                    wrapper.classList.toggle('open');
+                    if (wrapper.classList.contains('open')) renderCalendar();
+                });
+                popup.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    var target = event.target.closest('button');
+                    if (!target || !popup.contains(target)) return;
+                    if (target.dataset.value) {
+                        input.value = target.dataset.value;
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        view = new Date(input.value + 'T00:00:00');
+                        syncDate();
+                        wrapper.classList.remove('open');
+                    } else if (target.dataset.step !== undefined) {
+                        view.setMonth(view.getMonth() + Number(target.dataset.step));
+                        renderCalendar();
+                    } else if (target.dataset.action === 'clear') {
+                        input.value = '';
+                        syncDate();
+                        wrapper.classList.remove('open');
+                    } else if (target.dataset.action === 'today') {
+                        input.value = today.toISOString().slice(0, 10);
+                        view = new Date(input.value + 'T00:00:00');
+                        syncDate();
+                        wrapper.classList.remove('open');
+                    }
+                });
+                popup.addEventListener('change', function (event) {
+                    if (event.target.classList.contains('calendar-year')) {
+                        var year = Math.min(9999, Math.max(1, Number(event.target.value) || today.getFullYear()));
+                        view.setFullYear(year);
+                        renderCalendar();
+                    }
+                });
+                input.max = '9999-12-31';
+                syncDate();
+            });
+
+            document.addEventListener('click', function (event) {
+                document.querySelectorAll('.select-wrap.open').forEach(function (wrapper) {
+                    if (!wrapper.contains(event.target)) {
+                        wrapper.classList.remove('open');
+                        wrapper.querySelector('.select-button').setAttribute('aria-expanded', 'false');
+                    }
+                });
+                document.querySelectorAll('.date-wrap.open').forEach(function (wrapper) {
+                    if (!wrapper.contains(event.target)) wrapper.classList.remove('open');
+                });
+            });
+        });
+    </script>
 </head>
 
 <body>

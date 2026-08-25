@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('เกิดข้อผิดพลาด')}"></head>
+<body>
+<div class="auth-shell">
+    <div class="auth-card">
+        <div class="auth-brand"><span class="dot"></span>SPORTMATE</div>
+        <div class="auth-sub">ขออภัย ระบบไม่สามารถดำเนินการต่อได้</div>
+        <div class="flash err" th:text="${errorMessage}">ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง</div>
+        <a class="btn btn-primary" style="width:100%; text-align:center" th:href="@{/posts}">กลับไปหน้าหลัก</a>
+    </div>
+</div>
+</body>
+</html>

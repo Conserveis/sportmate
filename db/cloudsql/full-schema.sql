@@ -73,7 +73,9 @@ CREATE TABLE PostType (
 CREATE TABLE `User` (
     UserID            INT AUTO_INCREMENT PRIMARY KEY,
     UserName          VARCHAR(50)  NOT NULL UNIQUE,
-    Password          VARCHAR(255) NOT NULL,          -- เก็บเป็น hash เท่านั้น
+    Password          VARCHAR(255),                   -- NULL สำหรับบัญชี OAuth
+    AuthProvider      VARCHAR(20)   NOT NULL DEFAULT 'local',
+    ProviderId        VARCHAR(255),
     PhoneNumber       VARCHAR(20),
     Gmail             VARCHAR(255) NOT NULL UNIQUE,
     UserTypeID        INT NOT NULL,
@@ -90,7 +92,8 @@ CREATE TABLE `User` (
 
     CreatedAt         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (UserTypeID) REFERENCES UserType(UserTypeID)
+    FOREIGN KEY (UserTypeID) REFERENCES UserType(UserTypeID),
+    UNIQUE KEY uq_provider (AuthProvider, ProviderId)
 ) ENGINE=InnoDB;
 
 -- ============================================================================
