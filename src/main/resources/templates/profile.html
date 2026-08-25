@@ -111,7 +111,8 @@
         <div th:if="${stats.reviews.isEmpty()}" style="color:var(--muted);font-size:.9rem">
             ยังไม่มีผู้เข้าร่วมรีวิวกิจกรรมของคุณ
         </div>
-        <div class="panel review-item" th:each="r : ${stats.reviews}">
+        <div class="panel review-item" th:each="r, it : ${stats.reviews}"
+            th:classappend="${it.index >= 5} ? ' review-hidden' : ''">
             <div class="review-top">
                 <div class="c-avatar" th:text="${#strings.substring(r.event.user.userName,0,1).toUpperCase()}">U</div>
                 <div style="flex:1">
@@ -128,6 +129,22 @@
             <div class="c-text" th:if="${r.comment != null and !r.comment.isBlank()}"
                  th:text="${r.comment}" style="margin-top:8px">ความคิดเห็น</div>
         </div>
+        <div th:if="${stats.reviews.size() > 5}" style="text-align:center;margin-top:4px">
+            <button type="button" class="btn btn-sm" id="reviewToggleBtn"
+                    th:attr="data-more=${stats.reviews.size() - 5}"
+                    onclick="toggleReviews(this)">
+                แสดงเพิ่มเติม (<span th:text="${stats.reviews.size() - 5}">0</span>)
+            </button>
+        </div>
+        <script>
+            function toggleReviews(btn) {
+                var hidden = document.querySelectorAll('.review-item.review-hidden');
+                var open = btn.dataset.open === '1';
+                hidden.forEach(function (el) { el.style.display = open ? '' : 'block'; });
+                btn.dataset.open = open ? '0' : '1';
+                btn.textContent = open ? 'แสดงเพิ่มเติม (' + btn.dataset.more + ')' : 'ย่อรีวิว';
+            }
+        </script>
     </div>
 
     <!-- interested sports -->
