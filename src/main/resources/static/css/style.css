@@ -155,6 +155,23 @@ h1,h2,h3,.display{
 .auth-alt{text-align:center;margin-top:16px;font-size:.88rem;color:var(--muted)}
 .auth-alt a{color:var(--pitch);font-weight:600;text-decoration:none}
 
+/* ===== oauth login buttons ===== */
+.oauth-divider{display:flex;align-items:center;gap:12px;margin:22px 0 16px;
+  color:var(--muted);font-size:.82rem}
+.oauth-divider::before,.oauth-divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.oauth-list{display:flex;flex-direction:column;gap:12px}
+.btn-oauth{display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:13px 16px;border-radius:999px;font-weight:600;font-size:.95rem;
+  text-decoration:none;border:1px solid var(--line);transition:filter .15s,transform .05s}
+.btn-oauth:hover{filter:brightness(.97)}
+.btn-oauth:active{transform:scale(.99)}
+.btn-oauth .oauth-mark{display:inline-block;width:22px;height:22px;border-radius:50%;
+  flex:none;object-fit:cover}
+
+.btn-oauth-google{background:#fff;color:#3c4043;border-color:#dadce0}
+
+.btn-oauth-thaid{background:#0B1F5C;color:#fff;border-color:#0B1F5C}
+
 /* ===== profile ===== */
 .profile-head{display:flex;gap:18px;align-items:center;background:var(--ink);color:#fff;
   border-radius:var(--radius);padding:22px 24px;border-bottom:4px solid var(--flare)}

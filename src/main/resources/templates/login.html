@@ -11,6 +11,9 @@
         <div class="flash err" th:if="${param.containsKey('error')}">
             เข้าสู่ระบบผ่านผู้ให้บริการภายนอกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง
         </div>
+        <div style="background:yellow;padding:8px;font-size:12px;word-break:break-all">
+            DEBUG error=[<span th:text="${error} ?: 'NULL'"></span>] keys=[<span th:text="${param.keySet()}"></span>]
+        </div>
 
         <form method="post" th:action="@{/login}">
             <div class="field">
@@ -24,21 +27,19 @@
             <button class="btn btn-primary" style="width:100%">เข้าสู่ระบบ</button>
         </form>
 
-<div class="oauth-divider" th:if="${oauthProviders != null and not #lists.isEmpty(oauthProviders)}"><span>หรือเข้าสู่ระบบด้วย</span></div>
+<div class="oauth-divider" th:if="${oauthProviders != null and not #lists.isEmpty(oauthProviders)}"><span>หรือ</span></div>
 
         <div class="oauth-list" th:if="${oauthProviders != null}">
             <a th:each="p : ${oauthProviders}"
                 class="btn-oauth" th:classappend="'btn-oauth-' + ${p.id}"
                 th:href="@{${p.url}}">
-                <span class="oauth-mark" th:text="${p.mark}">G</span>
+                <img th:if="${p.id == 'google'}" class="oauth-mark" th:src="@{/images/google-logo.webp}" alt="Google">
+                <img th:if="${p.id == 'thaid'}" class="oauth-mark" th:src="@{/images/thaid-logo.png}" alt="ThaiD">
                 <span th:text="${p.label}">ผู้ให้บริการ</span>
             </a>
         </div>
 
         <div class="auth-alt">ยังไม่มีบัญชี? <a th:href="@{/register}">สมัครสมาชิก</a></div>
-        <div class="locked-note" style="margin-top:18px">
-            ทดลองใช้: <b>demo</b> / <b>member</b> — รหัสผ่าน <b>password123</b>
-        </div>
     </div>
 </div>
 </body>

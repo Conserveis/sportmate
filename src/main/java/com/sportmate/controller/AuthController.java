@@ -1,11 +1,15 @@
 package com.sportmate.controller;
 
-import com.sportmate.entity.User;
-import com.sportmate.service.UserService;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.sportmate.entity.User;
+import com.sportmate.service.UserService;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class AuthController {
@@ -26,13 +30,13 @@ public class AuthController {
         for (Object o : iterable) {
             if (o instanceof org.springframework.security.oauth2.client.registration.ClientRegistration reg) {
                 if ("google".equals(reg.getRegistrationId())) {
-                    result.add(java.util.Map.of("id", "google", "label", "Google", "mark", "G", "url", "/oauth2/authorization/google"));
+                    result.add(java.util.Map.of("id", "google", "label", "เข้าสู่ระบบด้วย Google", "mark", "G", "url", "/oauth2/authorization/google"));
                 }
             }
         }
     }
     // ThaiD เป็น mockup — แสดงปุ่มเสมอ ไม่ต้องรอ credential จริง
-    result.add(java.util.Map.of("id", "thaid", "label", "ThaiD (จำลอง)", "mark", "ID", "url", "/thaid-mock/login"));
+    result.add(java.util.Map.of("id", "thaid", "label", "เข้าสู่ระบบด้วย ThaiD", "mark", "ID", "url", "/thaid-mock/login"));
     return result;
 }
 
@@ -40,7 +44,7 @@ public class AuthController {
     public String loginPage(Model model) {
         model.addAttribute("oauthProviders", availableProviders());
         return "login";
-    }
+}
 
     @PostMapping("/login")
     public String login(@RequestParam String username,
@@ -93,7 +97,7 @@ public class AuthController {
         }
     }
 
-    // ---- ยืนยัน OTP (UC-1 / FR02) ----
+    // ---- ยืนยัน OTP ----
     @GetMapping("/verify")
     public String verifyPage(HttpSession session, Model model) {
         Integer pendingId = (Integer) session.getAttribute("pendingUserId");

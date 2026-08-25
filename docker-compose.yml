@@ -38,6 +38,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sportmate?useSSL=false&serverTimezone=Asia/Bangkok&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: rootpass
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     ports:
       - "8080:8080"
     depends_on:
