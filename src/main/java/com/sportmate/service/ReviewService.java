@@ -35,6 +35,8 @@ public class ReviewService {
                 .orElseThrow(() -> new IllegalArgumentException("ไม่พบข้อมูลการเข้าร่วม"));
         if (!e.getUser().getId().equals(reviewer.getId()))
             throw new IllegalStateException("ไม่มีสิทธิ์รีวิวการเข้าร่วมนี้");
+        if (!"approved".equals(e.getStatus()))
+            throw new IllegalStateException("เฉพาะผู้ที่ได้รับการอนุมัติเข้าร่วมเท่านั้นที่สามารถรีวิวได้");
         if (!e.getPost().getDatePlay().isBefore(LocalDateTime.now()))
             throw new IllegalStateException("กิจกรรมยังไม่สิ้นสุด ไม่สามารถรีวิวได้");
         if (score < 1 || score > 5)
