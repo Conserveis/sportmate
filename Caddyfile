@@ -21,6 +21,3 @@
 		format console
 	}
 }
-sportmate.duckdns.org  {
-    reverse_proxy sportmate-app:8080
-}
