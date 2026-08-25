@@ -109,15 +109,42 @@ public class UserService {
     User u = userRepo.findByUserName(userNameOrEmail)
             .or(() -> userRepo.findByGmail(userNameOrEmail))
             .orElseThrow(() -> new IllegalArgumentException("ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง"));
-    // บัญชีที่สมัครผ่าน Google/ThaiD ไม่มีรหัสผ่านในระบบเรา
-    if (u.getPassword() == null || u.isExternalAccount())
+    // บล็อกเฉพาะบัญชีที่ "ยังไม่มีรหัสผ่าน" เท่านั้น
+    // บัญชีที่เคยตั้งรหัสผ่านไว้แล้วผูกกับ Google/ThaiD ทีหลัง ยังเข้าด้วยรหัสผ่านได้ตามปกติ
+    if (u.getPassword() == null || u.getPassword().isBlank())
         throw new IllegalArgumentException(
-                "บัญชีนี้เข้าสู่ระบบผ่าน " + providerLabel(u.getAuthProvider()) + " กรุณากดปุ่มด้านล่างแทน");
+                "บัญชีนี้สมัครผ่าน " + providerLabel(u.getAuthProvider())
+                + " จึงยังไม่มีรหัสผ่าน กรุณากดปุ่มด้านล่างเพื่อเข้าสู่ระบบ "
+                + "แล้วไปตั้งรหัสผ่านได้ที่หน้าโปรไฟล์");
     if (!encoder.matches(rawPassword, u.getPassword()))
         throw new IllegalArgumentException("ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง");
     if (!u.isEmailVerified())
         throw new UnverifiedUserException(u.getId());
     return u;
+}
+
+/** ตั้ง/เปลี่ยนรหัสผ่าน — ใช้ได้ทั้งบัญชี local และบัญชีที่มาจาก Google/ThaiD */
+@Transactional
+public void setPassword(Integer userId, String currentPassword, String newPassword, String confirmPassword) {
+    User u = getById(userId);
+    boolean hasPassword = u.getPassword() != null && !u.getPassword().isBlank();
+
+    // บัญชีที่มีรหัสผ่านอยู่แล้ว ต้องยืนยันรหัสเดิมก่อน
+    if (hasPassword && !encoder.matches(currentPassword, u.getPassword()))
+        throw new IllegalArgumentException("รหัสผ่านเดิมไม่ถูกต้อง");
+    if (newPassword == null || newPassword.length() < 8)
+        throw new IllegalArgumentException("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร");
+    if (!newPassword.equals(confirmPassword))
+        throw new IllegalArgumentException("รหัสผ่านและการยืนยันไม่ตรงกัน");
+
+    u.setPassword(encoder.encode(newPassword));
+    userRepo.save(u);
+}
+
+/** บัญชีนี้ตั้งรหัสผ่านไว้หรือยัง (ให้หน้าโปรไฟล์เลือกแสดงข้อความ) */
+public boolean hasPassword(Integer userId) {
+    String p = getById(userId).getPassword();
+    return p != null && !p.isBlank();
 }
 
 private String providerLabel(String provider) {

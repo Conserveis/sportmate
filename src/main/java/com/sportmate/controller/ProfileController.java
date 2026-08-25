@@ -1,16 +1,20 @@
 package com.sportmate.controller;
 
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import com.sportmate.entity.User;
 import com.sportmate.service.EventService;
 import com.sportmate.service.PostService;
 import com.sportmate.service.UserService;
-import jakarta.servlet.http.HttpSession;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class ProfileController {
@@ -38,7 +42,23 @@ public class ProfileController {
         model.addAttribute("history", eventService.joinedByUser(me));        // ประวัติการเข้าร่วม
         model.addAttribute("organized", postService.ownedBy(me));           // ประวัติการจัด
         model.addAttribute("allSports", userService.allSports());
+        model.addAttribute("hasPassword", userService.hasPassword(me.getId()));
         return "profile";
+    }
+
+    @PostMapping("/profile/password")
+    public String changePassword(@RequestParam(required = false) String currentPassword,
+                                 @RequestParam String newPassword,
+                                 @RequestParam String confirmPassword,
+                                 HttpSession session, RedirectAttributes ra) {
+        try {
+            userService.setPassword((Integer) session.getAttribute("uid"),
+                    currentPassword, newPassword, confirmPassword);
+            ra.addFlashAttribute("msg", "ตั้งรหัสผ่านเรียบร้อยแล้ว");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/profile";
     }
 
     @PostMapping("/profile/sports")

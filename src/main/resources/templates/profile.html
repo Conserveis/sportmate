@@ -62,6 +62,29 @@
         </form>
     </div>
 
+    <!-- set / change password -->
+    <div class="section">
+        <h2 th:text="${hasPassword} ? 'เปลี่ยนรหัสผ่าน' : 'ตั้งรหัสผ่าน'">รหัสผ่าน</h2>
+        <div th:unless="${hasPassword}" style="color:var(--muted);font-size:.9rem;margin-bottom:10px">
+            บัญชีนี้เข้าสู่ระบบผ่านผู้ให้บริการภายนอก ตั้งรหัสผ่านไว้เพื่อให้เข้าสู่ระบบด้วยชื่อผู้ใช้หรืออีเมลได้ด้วย
+        </div>
+        <form method="post" th:action="@{/profile/password}" style="max-width:420px">
+            <div class="field" th:if="${hasPassword}">
+                <label>รหัสผ่านเดิม</label>
+                <input type="password" name="currentPassword" required>
+            </div>
+            <div class="field">
+                <label>รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</label>
+                <input type="password" name="newPassword" minlength="8" required>
+            </div>
+            <div class="field">
+                <label>ยืนยันรหัสผ่านใหม่</label>
+                <input type="password" name="confirmPassword" minlength="8" required>
+            </div>
+            <button class="btn btn-ghost btn-sm">บันทึกรหัสผ่าน</button>
+        </form>
+    </div>
+
     <!-- upcoming -->
     <div class="section">
         <h2>กิจกรรมที่กำลังจะมาถึง</h2>

@@ -8,11 +8,8 @@
         <div class="auth-sub">หาเพื่อนเล่นกีฬา จัดทีม นัดหมาย จบในที่เดียว</div>
 
         <div class="flash err" th:if="${error}" th:text="${error}"></div>
-        <div class="flash err" th:if="${param.containsKey('error')}">
+        <div class="flash err" th:if="${oauthError}">
             เข้าสู่ระบบผ่านผู้ให้บริการภายนอกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง
-        </div>
-        <div style="background:yellow;padding:8px;font-size:12px;word-break:break-all">
-            DEBUG error=[<span th:text="${error} ?: 'NULL'"></span>] keys=[<span th:text="${param.keySet()}"></span>]
         </div>
 
         <form method="post" th:action="@{/login}">

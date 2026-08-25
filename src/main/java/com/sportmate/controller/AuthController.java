@@ -41,8 +41,10 @@ public class AuthController {
 }
 
     @GetMapping("/login")
-    public String loginPage(Model model) {
+    public String loginPage(@RequestParam(value = "error", required = false) String error,
+                            Model model) {
         model.addAttribute("oauthProviders", availableProviders());
+        model.addAttribute("oauthError", error != null);
         return "login";
 }
 

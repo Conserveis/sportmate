@@ -50,7 +50,10 @@ public class OAuthAccountService {
         var byEmail = userRepo.findByGmail(email);
         if (byEmail.isPresent()) {
             User existing = byEmail.get();
-            existing.setAuthProvider(provider);
+            boolean hasPassword = existing.getPassword() != null && !existing.getPassword().isBlank();
+            // ถ้าบัญชีเดิมตั้งรหัสผ่านไว้แล้ว ให้คงสถานะ local ไว้ (ยังเข้าด้วยรหัสผ่านได้)
+            // แค่ผูก providerId เพิ่มเพื่อให้ครั้งต่อไปเข้าผ่านปุ่มได้ด้วย
+            if (!hasPassword) existing.setAuthProvider(provider);
             existing.setProviderId(providerId);
             existing.setEmailVerified(true);   // ผู้ให้บริการยืนยันอีเมลให้แล้ว
             return userRepo.save(existing);
