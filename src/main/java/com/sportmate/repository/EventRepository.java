@@ -17,7 +17,7 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
 
     Optional<Event> findByUserAndPost(User user, Post post);
 
-    // จำนวนผู้เข้าร่วมที่ได้รับการอนุมัติแล้ว (approved) ของโพสต์หนึ่ง
+    // จำนวนผู้เข้าร่วมที่ได้รับการอนุมัติแล้วของโพสต์หนึ่ง
     @Query("""
         SELECT COUNT(e) FROM Event e
         WHERE e.post = :post AND e.status = 'approved'
@@ -30,7 +30,7 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     """)
     long countApprovedJoins(@Param("post") Post post);
 
-    // รายชื่อผู้เข้าร่วมของโพสต์ (เรียง pending ขึ้นก่อนเพื่อให้ผู้จัดอนุมัติได้ง่าย)
+    // รายชื่อผู้เข้าร่วมของโพสต์
     @Query("""
         SELECT e FROM Event e
         WHERE e.post = :post AND e.status IN ('pending','approved')
@@ -38,7 +38,7 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     """)
     List<Event> findParticipants(@Param("post") Post post);
 
-    // ประวัติการเข้าร่วมทั้งหมดของผู้ใช้ (ทั้ง pending และ approved)
+    // ประวัติการเข้าร่วมทั้งหมดของผู้ใช้
     @Query("""
         SELECT e FROM Event e
         WHERE e.user = :user AND e.status IN ('pending','approved')
@@ -54,7 +54,7 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     """)
     List<Event> findApprovedJoinedByUser(@Param("user") User user);
 
-    // หน้า "จัดเก็บกิจกรรม": โพสต์ที่ user เข้าร่วมแล้ว (approved) และ "หมดเวลาเข้าร่วม" (DatePlay < now)
+    // หน้า "จัดเก็บกิจกรรม"
     @Query("""
         SELECT e FROM Event e
         WHERE e.user = :user
@@ -74,7 +74,7 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     """)
     List<Event> findUpcomingByUser(@Param("user") User user, @Param("now") LocalDateTime now);
 
-    // ===== โปรไฟล์สาธารณะ: สถิติฝั่งผู้เข้าร่วม (นับเฉพาะ approved) =====
+    //โปรไฟล์สาธารณะ
 
     // จำนวนครั้งการเข้าร่วมทั้งหมดที่ได้รับการอนุมัติ
     @Query("""
@@ -92,10 +92,6 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     """)
     long countAttendedByUser(@Param("user") User user, @Param("now") LocalDateTime now);
 
-    /**
-     * นับการเข้าร่วมแยกตามชนิดกีฬา เรียงจากมากไปน้อย (เฉพาะ approved)
-     * แถวแรกของผลลัพธ์ = "กีฬาที่เข้าร่วมมากที่สุด"
-     */
     @Query("""
         SELECT new com.sportmate.dto.SportCount(e.post.sport.name, COUNT(e))
         FROM Event e

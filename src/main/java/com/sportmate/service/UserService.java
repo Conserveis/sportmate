@@ -39,11 +39,6 @@ public class UserService {
         this.encoder = encoder;
     }
 
-    /**
-     * สมัครสมาชิก: สร้างบัญชีแบบยังไม่ยืนยัน แล้วออก OTP ให้ยืนยัน
-     * หมายเหตุ: ไม่มี mail server จริง จึงไม่ได้ "ส่ง" OTP ทางอีเมล แต่จะแสดง OTP
-     * บนหน้าจอยืนยัน (โหมดจำลอง) และพิมพ์ลง log ให้กรอกต่อได้
-     */
     @Transactional
     public User register(String userName, String gmail, String rawPassword) {
         if (userRepo.existsByUserName(userName))
@@ -139,11 +134,6 @@ public void setPassword(Integer userId, String currentPassword, String newPasswo
     userRepo.save(u);
 }
 
-/**
- * ตรวจสอบความถูกต้องของรหัสผ่าน:
- * - ความยาวอย่างน้อย 8 ตัวอักษร
- * - มีทั้งตัวพิมพ์ใหญ่ (A-Z) และตัวพิมพ์เล็ก (a-z)
- */
 public static void validatePassword(String password) {
     if (password == null || password.length() < 8) {
         throw new IllegalArgumentException("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร");
@@ -169,7 +159,6 @@ private String providerLabel(String provider) {
     };
 } //Authen
 
-    /** ใช้บอก controller ว่าบัญชีนี้ยังไม่ยืนยัน OTP เพื่อพาไปหน้ายืนยัน */
     public static class UnverifiedUserException extends RuntimeException {
         private final Integer userId;
         public UnverifiedUserException(Integer userId) { this.userId = userId; }
@@ -234,11 +223,6 @@ private String providerLabel(String provider) {
         userRepo.save(u);
     }
 
-    /**
-     * สมัคร Paid Member รายเดือน
-     * หมายเหตุ: ไม่ได้ต่อ Payment Gateway จริง — ตรวจรูปแบบบัตรแบบจำลองแล้วถือว่าชำระสำเร็จ
-     * -> เปลี่ยน UserType เป็น 'Member', ตั้งวันหมดอายุ +1 เดือน, ออกใบเสร็จ (เก็บเลขบัตร 4 ตัวท้าย)
-     */
     @Transactional
     public void subscribeMonthly(Integer userId, String cardLast4) {
         User u = getById(userId);

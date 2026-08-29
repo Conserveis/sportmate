@@ -1,14 +1,15 @@
 package com.sportmate.service;
 
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.sportmate.entity.Event;
 import com.sportmate.entity.Review;
 import com.sportmate.entity.User;
 import com.sportmate.repository.EventRepository;
 import com.sportmate.repository.ReviewRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Service
 public class ReviewService {
@@ -25,10 +26,6 @@ public class ReviewService {
         return reviewRepo.findByEvent_Id(eventId).isPresent();
     }
 
-    /**
-     * รีวิวผู้จัด (UC-6): ต้องเป็นผู้เข้าร่วมกิจกรรมนั้น, กิจกรรมจบแล้ว และยังไม่เคยรีวิว
-     * เมื่อบันทึก Review ทริกเกอร์ในฐานข้อมูลจะอัปเดต AvgScore ของเจ้าของให้อัตโนมัติ
-     */
     @Transactional
     public void review(User reviewer, Integer eventId, int score, String comment) {
         Event e = eventRepo.findById(eventId)

@@ -1,15 +1,16 @@
 package com.sportmate.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.sportmate.entity.Event;
 import com.sportmate.entity.Post;
 import com.sportmate.entity.User;
 import com.sportmate.repository.EventRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class EventService {
@@ -40,7 +41,7 @@ public class EventService {
                 .orElse(false);
     }
 
-    /** เข้าร่วมกิจกรรม (UC-7) */
+    /** เข้าร่วมกิจกรรม */
     @Transactional
     public void join(User user, Post post) {
         if ("cancelled".equals(post.getStatus()))
@@ -76,7 +77,7 @@ public class EventService {
         eventRepo.save(e);
 
         if (post.isPublic()) {
-            // โพสต์สาธารณะ: นับเป็นเข้าร่วมทันที และแจ้งเตือนเจ้าของ (UC-4 FR16/FR17)
+            // โพสต์สาธารณะ: นับเป็นเข้าร่วมทันที และแจ้งเตือนเจ้าของ
             long joined = eventRepo.countApprovedJoins(post);
             long need = Math.max(0, post.getMinPlayer() - joined);
             String msg = user.getUserName() + " เข้าร่วม \"" + post.getPostName() + "\" (ตอนนี้ " + joined + "/" + post.getMaxPlayer()
@@ -148,7 +149,7 @@ public class EventService {
         notificationService.push(e.getUser(), msg, "/posts/" + post.getId(), "join_rejected");
     }
 
-    /** ยกเลิกการเข้าร่วม / ยกเลิกคำขอ (UC-7 9a) */
+    /** ยกเลิกการเข้าร่วม / ยกเลิกคำขอ */
     @Transactional
     public void cancelJoin(User user, Post post) {
         Event e = eventRepo.findByUserAndPost(user, post)
@@ -159,7 +160,7 @@ public class EventService {
         eventRepo.save(e);
 
         if (wasApproved) {
-            // แจ้งเตือนเจ้าของว่ามีคนยกเลิก + จำนวนล่าสุด (UC-4 FR20)
+            // แจ้งเตือนเจ้าของว่ามีคนยกเลิก + จำนวนล่าสุด
             long joined = eventRepo.countApprovedJoins(post);
             long need = Math.max(0, post.getMinPlayer() - joined);
             String msg = user.getUserName() + " ยกเลิกการเข้าร่วม \"" + post.getPostName() + "\" (ตอนนี้ "

@@ -12,8 +12,7 @@ import com.sportmate.entity.User;
 
 public interface PostRepository extends JpaRepository<Post, Integer> {
 
-    // หน้า Post: เฉพาะ PostType='Post' ที่ยังไม่หมดเวลา (DatePlay >= now)
-    // และเผยแพร่แล้ว (PublishAt null = ทันที, หรือ PublishAt <= now) และไม่ถูกยกเลิก
+    // หน้า Post
     @Query("""
         SELECT p FROM Post p
         WHERE p.postType.name = 'Post'
@@ -24,7 +23,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     """)
     List<Post> findActivePosts(@Param("now") LocalDateTime now);
 
-    // หน้า Tournament: PostType='Tournament' ทั้งหมด (ไม่หายแม้หมดเวลา)
+    // หน้า Tournament: PostType='Tournament'
     @Query("""
         SELECT p FROM Post p
         WHERE p.postType.name = 'Tournament'

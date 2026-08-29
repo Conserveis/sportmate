@@ -1,7 +1,3 @@
--- ============================================================================
---  ตาราง Notification : เก็บการแจ้งเตือนของผู้ใช้ (UC-4)
---  รันต่อจาก 01_schema.sql / 02_seed_location.sql โดย docker-entrypoint-initdb.d
--- ============================================================================
 USE sportmate;
 
 CREATE TABLE IF NOT EXISTS Notification (

@@ -1,9 +1,6 @@
 package com.sportmate.util;
 
-/**
- * แปลง Exception ให้เป็นข้อความที่ผู้ใช้อ่านเข้าใจ
- * ไม่เปิดเผยรายละเอียดภายในระบบ (stack trace, SQL, class name)
- */
+
 public final class ErrorMessage {
 
     private static final String FALLBACK =

@@ -26,9 +26,8 @@ public class ChatService {
         return chatRepo.findByPostOrderByTimeAsc(post);
     }
 
-    /**
-     * คอมเมนต์ในโพสต์ (UC-... FR28): ทำได้เฉพาะผู้ที่เข้าร่วมแล้ว หรือเจ้าของโพสต์
-     */
+
+     //คอมเมนต์ในโพสต์
     @Transactional
     public Chat addComment(User user, Post post, String text) {
         boolean owner = post.getOwner().getId().equals(user.getId());

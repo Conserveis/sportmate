@@ -1,24 +1,19 @@
 package com.sportmate.config;
 
-import com.sportmate.entity.User;
-import com.sportmate.service.OAuthAccountService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import com.sportmate.entity.User;
+import com.sportmate.service.OAuthAccountService;
 
-/**
- * ทำงานทันทีหลังผู้ใช้ยืนยันตัวตนกับ Google/Apple/ThaiD สำเร็จ
- *
- * หน้าที่สำคัญ: แปลงผู้ใช้ภายนอกให้เป็นบัญชีในระบบ แล้ว "ใส่ uid ลง session"
- * ให้เหมือนกับตอนล็อกอินด้วยรหัสผ่านทุกประการ — ทำให้ AuthInterceptor และ
- * controller เดิมทั้งหมดทำงานต่อได้โดยไม่ต้องแก้อะไรเลย
- */
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 @Component
 public class OAuthLoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 

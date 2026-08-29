@@ -77,7 +77,7 @@ public class OAuthAccountService {
     }
 
     /**
-    * สำหรับ ThaiD แบบ mock: ไม่มี OAuth2User จริง (ไม่ได้ต่อ DOPA จริง)
+    * สำหรับ ThaiD แบบ mock: ไม่มี OAuth2User จริง
     * รับข้อมูลจากฟอร์มจำลองมาสร้าง/หาบัญชีตรงๆ ด้วย logic เดียวกับ findOrCreate
     */
     @Transactional

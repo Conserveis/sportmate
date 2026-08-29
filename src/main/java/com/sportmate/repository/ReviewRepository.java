@@ -14,11 +14,6 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
 
     Optional<Review> findByEvent_Id(Integer eventId);
 
-    /**
-     * รีวิวทั้งหมดที่ "ผู้จัดคนนี้" ได้รับ
-     * เส้นทางความสัมพันธ์: Review -> Event -> Post -> owner
-     * (คนรีวิวคือ r.event.user ซึ่งเป็นผู้เข้าร่วมกิจกรรมนั้น)
-     */
     @Query("""
         SELECT r FROM Review r
         WHERE r.event.post.owner = :owner
@@ -26,7 +21,7 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
     """)
     List<Review> findReviewsForOwner(@Param("owner") User owner);
 
-    /** จำนวนรีวิวที่ผู้จัดคนนี้ได้รับ */
+    //จำนวนรีวิวที่ผู้จัดคนนี้ได้รับ 
     @Query("SELECT COUNT(r) FROM Review r WHERE r.event.post.owner = :owner")
     long countReviewsForOwner(@Param("owner") User owner);
 }

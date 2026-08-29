@@ -1,9 +1,5 @@
 package com.sportmate.dto;
 
-/**
- * ผลลัพธ์การนับจำนวนครั้งที่ผู้ใช้เข้าร่วมกิจกรรม แยกตามชนิดกีฬา
- * ใช้กับ constructor expression ใน JPQL (EventRepository.countJoinsBySport)
- */
 public class SportCount {
 
     private final String sportName;

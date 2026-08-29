@@ -103,7 +103,21 @@ h1,h2,h3,.display{
 .nav a.link:hover{color:#fff;background:rgba(255,255,255,.1)}
 .nav a.link.active{color:var(--ink);background:var(--volt);font-weight:700}
 .nav .spacer{flex:1}
-.nav .who{font-size:.82rem;color:rgba(255,255,255,.55);margin-right:6px}
+/* ปุ่มโปรไฟล์ + ชื่อผู้ใช้ รวมเป็นปุ่มเดียว */
+.nav a.link.who-link{
+  display:inline-flex;align-items:center;gap:8px;
+  text-transform:none;letter-spacing:0;font-size:.85rem;
+  margin-right:6px;
+}
+.who-avatar{
+  width:24px;height:24px;flex:0 0 24px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--volt);color:var(--ink);
+  font-size:.72rem;font-weight:800;line-height:1;
+  transition:background var(--duration) var(--ease),color var(--duration) var(--ease);
+}
+.nav a.link.who-link.active .who-avatar{background:var(--ink);color:var(--volt)}
+.nav a.link.who-link.active .badge-member{background:var(--ink);color:var(--volt)}
 .badge-member{
   background:var(--volt);color:var(--ink);font-weight:700;
   font-size:.65rem;padding:3px 8px;border-radius:20px;text-transform:uppercase;
@@ -669,9 +683,10 @@ h1,h2,h3,.display{
     font-size:1rem;padding:14px 16px;border-radius:var(--radius-sm);
     width:100%;
   }
-  .nav .who{
-    padding:14px 16px;font-size:.9rem;border-top:1px solid rgba(255,255,255,.1);
-    margin-top:8px;width:100%;
+    .nav a.link.who-link{
+    padding:14px 16px;font-size:.95rem;
+    border-top:1px solid rgba(255,255,255,.1);
+    margin-top:8px;width:100%;border-radius:var(--radius-sm);
   }
 
   /* layout */

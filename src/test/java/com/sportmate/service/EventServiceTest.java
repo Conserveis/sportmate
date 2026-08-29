@@ -1,23 +1,30 @@
 package com.sportmate.service;
 
-import com.sportmate.entity.Event;
-import com.sportmate.entity.Post;
-import com.sportmate.entity.User;
-import com.sportmate.repository.EventRepository;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import com.sportmate.entity.Event;
+import com.sportmate.entity.Post;
+import com.sportmate.entity.User;
+import com.sportmate.repository.EventRepository;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
@@ -85,7 +92,7 @@ class EventServiceTest {
         verify(eventRepo).save(eventCaptor.capture());
         assertEquals("pending", eventCaptor.getValue().getStatus());
 
-        // แจ้งเตือนเจ้าของว่าขอเข้าร่วม (join_request)
+        // แจ้งเตือนเจ้าของว่าขอเข้าร่วม 
         verify(notificationService).push(eq(owner), contains("ขอเข้าร่วม"), contains("/posts/102"), eq("join_request"));
     }
 

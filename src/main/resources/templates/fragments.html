@@ -232,19 +232,24 @@
         <button class="hamburger" aria-label="เมนู" onclick="document.querySelector('.nav-links').classList.toggle('open');this.classList.toggle('open')">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
-        <div class="nav-links">
+                <div class="nav-links">
             <a class="link" th:classappend="${active=='posts'}?'active'" th:href="@{/posts}">Post</a>
             <a class="link" th:classappend="${active=='tournaments'}?'active'" th:href="@{/tournaments}">Tournament</a>
             <a class="link" th:classappend="${active=='archive'}?'active'" th:href="@{/archive}">จัดเก็บกิจกรรม</a>
-            <a class="link" th:classappend="${active=='profile'}?'active'" th:href="@{/profile}">โปรไฟล์</a>
             <span class="spacer"></span>
             <a class="bell" th:classappend="${active=='notifications'}?'active'" th:href="@{/notifications}" title="การแจ้งเตือน">
                 🔔<span class="bell-badge" th:if="${unreadCount != null and unreadCount > 0}" th:text="${unreadCount}">0</span>
             </a>
-            <span class="who" th:if="${currentUser}">
-                <span th:text="${currentUser.userName}">user</span>
+            <a class="link who-link" th:if="${currentUser}"
+               th:classappend="${active=='profile'}?'active'"
+               th:href="@{/profile}" title="ไปที่โปรไฟล์ของฉัน">
+                <span class="who-avatar"
+                      th:text="${#strings.isEmpty(currentUser.userName)} ? '?' : ${#strings.toUpperCase(#strings.substring(currentUser.userName,0,1))}">S</span>
+                <span class="who-name" th:text="${currentUser.userName}">user</span>
                 <span class="badge-member" th:if="${currentUser.member}">Member</span>
-            </span>
+            </a>
+            <a class="link" th:if="${currentUser == null}"
+               th:classappend="${active=='profile'}?'active'" th:href="@{/profile}">โปรไฟล์</a>
             <a class="link" th:href="@{/logout}">ออกจากระบบ</a>
         </div>
     </div>
