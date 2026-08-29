@@ -435,6 +435,22 @@ h1,h2,h3,.display{
 .c-body .c-name{font-weight:600;font-size:.88rem}
 .c-body .c-time{font-size:.74rem;color:var(--muted);margin-left:6px;font-weight:400}
 .c-body .c-text{font-size:.9rem;margin-top:3px;line-height:1.55}
+/* ปุ่มแก้ไข / ลบ คอมเมนต์ */
+.c-actions{display:flex;gap:12px;margin-top:6px;align-items:center}
+.c-act{
+  background:none;border:0;padding:0;cursor:pointer;
+  font:inherit;font-size:.76rem;font-weight:600;color:var(--muted);
+  transition:color var(--duration) var(--ease);
+}
+.c-act:hover{color:var(--ink);text-decoration:underline}
+.c-act-danger:hover{color:#B4340F}
+.c-edit-form{display:none;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.c-edit-form input{
+  flex:1;min-width:180px;padding:8px 12px;font:inherit;font-size:.9rem;
+  border:1.5px solid var(--line);border-radius:8px;
+  transition:border-color var(--duration) var(--ease);
+}
+.c-edit-form input:focus{outline:none;border-color:var(--volt)}
 .comment-form{display:flex;gap:8px;margin-top:18px}
 .comment-form input{
   flex:1;padding:11px 14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font:inherit;

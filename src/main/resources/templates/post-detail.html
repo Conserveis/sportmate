@@ -49,13 +49,35 @@
                     ยังไม่มีความคิดเห็น
                 </div>
 
-                <div class="comment" th:each="c : ${comments}">
+                <div class="comment" th:each="c : ${comments}" th:id="'comment-'+${c.id}">
                     <div class="c-avatar" th:text="${#strings.substring(c.user.userName,0,1).toUpperCase()}">U</div>
                     <div class="c-body">
                         <a class="c-name user-link" th:href="@{'/users/' + ${c.user.id}}"
                            th:text="${c.user.userName}">user</a>
                         <span class="c-time" th:text="${#temporals.format(c.time,'dd/MM HH:mm')}">time</span>
                         <div class="c-text" th:text="${c.text}">ข้อความ</div>
+
+                        <div class="c-actions"
+                             th:if="${currentUser != null and (c.user.id == currentUser.id or isOwner)}">
+                            <button type="button" class="c-act"
+                                    th:if="${c.user.id == currentUser.id}"
+                                    th:attr="data-target='edit-'+${c.id}"
+                                    onclick="toggleCommentEdit(this)">แก้ไข</button>
+                            <form method="post" style="margin:0;display:inline"
+                                  th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/delete'}"
+                                  onsubmit="return confirm('ต้องการลบความคิดเห็นนี้ใช่หรือไม่?')">
+                                <button type="submit" class="c-act c-act-danger">ลบ</button>
+                            </form>
+                        </div>
+
+                        <form class="c-edit-form" th:id="'edit-'+${c.id}" method="post"
+                              th:if="${currentUser != null and c.user.id == currentUser.id}"
+                              th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/edit'}">
+                            <input name="text" th:value="${c.text}" required maxlength="1000">
+                            <button type="submit" class="btn btn-primary btn-sm">บันทึก</button>
+                            <button type="button" class="btn btn-ghost btn-sm"
+                                    onclick="cancelCommentEdit(this)">ยกเลิก</button>
+                        </form>
                     </div>
                 </div>
 
@@ -140,5 +162,24 @@
         </div>
     </div>
 </div>
+<script>
+    function toggleCommentEdit(btn) {
+        var body = btn.closest('.c-body');
+        var form = document.getElementById(btn.getAttribute('data-target'));
+        body.querySelector('.c-text').style.display = 'none';
+        body.querySelector('.c-actions').style.display = 'none';
+        form.style.display = 'flex';
+        form.querySelector('input[name=text]').focus();
+    }
+    function cancelCommentEdit(btn) {
+        var body = btn.closest('.c-body');
+        var form = btn.closest('.c-edit-form');
+        form.style.display = 'none';
+        form.querySelector('input[name=text]').value =
+            body.querySelector('.c-text').textContent.trim();
+        body.querySelector('.c-text').style.display = '';
+        body.querySelector('.c-actions').style.display = '';
+    }
+</script>
 </body>
 </html>

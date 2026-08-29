@@ -158,6 +158,30 @@ public class PostController {
         }
         return "redirect:/posts/" + id;
     }
+        @PostMapping("/posts/{id}/comment/{commentId}/edit")
+    public String editComment(@PathVariable Integer id, @PathVariable Integer commentId,
+                              @RequestParam String text,
+                              HttpSession session, RedirectAttributes ra) {
+        try {
+            chatService.editComment(me(session), commentId, id, text);
+            ra.addFlashAttribute("msg", "แก้ไขความคิดเห็นแล้ว");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
+        }
+        return "redirect:/posts/" + id;
+    }
+
+    @PostMapping("/posts/{id}/comment/{commentId}/delete")
+    public String deleteComment(@PathVariable Integer id, @PathVariable Integer commentId,
+                                HttpSession session, RedirectAttributes ra) {
+        try {
+            chatService.deleteComment(me(session), commentId, id);
+            ra.addFlashAttribute("msg", "ลบความคิดเห็นแล้ว");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
+        }
+        return "redirect:/posts/" + id;
+    }
 
     @PostMapping("/posts/{id}/cancel")
     public String cancel(@PathVariable Integer id, HttpSession session, RedirectAttributes ra) {
