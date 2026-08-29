@@ -1,5 +1,7 @@
 package com.sportmate.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -67,14 +69,23 @@ public class PublicProfileService {
         long upcoming = Math.max(0, joins - attended);
         List<SportCount> sportCounts = eventRepo.countJoinsBySport(u);
         List<Event> recentJoined = limit(eventRepo.findApprovedJoinedByUser(u));
+        long participantReviewCount = reviewRepo.countReviewsForParticipant(u);
+        BigDecimal participantAvg = toScore(reviewRepo.avgScoreForParticipant(u));
+        List<Review> participantReviews = limit(reviewRepo.findReviewsForParticipant(u));
 
-        return new PublicProfile(u,
+            return new PublicProfile(u,
                 organized, finished, cancelled, reviewCount, u.getAvgScore(),
                 organizedPosts, reviews,
-                joins, attended, upcoming, sportCounts, recentJoined);
+                joins, attended, upcoming, sportCounts, recentJoined,
+                participantReviewCount, participantAvg, participantReviews);
     }
 
     private <T> List<T> limit(List<T> list) {
         return list.size() <= LIST_LIMIT ? list : List.copyOf(list.subList(0, LIST_LIMIT));
+    }
+        /** AVG() คืน null เมื่อยังไม่มีรีวิว — แปลงเป็น 0.00 กันหน้าเว็บพัง */
+    private BigDecimal toScore(Double avg) {
+        return avg == null ? BigDecimal.ZERO
+                : BigDecimal.valueOf(avg).setScale(2, RoundingMode.HALF_UP);
     }
 }

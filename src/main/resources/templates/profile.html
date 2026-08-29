@@ -91,6 +91,12 @@
                     <span><b th:text="${stats.attendedCount}">0</b> ครั้ง</span>
                     <span class="k">กำลังจะถึง</span>
                     <span><b th:text="${stats.upcomingCount}">0</b> กิจกรรม</span>
+                    <span class="k">คะแนนเฉลี่ย</span>
+                    <span th:if="${stats.ratedParticipant}">
+                        <b th:text="${#numbers.formatDecimal(stats.participantAvgScore,1,2)}">0.00</b> / 5.00
+                        (<span th:text="${stats.participantReviewCount}">0</span> รีวิว)
+                    </span>
+                    <span th:unless="${stats.ratedParticipant}" style="color:var(--muted)">ยังไม่มีผู้จัดรีวิว</span>
                 </div>
                 <div th:if="${stats.sportCounts.isEmpty()}" style="color:var(--muted);font-size:.88rem;margin-top:10px">
                     ยังไม่เคยเข้าร่วมกิจกรรม
@@ -151,6 +157,27 @@
         </script>
     </div>
 
+        <!-- รีวิวที่ได้รับในฐานะผู้เข้าร่วม -->
+    <div class="section" th:if="${stats.ratedParticipant}">
+        <h2>รีวิวจากผู้จัด (<span th:text="${stats.participantReviewCount}">0</span>)</h2>
+        <div class="panel review-item" th:each="r : ${stats.participantReviews}">
+            <div class="review-top">
+                <div class="c-avatar" th:text="${#strings.substring(r.event.post.owner.userName,0,1).toUpperCase()}">U</div>
+                <div style="flex:1">
+                    <a class="c-name user-link" th:href="@{'/users/' + ${r.event.post.owner.id}}"
+                       th:text="${r.event.post.owner.userName}">ผู้จัด</a>
+                    <span class="stars" style="margin-left:8px"
+                          th:text="${'★★★★★'.substring(0, r.reviewScore) + '☆☆☆☆☆'.substring(0, 5 - r.reviewScore)}">★★★★☆</span>
+                    <div class="l-meta">
+                        <span th:text="${r.event.post.postName}">ชื่อกิจกรรม</span> ·
+                        <span th:text="${#temporals.format(r.reviewDate,'dd/MM/yyyy')}">วันที่</span>
+                    </div>
+                </div>
+            </div>
+            <div class="c-text" th:if="${r.comment != null and !r.comment.isBlank()}"
+                 th:text="${r.comment}" style="margin-top:8px">ความคิดเห็น</div>
+        </div>
+    </div>
 
     <!-- upcoming -->
     <div class="section">

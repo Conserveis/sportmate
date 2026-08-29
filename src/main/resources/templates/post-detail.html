@@ -137,7 +137,7 @@
             <div class="panel" style="margin-top:18px">
                 <h2 style="font-family:'Noto Sans Thai',sans-serif;text-transform:uppercase;font-size:1rem;margin-bottom:10px">รายชื่อผู้เข้าร่วม</h2>
                 <div th:if="${participants.isEmpty()}" style="color:var(--muted);font-size:.88rem">ยังไม่มีผู้เข้าร่วม</div>
-                <div class="comment" th:each="e : ${participants}" style="padding:10px 0;align-items:center">
+                <div class="comment" th:each="e : ${participants}" style="padding:10px 0;align-items:center;flex-wrap:wrap">
                     <div class="c-avatar" th:text="${#strings.substring(e.user.userName,0,1).toUpperCase()}">U</div>
                     <div class="c-body" style="flex:1">
                         <div>
@@ -155,6 +155,27 @@
                         <form method="post" th:action="@{'/posts/' + ${post.id} + '/reject/' + ${e.user.id}}" style="margin:0"
                               onsubmit="return confirm('ต้องการปฏิเสธคำขอนี้ใช่หรือไม่?')">
                             <button class="btn btn-ghost btn-sm" style="padding:4px 10px;font-size:.78rem;color:#B4340F;border-color:#F6C6B6">ปฏิเสธ</button>
+                        </form>
+                    </div>
+                                        <!-- ผู้จัดรีวิวผู้เข้าร่วม (หลังกิจกรรมจบแล้วเท่านั้น) -->
+                    <div th:if="${isOwner and eventFinished and e.status=='approved'}"
+                         style="flex-basis:100%;margin-top:8px">
+                        <div th:if="${participantReviewed[e.id]}" class="pill green">✓ รีวิวแล้ว</div>
+                        <form th:unless="${participantReviewed[e.id]}" method="post"
+                              th:action="@{'/posts/' + ${post.id} + '/review-participant'}"
+                              style="border-top:1px solid var(--line-light);padding-top:10px">
+                            <input type="hidden" name="eventId" th:value="${e.id}">
+                            <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px">ให้คะแนนผู้เข้าร่วมคนนี้</div>
+                            <div class="rate">
+                                <input type="radio" th:id="'pr5_'+${e.id}" name="score" value="5"><label th:for="'pr5_'+${e.id}">★</label>
+                                <input type="radio" th:id="'pr4_'+${e.id}" name="score" value="4"><label th:for="'pr4_'+${e.id}">★</label>
+                                <input type="radio" th:id="'pr3_'+${e.id}" name="score" value="3"><label th:for="'pr3_'+${e.id}">★</label>
+                                <input type="radio" th:id="'pr2_'+${e.id}" name="score" value="2"><label th:for="'pr2_'+${e.id}">★</label>
+                                <input type="radio" th:id="'pr1_'+${e.id}" name="score" value="1"><label th:for="'pr1_'+${e.id}">★</label>
+                            </div>
+                            <input name="comment" placeholder="ความคิดเห็น (ไม่บังคับ)" maxlength="500"
+                                   style="width:100%;padding:7px 10px;border:1.5px solid var(--line);border-radius:8px;margin:6px 0;font:inherit">
+                            <button class="btn btn-primary btn-sm">ส่งรีวิว</button>
                         </form>
                     </div>
                 </div>

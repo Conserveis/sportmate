@@ -16,17 +16,20 @@ import java.time.LocalDateTime;
 @Controller
 public class PostController {
 
-    private final PostService postService;
+        private final PostService postService;
     private final EventService eventService;
     private final ChatService chatService;
     private final UserService userService;
+    private final ReviewService reviewService;
 
     public PostController(PostService postService, EventService eventService,
-                          ChatService chatService, UserService userService) {
+                          ChatService chatService, UserService userService,
+                          ReviewService reviewService) {
         this.postService = postService;
         this.eventService = eventService;
         this.chatService = chatService;
         this.userService = userService;
+        this.reviewService = reviewService;
     }
 
     private User me(HttpSession session) {
@@ -86,18 +89,27 @@ public class PostController {
         }
     }
 
-    // ---- รายละเอียดโพสต์ + คอมเมนต์ ----
+        // ---- รายละเอียดโพสต์ + คอมเมนต์ ----
     @GetMapping("/posts/{id}")
     public String detail(@PathVariable Integer id, HttpSession session, Model model) {
         Post p = postService.getById(id);
         User me = me(session);
+
+        var participants = eventService.participants(p);
+        java.util.Map<Integer, Boolean> participantReviewed = new java.util.HashMap<>();
+        for (var ev : participants) {
+            participantReviewed.put(ev.getId(), reviewService.hasReviewedParticipant(ev.getId()));
+        }
+
         model.addAttribute("post", p);
-        model.addAttribute("participants", eventService.participants(p));
+        model.addAttribute("participants", participants);
         model.addAttribute("joinCount", eventService.countJoins(p));
         model.addAttribute("hasJoined", eventService.hasJoined(me, p));
         model.addAttribute("isPending", eventService.isPending(me, p));
         model.addAttribute("isOwner", p.getOwner().getId().equals(me.getId()));
         model.addAttribute("comments", chatService.comments(p));
+        model.addAttribute("participantReviewed", participantReviewed);
+        model.addAttribute("eventFinished", p.getDatePlay().isBefore(LocalDateTime.now()));
         return "post-detail";
     }
 
@@ -177,6 +189,21 @@ public class PostController {
         try {
             chatService.deleteComment(me(session), commentId, id);
             ra.addFlashAttribute("msg", "ลบความคิดเห็นแล้ว");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
+        }
+        return "redirect:/posts/" + id;
+    }
+
+        @PostMapping("/posts/{id}/review-participant")
+    public String reviewParticipant(@PathVariable Integer id,
+                                    @RequestParam Integer eventId,
+                                    @RequestParam int score,
+                                    @RequestParam(required = false) String comment,
+                                    HttpSession session, RedirectAttributes ra) {
+        try {
+            reviewService.reviewParticipant(me(session), id, eventId, score, comment);
+            ra.addFlashAttribute("msg", "รีวิวผู้เข้าร่วมสำเร็จ");
         } catch (Exception e) {
             ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }

@@ -27,13 +27,18 @@ public class PublicProfile {
     private final long upcomingCount;           // ที่กำลังจะถึง
     private final List<SportCount> sportCounts; // สัดส่วนกีฬาที่เข้าร่วม (มาก -> น้อย)
     private final List<Event> recentJoined;     // กิจกรรมที่เข้าร่วมล่าสุด
+    private final long participantReviewCount;      // รีวิวที่ได้รับในฐานะผู้เข้าร่วม
+    private final BigDecimal participantAvgScore;   // คะแนนเฉลี่ยในฐานะผู้เข้าร่วม
+    private final List<Review> participantReviews;  // รีวิวจากผู้จัด (ใหม่ก่อน)
 
     public PublicProfile(User user,
                          long organizedCount, long organizedFinishedCount, long organizedCancelledCount,
                          long reviewCount, BigDecimal avgScore,
                          List<Post> organizedPosts, List<Review> reviews,
                          long joinCount, long attendedCount, long upcomingCount,
-                         List<SportCount> sportCounts, List<Event> recentJoined) {
+                         List<SportCount> sportCounts, List<Event> recentJoined,
+                         long participantReviewCount, BigDecimal participantAvgScore,
+                         List<Review> participantReviews) {
         this.user = user;
         this.organizedCount = organizedCount;
         this.organizedFinishedCount = organizedFinishedCount;
@@ -47,6 +52,9 @@ public class PublicProfile {
         this.upcomingCount = upcomingCount;
         this.sportCounts = sportCounts;
         this.recentJoined = recentJoined;
+        this.participantReviewCount = participantReviewCount;
+        this.participantAvgScore = participantAvgScore;
+        this.participantReviews = participantReviews;
     }
 
     /** กีฬาที่เข้าร่วมมากที่สุด — null ถ้ายังไม่เคยเข้าร่วมเลย */
@@ -70,4 +78,10 @@ public class PublicProfile {
     public long getUpcomingCount() { return upcomingCount; }
     public List<SportCount> getSportCounts() { return sportCounts; }
     public List<Event> getRecentJoined() { return recentJoined; }
+        public long getParticipantReviewCount() { return participantReviewCount; }
+    public BigDecimal getParticipantAvgScore() { return participantAvgScore; }
+    public List<Review> getParticipantReviews() { return participantReviews; }
+
+    /** เคยถูกรีวิวในฐานะผู้เข้าร่วมหรือยัง */
+    public boolean isRatedParticipant() { return participantReviewCount > 0; }
 }
