@@ -119,17 +119,28 @@
                     <!-- ส่งคำขอแล้ว รอเจ้าของโพสต์อนุมัติ -->
                     <div th:if="${isPending and !post.expired}">
                         <div class="pill orange" style="display:block;margin-bottom:8px;padding:8px">⏳ รอการอนุมัติจากผู้จัด</div>
-                        <form method="post" th:action="@{'/posts/' + ${post.id} + '/cancel-join'}">
+                        <form th:if="${!post.cancelLocked}" method="post"
+                              th:action="@{'/posts/' + ${post.id} + '/cancel-join'}"
+                              onsubmit="return confirm('ยกเลิกคำขอเข้าร่วม?')">
                             <button class="btn btn-ghost" style="width:100%">ยกเลิกคำขอ</button>
                         </form>
+                        <div th:if="${post.cancelLocked}" class="locked-note" style="margin-top:0">
+                            เลยกำหนดยกเลิกแล้ว (ต้องยกเลิกก่อนวันจัดกิจกรรมอย่างน้อย 1 วัน)
+                        </div>
                     </div>
 
                     <!-- ได้รับการอนุมัติ / เข้าร่วมแล้ว -->
-                    <form th:if="${hasJoined and !post.expired}" method="post"
-                          th:action="@{'/posts/' + ${post.id} + '/cancel-join'}">
+                    <div th:if="${hasJoined and !post.expired}">
                         <div class="pill green" style="display:block;margin-bottom:8px;padding:8px">✓ คุณเข้าร่วมแล้ว</div>
-                        <button class="btn btn-ghost" style="width:100%">ยกเลิกการเข้าร่วม</button>
-                    </form>
+                        <form th:if="${!post.cancelLocked}" method="post"
+                              th:action="@{'/posts/' + ${post.id} + '/cancel-join'}"
+                              onsubmit="return confirm('ยกเลิกการเข้าร่วมกิจกรรมนี้?')">
+                            <button class="btn btn-ghost" style="width:100%">ยกเลิกการเข้าร่วม</button>
+                        </form>
+                        <div th:if="${post.cancelLocked}" class="locked-note" style="margin-top:0"
+                             th:text="|ไม่สามารถยกเลิกการเข้าร่วมได้แล้ว (ยกเลิกได้ถึง ${#temporals.format(post.cancelDeadline,'dd/MM/yyyy HH:mm')})|">
+                        </div>
+                    </div>
                     <div th:if="${post.expired}" class="locked-note" style="margin-top:0">กิจกรรมนี้หมดเวลารับสมัครแล้ว</div>
                 </div>
             </div>

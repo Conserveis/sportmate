@@ -229,11 +229,13 @@
                 </div>
             </a>
             <span class="pill orange" th:if="${p.status=='cancelled'}">ยกเลิกแล้ว</span>
-            <form th:if="${p.status!='cancelled' and !p.expired}" method="post"
+            <form th:if="${p.status!='cancelled' and !p.expired and !p.cancelLocked}" method="post"
                   th:action="@{'/posts/' + ${p.id} + '/cancel'}"
                   onsubmit="return confirm('ยกเลิกกิจกรรมนี้?')">
                 <button class="btn btn-ghost btn-sm">ยกเลิก</button>
             </form>
+            <span class="pill" th:if="${p.status!='cancelled' and !p.expired and p.cancelLocked}"
+                  style="font-size:.75rem">ยกเลิกไม่ได้ (ใกล้วันจัดแล้ว)</span>
         </div>
     </div>
 </div>

@@ -1,7 +1,17 @@
 package com.sportmate.entity;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "Post")
@@ -58,6 +68,19 @@ public class Post {
     public boolean isExpired() {
         return datePlay != null && datePlay.isBefore(LocalDateTime.now());
     }
+
+    /** เส้นตายในการยกเลิก = ก่อนวันจัดกิจกรรม 1 วัน */
+    @Transient
+    public LocalDateTime getCancelDeadline() {
+        return datePlay == null ? null : datePlay.minusDays(1);
+    }
+
+    /** true = เลยเส้นตายแล้ว ยกเลิกไม่ได้ (เหลือน้อยกว่า 1 วันก่อนวันจัด) */
+    @Transient
+    public boolean isCancelLocked() {
+        return datePlay != null && LocalDateTime.now().isAfter(datePlay.minusDays(1));
+    }
+
 
     @Transient
     public boolean isTournament() {

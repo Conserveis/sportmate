@@ -183,6 +183,13 @@ public class PostService {
         if (!p.getOwner().getId().equals(requester.getId())) {
             throw new IllegalStateException("เฉพาะเจ้าของโพสต์เท่านั้นที่ยกเลิกได้");
         }
+        if ("cancelled".equals(p.getStatus())) {
+            throw new IllegalStateException("กิจกรรมนี้ถูกยกเลิกไปแล้ว");
+        }
+        if (p.isCancelLocked()) {
+            throw new IllegalStateException(
+                    "ไม่สามารถยกเลิกโพสต์ได้ ต้องยกเลิกก่อนวันจัดกิจกรรมอย่างน้อย 1 วัน");
+        }
         p.setStatus("cancelled");
         postRepo.save(p);
 

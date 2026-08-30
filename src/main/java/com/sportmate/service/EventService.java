@@ -154,6 +154,14 @@ public class EventService {
     public void cancelJoin(User user, Post post) {
         Event e = eventRepo.findByUserAndPost(user, post)
                 .orElseThrow(() -> new IllegalStateException("คุณยังไม่ได้เข้าร่วมกิจกรรมนี้"));
+        if ("cancelled".equals(e.getStatus())) {
+            throw new IllegalStateException("คุณยกเลิกกิจกรรมนี้ไปแล้ว");
+        }
+        // เจ้าของโพสต์ยกเลิกกิจกรรมเอง -> ผู้เข้าร่วมถอนตัวได้เสมอ ไม่ติดเส้นตาย
+        if (!"cancelled".equals(post.getStatus()) && post.isCancelLocked()) {
+            throw new IllegalStateException(
+                    "ไม่สามารถยกเลิกการเข้าร่วมได้ ต้องยกเลิกก่อนวันจัดกิจกรรมอย่างน้อย 1 วัน");
+        }
         boolean wasApproved = "approved".equals(e.getStatus());
         e.setStatus("cancelled");
         e.setCancelDate(LocalDateTime.now());
