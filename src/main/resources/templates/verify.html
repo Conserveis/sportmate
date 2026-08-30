@@ -8,10 +8,12 @@
         <div class="auth-sub">ยืนยันตัวตนด้วยรหัส OTP</div>
 
         <div class="flash err" th:if="${error}" th:text="${error}"></div>
+        <div class="flash" th:if="${msg}" th:text="${msg}"></div>
 
         <p style="font-size:.9rem;color:var(--muted)">
             เราได้ส่งรหัส OTP 6 หลักไปที่
-            <b th:text="${gmail}" style="color:var(--ink)">email</b>
+            <b th:text="${gmail}" style="color:var(--ink)">email</b><br>
+            บัญชีจะถูกสร้างเมื่อยืนยันรหัสสำเร็จเท่านั้น
         </p>
 
         <!-- โหมดจำลอง: แสดง OTP บนหน้าจอ (ระบบจริงจะไม่แสดง ต้องเปิดอีเมลดู) -->
@@ -25,16 +27,48 @@
                 <label>กรอกรหัส OTP</label>
                 <input name="otp" maxlength="6" pattern="\d{6}" required autofocus
                        placeholder="______" style="letter-spacing:.3em;text-align:center;font-size:1.2rem">
+                <div class="hint" th:text="|กรอกผิดได้อีก ${attemptsLeft} ครั้ง|">-</div>
             </div>
             <button class="btn btn-primary" style="width:100%">ยืนยัน</button>
         </form>
 
         <form method="post" th:action="@{/verify/resend}" style="margin-top:12px">
-            <button class="btn btn-ghost btn-sm" style="width:100%">ขอรหัส OTP ใหม่</button>
+            <button id="resendBtn" class="btn btn-ghost btn-sm" style="width:100%"
+                    th:disabled="${resendLeft <= 0}">ขอรหัส OTP ใหม่</button>
+            <div class="hint" style="text-align:center" th:text="|ขอรหัสใหม่ได้อีก ${resendLeft} ครั้ง|">-</div>
         </form>
 
         <div class="auth-alt"><a th:href="@{/login}">กลับไปหน้าเข้าสู่ระบบ</a></div>
     </div>
 </div>
+
+<script th:inline="javascript">
+    // นับถอยหลังคูลดาวน์ฝั่งหน้าจอ (ของจริงบังคับที่ server อยู่แล้ว)
+    var left = /*[[${cooldown}]]*/ 0;
+    var quotaLeft = /*[[${resendLeft}]]*/ 0;
+    var btn = document.getElementById('resendBtn');
+    var LABEL = 'ขอรหัส OTP ใหม่';
+
+    function tick() {
+        if (left > 0) {
+            btn.disabled = true;
+            btn.textContent = 'ขอรหัสใหม่ได้ในอีก ' + left + ' วินาที';
+            left--;
+            setTimeout(tick, 1000);
+        } else {
+            // หมดคูลดาวน์แล้ว -> ปลดปุ่ม
+            btn.disabled = false;
+            btn.textContent = LABEL;
+        }
+    }
+
+    if (quotaLeft <= 0) {
+        // ขอครบโควตาแล้ว = ปิดถาวร ไม่ต้องนับถอยหลัง
+        btn.disabled = true;
+        btn.textContent = 'ขอรหัสใหม่ครบจำนวนแล้ว';
+    } else {
+        tick();
+    }
+</script>
 </body>
 </html>

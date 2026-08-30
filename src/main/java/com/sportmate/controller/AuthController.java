@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.sportmate.entity.User;
+import com.sportmate.service.OtpSession;
 import com.sportmate.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
@@ -73,9 +74,8 @@ public class AuthController {
             return "redirect:/posts";
         } catch (UserService.UnverifiedUserException ue) {
             // บัญชียังไม่ยืนยัน OTP -> พาไปหน้ายืนยัน
-            session.setAttribute("pendingUserId", ue.getUserId());
+            session.setAttribute("otpSession", userService.startVerifyExisting(ue.getUserId()));
             session.setAttribute("pendingRememberMe", rememberMe);
-            userService.resendOtp(ue.getUserId());
             return "redirect:/verify";
         } catch (Exception e) {
             model.addAttribute("error", ErrorMessage.forUser(e));
@@ -91,7 +91,7 @@ public class AuthController {
         return "register";
     }
 
-    @PostMapping("/register")
+        @PostMapping("/register")
     public String register(@RequestParam String username,
                            @RequestParam String gmail,
                            @RequestParam String password,
@@ -104,9 +104,9 @@ public class AuthController {
             return "register";
         }
         try {
-            User u = userService.register(username, gmail, password);
-            // ยังไม่ล็อกอิน — ต้องยืนยัน OTP ก่อน
-            session.setAttribute("pendingUserId", u.getId());
+            // ยังไม่สร้างบัญชี — เก็บไว้ใน session รอ OTP ผ่านก่อน
+            session.setAttribute("otpSession",
+                    userService.startRegistration(username, gmail, password));
             return "redirect:/verify";
         } catch (Exception e) {
             model.addAttribute("error", ErrorMessage.forUser(e));
@@ -117,48 +117,62 @@ public class AuthController {
     }
 
     // ---- ยืนยัน OTP ----
+    private void fillOtpModel(Model model, OtpSession s) {
+        model.addAttribute("gmail", s.getGmail());
+        model.addAttribute("devOtp", s.getOtpCode());          // โหมดจำลองเท่านั้น
+        model.addAttribute("attemptsLeft", s.attemptsLeft());
+        model.addAttribute("resendLeft", s.resendLeft());
+        model.addAttribute("cooldown", s.cooldownSecondsLeft());
+    }
+
     @GetMapping("/verify")
     public String verifyPage(HttpSession session, Model model) {
-        Integer pendingId = (Integer) session.getAttribute("pendingUserId");
-        if (pendingId == null) return "redirect:/register";
-        User u = userService.getById(pendingId);
-        model.addAttribute("gmail", u.getGmail());
-        // โหมดจำลอง: แสดง OTP บนหน้าจอ (ระบบจริงจะส่งทางอีเมล ไม่แสดงตรงนี้)
-        model.addAttribute("devOtp", u.getOtpCode());
+        OtpSession s = (OtpSession) session.getAttribute("otpSession");
+        if (s == null) return "redirect:/register";
+        fillOtpModel(model, s);
         return "verify";
     }
 
     @PostMapping("/verify")
     public String verify(@RequestParam String otp, HttpSession session,
                          HttpServletRequest request, HttpServletResponse response, Model model) {
-        Integer pendingId = (Integer) session.getAttribute("pendingUserId");
-        if (pendingId == null) return "redirect:/register";
+        OtpSession s = (OtpSession) session.getAttribute("otpSession");
+        if (s == null) return "redirect:/register";
         try {
-            userService.verifyOtp(pendingId, otp);
-            session.removeAttribute("pendingUserId");
+            userService.checkOtp(s, otp);   // ผิด/หมดอายุ/เกินจำนวนครั้ง -> throw
+
+            Integer uid = s.isNewAccount()
+                    ? userService.completeRegistration(s).getId()   // สร้างบัญชีตรงนี้เท่านั้น
+                    : s.getUserId();
+            if (!s.isNewAccount()) userService.markVerified(uid);
+
+            session.removeAttribute("otpSession");
             boolean rememberMe = Boolean.TRUE.equals(session.getAttribute("pendingRememberMe"));
             session.removeAttribute("pendingRememberMe");
-            session.setAttribute("uid", pendingId);   // ยืนยันสำเร็จ -> ล็อกอินเลย
+            session.setAttribute("uid", uid);   // ยืนยันสำเร็จ -> ล็อกอินเลย
             if (rememberMe) {
-                rememberMeService.remember(request, response, pendingId);
+                rememberMeService.remember(request, response, uid);
             } else {
                 rememberMeService.clear(request, response);
             }
             return "redirect:/posts";
         } catch (Exception e) {
-            User u = userService.getById(pendingId);
             model.addAttribute("error", ErrorMessage.forUser(e));
-            model.addAttribute("gmail", u.getGmail());
-            model.addAttribute("devOtp", u.getOtpCode());
+            fillOtpModel(model, s);
             return "verify";
         }
     }
 
     @PostMapping("/verify/resend")
-    public String resend(HttpSession session) {
-        Integer pendingId = (Integer) session.getAttribute("pendingUserId");
-        if (pendingId == null) return "redirect:/register";
-        userService.resendOtp(pendingId);
+    public String resend(HttpSession session, org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
+        OtpSession s = (OtpSession) session.getAttribute("otpSession");
+        if (s == null) return "redirect:/register";
+        try {
+            userService.resend(s);
+            ra.addFlashAttribute("msg", "ส่งรหัส OTP ใหม่แล้ว");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
+        }
         return "redirect:/verify";
     }
 

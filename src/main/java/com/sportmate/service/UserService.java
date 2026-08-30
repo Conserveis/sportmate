@@ -45,63 +45,104 @@ public class UserService {
         this.encoder = encoder;
     }
 
-    @Transactional
-    public User register(String userName, String gmail, String rawPassword) {
+        /**
+     * ขั้นที่ 1 ของการสมัคร — ตรวจข้อมูล + ออก OTP
+     * ยังไม่เขียนอะไรลง DB ทั้งสิ้น บัญชีจะถูกสร้างก็ต่อเมื่อ OTP ผ่านเท่านั้น
+     */
+    public OtpSession startRegistration(String userName, String gmail, String rawPassword) {
         if (userRepo.existsByUserName(userName))
             throw new IllegalArgumentException("ชื่อผู้ใช้งานนี้มีผู้ใช้แล้ว");
         if (userRepo.existsByGmail(gmail))
             throw new IllegalArgumentException("อีเมลนี้มีผู้ใช้แล้ว");
         validatePassword(rawPassword);
 
+        OtpSession s = new OtpSession();
+        s.setUserName(userName);
+        s.setGmail(gmail);
+        s.setPasswordHash(encoder.encode(rawPassword));
+        s.issueNewCode();
+        return s;
+    }
+
+    /** สร้าง OtpSession สำหรับบัญชีเก่าที่ยังไม่ยืนยันอีเมล */
+    public OtpSession startVerifyExisting(Integer userId) {
+        User u = getById(userId);
+        OtpSession s = new OtpSession();
+        s.setUserId(u.getId());
+        s.setGmail(u.getGmail());
+        s.issueNewCode();
+        return s;
+    }
+
+    /**
+     * ตรวจ OTP — หมดอายุ / กรอกผิดเกินกำหนด จะโยน exception
+     * เรียกใช้ก่อน completeRegistration() หรือ markVerified() เสมอ
+     */
+    public void checkOtp(OtpSession s, String code) {
+        if (s.getOtpCode() == null)
+            throw new IllegalStateException("ไม่พบรหัส OTP กรุณากดขอรหัสใหม่");
+        if (s.isExpired())
+            throw new IllegalStateException("รหัส OTP หมดอายุแล้ว กรุณากดขอรหัสใหม่");
+        if (s.attemptsLeft() <= 0)
+            throw new IllegalStateException(
+                    "กรอกรหัส OTP ผิดครบ " + OtpSession.MAX_ATTEMPTS + " ครั้ง "
+                    + "รหัสนี้ใช้ไม่ได้แล้ว กรุณากดขอรหัสใหม่");
+
+        if (!s.getOtpCode().equals(code == null ? null : code.trim())) {
+            s.countAttempt();
+            if (s.attemptsLeft() <= 0)
+                throw new IllegalArgumentException(
+                        "รหัส OTP ไม่ถูกต้อง และกรอกผิดครบ " + OtpSession.MAX_ATTEMPTS
+                        + " ครั้งแล้ว กรุณากดขอรหัสใหม่");
+            throw new IllegalArgumentException(
+                    "รหัส OTP ไม่ถูกต้อง (เหลืออีก " + s.attemptsLeft() + " ครั้ง)");
+        }
+    }
+
+    /** ขั้นที่ 2 — OTP ผ่านแล้ว ค่อยสร้างบัญชีจริงลง DB */
+    @Transactional
+    public User completeRegistration(OtpSession s) {
+        // เช็คซ้ำอีกรอบ เผื่อมีคนสมัครชื่อ/อีเมลเดียวกันตัดหน้าระหว่างรอกรอก OTP
+        if (userRepo.existsByUserName(s.getUserName()))
+            throw new IllegalArgumentException("ชื่อผู้ใช้งานนี้มีผู้ใช้แล้ว กรุณาสมัครใหม่");
+        if (userRepo.existsByGmail(s.getGmail()))
+            throw new IllegalArgumentException("อีเมลนี้มีผู้ใช้แล้ว กรุณาสมัครใหม่");
+
         UserType normal = userTypeRepo.findByName(UserType.NORMAL)
                 .orElseThrow(() -> new IllegalStateException("ไม่พบ UserType 'Normal'"));
 
         User u = new User();
-        u.setUserName(userName);
-        u.setGmail(gmail);
-        u.setPassword(encoder.encode(rawPassword));
+        u.setUserName(s.getUserName());
+        u.setGmail(s.getGmail());
+        u.setPassword(s.getPasswordHash());
         u.setUserType(normal);
-        u.setEmailVerified(false);   // ต้องยืนยัน OTP ก่อน
+        u.setEmailVerified(true);   // ผ่าน OTP แล้วเท่านั้นถึงมาถึงบรรทัดนี้
         u.setAvgScore(BigDecimal.ZERO);
         u.setCreatedAt(LocalDateTime.now());
-        userRepo.save(u);
-        generateOtp(u);
-        return u;
+        return userRepo.save(u);
     }
 
-    /** สร้าง OTP 6 หลัก ตั้งอายุ 10 นาที และคืนค่า OTP */
+    /** ยืนยันอีเมลให้บัญชีเก่าที่มี row อยู่แล้ว */
     @Transactional
-    public String generateOtp(User u) {
-        String code = String.format("%06d", new java.util.Random().nextInt(1_000_000));
-        u.setOtpCode(code);
-        u.setOtpExpireAt(LocalDateTime.now().plusMinutes(10));
-        userRepo.save(u);
-        // จำลองการส่งอีเมล — ในระบบจริงจะส่งผ่าน mail service
-        System.out.println("[OTP] สำหรับ " + u.getGmail() + " = " + code + " (หมดอายุใน 10 นาที)");
-        return code;
-    }
-
-    /** ขอ OTP ใหม่ */
-    @Transactional
-    public String resendOtp(Integer userId) {
-        return generateOtp(getById(userId));
-    }
-
-    /** ตรวจสอบ OTP : ถูกต้อง + ยังไม่หมดอายุ -> เปิดใช้งานบัญชี */
-    @Transactional
-    public void verifyOtp(Integer userId, String code) {
+    public void markVerified(Integer userId) {
         User u = getById(userId);
-        if (u.isEmailVerified()) return;
-        if (u.getOtpCode() == null || u.getOtpExpireAt() == null)
-            throw new IllegalStateException("ไม่พบรหัส OTP กรุณากดขอรหัสใหม่");
-        if (u.getOtpExpireAt().isBefore(LocalDateTime.now()))
-            throw new IllegalStateException("รหัส OTP หมดอายุแล้ว กรุณากดขอรหัสใหม่");
-        if (!u.getOtpCode().equals(code == null ? null : code.trim()))
-            throw new IllegalArgumentException("รหัส OTP ไม่ถูกต้อง");
         u.setEmailVerified(true);
         u.setOtpCode(null);
         u.setOtpExpireAt(null);
         userRepo.save(u);
+    }
+
+    /** ขอรหัสใหม่ — จำกัดจำนวนครั้ง + คูลดาวน์ */
+    public void resend(OtpSession s) {
+        long wait = s.cooldownSecondsLeft();
+        if (wait > 0)
+            throw new IllegalStateException("กรุณารออีก " + wait + " วินาที ก่อนขอรหัสใหม่");
+        if (s.resendLeft() <= 0)
+            throw new IllegalStateException(
+                    "ขอรหัสใหม่ได้สูงสุด " + OtpSession.MAX_RESEND
+                    + " ครั้ง กรุณาเริ่มสมัครใหม่อีกครั้ง");
+        s.countResend();
+        s.issueNewCode();
     }
 
         /**
