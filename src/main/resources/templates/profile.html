@@ -229,6 +229,8 @@
                 </div>
             </a>
             <span class="pill orange" th:if="${p.status=='cancelled'}">ยกเลิกแล้ว</span>
+            <a th:if="${p.status!='cancelled' and !p.expired}" class="btn btn-ghost btn-sm"
+               th:href="@{'/posts/' + ${p.id} + '/edit'}">แก้ไข</a>
             <form th:if="${p.status!='cancelled' and !p.expired and !p.cancelLocked}" method="post"
                   th:action="@{'/posts/' + ${p.id} + '/cancel'}"
                   onsubmit="return confirm('ยกเลิกกิจกรรมนี้?')">

@@ -106,7 +106,12 @@
                      th:text="|ต้องการอีก ${post.minPlayer - joinCount} คนให้ครบขั้นต่ำ|">-</div>
 
                 <!-- actions -->
-                <div th:if="${isOwner}" style="color:var(--muted);font-size:.85rem">คุณเป็นเจ้าของกิจกรรมนี้</div>
+                                <div th:if="${isOwner}">
+                    <div style="color:var(--muted);font-size:.85rem;margin-bottom:8px">คุณเป็นเจ้าของกิจกรรมนี้</div>
+                    <a th:if="${post.status != 'cancelled' and !post.expired}"
+                       class="btn btn-ghost" style="width:100%;display:block;text-align:center"
+                       th:href="@{'/posts/' + ${post.id} + '/edit'}">แก้ไขรายละเอียด</a>
+                </div>
 
                 <div th:unless="${isOwner}">
                     <!-- ยังไม่ได้กดเข้าร่วม / ไม่ได้รออนุมัติ -->

@@ -174,6 +174,73 @@ public class PostService {
                 }
             }
         }
+            return saved;
+    }
+
+    /**
+     * แก้ไขรายละเอียดโพสต์ — เฉพาะเจ้าของเท่านั้น
+     * แก้ไม่ได้ถ้า: ถูกยกเลิกแล้ว / เลยวันจัดกิจกรรมแล้ว
+     * เปลี่ยนประเภท (Post <-> Tournament) ไม่ได้
+     */
+    @Transactional
+    public Post update(Integer postId, User requester, Integer sportId, Integer locationId,
+                       String postName, String description, LocalDateTime datePlay,
+                       Integer maxPlayer, Integer minPlayer, boolean isPublic,
+                       LocalDateTime publishAt) {
+
+        Post p = getById(postId);
+
+        if (!p.getOwner().getId().equals(requester.getId()))
+            throw new IllegalStateException("เฉพาะเจ้าของโพสต์เท่านั้นที่แก้ไขได้");
+        if ("cancelled".equals(p.getStatus()))
+            throw new IllegalStateException("กิจกรรมนี้ถูกยกเลิกแล้ว ไม่สามารถแก้ไขได้");
+        if (p.isExpired())
+            throw new IllegalStateException("กิจกรรมนี้ผ่านไปแล้ว ไม่สามารถแก้ไขได้");
+
+        validateSchedule(datePlay, publishAt);
+
+        if (minPlayer == null || minPlayer < 3)
+            throw new IllegalArgumentException("จำนวนคนขั้นต่ำต้องตั้งแต่ 3 คนขึ้นไป");
+        if (maxPlayer == null || maxPlayer < minPlayer)
+            throw new IllegalArgumentException("จำนวนคนสูงสุดต้องไม่น้อยกว่าจำนวนขั้นต่ำ");
+
+        long joined = eventRepo.countApprovedJoins(p);
+        if (maxPlayer < joined)
+            throw new IllegalStateException(
+                    "ลดจำนวนสูงสุดเหลือ " + maxPlayer + " ไม่ได้ เพราะมีผู้เข้าร่วมแล้ว " + joined + " คน");
+
+        Sport sport = sportRepo.findById(sportId)
+                .orElseThrow(() -> new IllegalArgumentException("ไม่พบกีฬา"));
+        Location location = locationRepo.findById(locationId)
+                .orElseThrow(() -> new IllegalArgumentException("ไม่พบสถานที่"));
+
+        // เก็บค่าเดิมไว้เทียบ เพื่อแจ้งเตือนเฉพาะตอนที่ข้อมูลสำคัญเปลี่ยนจริง
+        LocalDateTime oldDatePlay = p.getDatePlay();
+        Integer oldLocationId = p.getLocation().getId();
+
+        p.setSport(sport);
+        p.setLocation(location);
+        p.setPostName(postName);
+        p.setDescription(description);
+        p.setDatePlay(datePlay);
+        p.setMaxPlayer(maxPlayer);
+        p.setMinPlayer(minPlayer);
+        p.setPublic(isPublic);
+        // แก้เวลาเผยแพร่ได้เฉพาะตอนที่ยังไม่ถูกเผยแพร่
+        if (p.getPublishAt() != null && p.getPublishAt().isAfter(LocalDateTime.now())) {
+            p.setPublishAt(publishAt);
+        }
+        Post saved = postRepo.save(p);
+
+        boolean important = !java.util.Objects.equals(oldDatePlay, datePlay)
+                || !java.util.Objects.equals(oldLocationId, location.getId());
+        if (important) {
+            for (Event ev : eventRepo.findParticipants(saved)) {
+                notificationService.push(ev.getUser(),
+                        "ผู้จัดแก้ไขรายละเอียดกิจกรรม \"" + saved.getPostName() + "\" (วัน/เวลา หรือสถานที่เปลี่ยน)",
+                        "/posts/" + saved.getId(), "post_updated");
+            }
+        }
         return saved;
     }
 

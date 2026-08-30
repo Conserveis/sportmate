@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('แก้ไขกิจกรรม')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav(${post.tournament?'tournaments':'posts'})}"></nav>
+
+<div class="wrap">
+    <div class="page-head">
+        <div>
+            <div class="eyebrow">Edit</div>
+            <h1 th:text="${post.tournament?'แก้ไขทัวร์นาเมนต์':'แก้ไขโพสต์'}">แก้ไขกิจกรรม</h1>
+        </div>
+    </div>
+
+    <div class="flash err" th:if="${error}" th:text="${error}"></div>
+
+    <div class="form-card">
+        <form method="post" th:action="@{'/posts/' + ${post.id} + '/edit'}">
+
+            <div class="field">
+                <label>ชื่อกิจกรรม</label>
+                <input name="postName" required th:value="${post.postName}">
+            </div>
+
+            <div class="row2">
+                <div class="field">
+                    <label>ประเภทกีฬา</label>
+                    <select name="sportId" required>
+                        <option th:each="s : ${sports}" th:value="${s.id}" th:text="${s.name}"
+                                th:selected="${s.id == post.sport.id}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>สถานที่</label>
+                    <select name="locationId" required>
+                        <option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.name}"
+                                th:selected="${l.id == post.location.id}"></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>วันและเวลานัด</label>
+                <input type="datetime-local" name="datePlay"
+                       min="2026-01-01T00:00" max="2028-12-31T23:59" required
+                       th:value="${#temporals.format(post.datePlay,'yyyy-MM-dd') + 'T' + #temporals.format(post.datePlay,'HH:mm')}">
+                <div class="hint">ตั้งได้ระหว่าง 01/01/2026 – 31/12/2028</div>
+            </div>
+
+            <div class="row2">
+                <div class="field">
+                    <label>จำนวนขั้นต่ำ</label>
+                    <input type="number" name="minPlayer" min="3" required th:value="${post.minPlayer}">
+                    <div class="hint">อย่างน้อย 3 คน</div>
+                </div>
+                <div class="field">
+                    <label>จำนวนสูงสุด</label>
+                    <input type="number" name="maxPlayer" min="3" required th:value="${post.maxPlayer}">
+                    <div class="hint">ลดต่ำกว่าจำนวนผู้เข้าร่วมปัจจุบันไม่ได้</div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>การเข้าร่วม</label>
+                <select name="isPublic">
+                    <option value="true" th:selected="${post.public}">สาธารณะ — เข้าร่วมได้ทันที</option>
+                    <option value="false" th:selected="${!post.public}">ส่วนตัว — เจ้าของต้องอนุมัติก่อน</option>
+                </select>
+            </div>
+
+            <div class="field" th:if="${post.publishAt != null}">
+                <label>ตั้งเวลาเผยแพร่ล่วงหน้า</label>
+                <input type="datetime-local" name="publishAt"
+                       min="2026-01-01T00:00" max="2028-12-31T23:59"
+                       th:value="${#temporals.format(post.publishAt,'yyyy-MM-dd') + 'T' + #temporals.format(post.publishAt,'HH:mm')}">
+                <div class="hint">แก้ได้เฉพาะกรณีที่ยังไม่ถึงเวลาเผยแพร่</div>
+            </div>
+
+            <div class="field">
+                <label>รายละเอียด</label>
+                <textarea name="description" rows="3" th:text="${post.description}"></textarea>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:8px">
+                <button class="btn btn-primary">บันทึกการแก้ไข</button>
+                <a class="btn btn-ghost" th:href="@{'/posts/' + ${post.id}}">ยกเลิก</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

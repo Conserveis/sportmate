@@ -210,6 +210,49 @@ public class PostController {
         return "redirect:/posts/" + id;
     }
 
+    // ---- ฟอร์มแก้ไขโพสต์ ----
+    @GetMapping("/posts/{id}/edit")
+    public String editForm(@PathVariable Integer id, HttpSession session,
+                           Model model, RedirectAttributes ra) {
+        Post p = postService.getById(id);
+        if (!p.getOwner().getId().equals(me(session).getId())) {
+            ra.addFlashAttribute("error", "เฉพาะเจ้าของโพสต์เท่านั้นที่แก้ไขได้");
+            return "redirect:/posts/" + id;
+        }
+        model.addAttribute("post", p);
+        model.addAttribute("sports", userService.allSports());
+        model.addAttribute("locations", postLocations());
+        return "post-edit";
+    }
+
+    @PostMapping("/posts/{id}/edit")
+    public String edit(@PathVariable Integer id,
+                       @RequestParam Integer sportId,
+                       @RequestParam Integer locationId,
+                       @RequestParam String postName,
+                       @RequestParam(required = false) String description,
+                       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime datePlay,
+                       @RequestParam Integer maxPlayer,
+                       @RequestParam Integer minPlayer,
+                       @RequestParam(defaultValue = "true") boolean isPublic,
+                       @RequestParam(required = false) String publishAt,
+                       HttpSession session, RedirectAttributes ra, Model model) {
+        try {
+            LocalDateTime publishAtParsed = (publishAt == null || publishAt.isBlank())
+                    ? null : LocalDateTime.parse(publishAt);
+            postService.update(id, me(session), sportId, locationId, postName,
+                    description, datePlay, maxPlayer, minPlayer, isPublic, publishAtParsed);
+            ra.addFlashAttribute("msg", "แก้ไขกิจกรรมสำเร็จ");
+            return "redirect:/posts/" + id;
+        } catch (Exception e) {
+            model.addAttribute("error", ErrorMessage.forUser(e));
+            model.addAttribute("post", postService.getById(id));
+            model.addAttribute("sports", userService.allSports());
+            model.addAttribute("locations", postLocations());
+            return "post-edit";
+        }
+    }
+
     @PostMapping("/posts/{id}/cancel")
     public String cancel(@PathVariable Integer id, HttpSession session, RedirectAttributes ra) {
         try {
