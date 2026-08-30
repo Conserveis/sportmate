@@ -1,6 +1,7 @@
 package com.sportmate.service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +23,11 @@ import com.sportmate.repository.UserTypeRepository;
 
 @Service
 public class UserService {
+
+    /** กรอกรหัสผิดเกินจำนวนนี้ -> ล็อกบัญชีชั่วคราว */
+    public static final int MAX_FAILED_LOGIN = 5;
+    /** ระยะเวลาล็อกบัญชี (นาที) */
+    public static final int LOCK_MINUTES = 30;
 
     private final UserRepository userRepo;
     private final UserTypeRepository userTypeRepo;
@@ -98,11 +104,31 @@ public class UserService {
         userRepo.save(u);
     }
 
-    /** ล็อกอินAuthen */
+        /**
+     * ล็อกอินAuthen
+     * หมายเหตุ: เมธอดนี้ "ห้าม" ใส่ @Transactional เพราะเราต้อง save จำนวนครั้งที่ผิด
+     * ก่อนจะ throw exception — ถ้าอยู่ใน transaction เดียวกัน exception จะ rollback การนับทิ้ง
+     */
     public User login(String userNameOrEmail, String rawPassword) {
     User u = userRepo.findByUserName(userNameOrEmail)
             .or(() -> userRepo.findByGmail(userNameOrEmail))
             .orElseThrow(() -> new IllegalArgumentException("ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง"));
+
+    // 1) ยังอยู่ในช่วงถูกล็อกอยู่หรือไม่
+    LocalDateTime now = LocalDateTime.now();
+    if (u.getLockUntil() != null && u.getLockUntil().isAfter(now)) {
+        long left = Duration.between(now, u.getLockUntil()).toMinutes() + 1;
+        throw new IllegalArgumentException(
+                "บัญชีนี้ถูกล็อกชั่วคราวเนื่องจากกรอกรหัสผ่านผิดเกิน " + MAX_FAILED_LOGIN
+                + " ครั้ง กรุณาลองใหม่อีกครั้งในอีก " + left + " นาที");
+    }
+    // เลยเวลาล็อกแล้ว -> ล้างสถานะ เริ่มนับใหม่
+    if (u.getLockUntil() != null) {
+        u.setLockUntil(null);
+        u.setFailedLoginCount(0);
+        userRepo.save(u);
+    }
+
     // บล็อกเฉพาะบัญชีที่ "ยังไม่มีรหัสผ่าน" เท่านั้น
     // บัญชีที่เคยตั้งรหัสผ่านไว้แล้วผูกกับ Google/ThaiD ทีหลัง ยังเข้าด้วยรหัสผ่านได้ตามปกติ
     if (u.getPassword() == null || u.getPassword().isBlank())
@@ -110,11 +136,46 @@ public class UserService {
                 "บัญชีนี้สมัครผ่าน " + providerLabel(u.getAuthProvider())
                 + " จึงยังไม่มีรหัสผ่าน กรุณากดปุ่มด้านล่างเพื่อเข้าสู่ระบบ "
                 + "แล้วไปตั้งรหัสผ่านได้ที่หน้าโปรไฟล์");
-    if (!encoder.matches(rawPassword, u.getPassword()))
-        throw new IllegalArgumentException("ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง");
+
+    // 2) รหัสผ่านผิด -> นับเพิ่ม และล็อกเมื่อครบ
+    if (!encoder.matches(rawPassword, u.getPassword())) {
+        int failed = u.getFailedLoginCount() + 1;
+        u.setFailedLoginCount(failed);
+
+        if (failed >= MAX_FAILED_LOGIN) {
+            u.setLockUntil(now.plusMinutes(LOCK_MINUTES));
+            u.setFailedLoginCount(0);   // เริ่มนับใหม่หลังปลดล็อก
+            userRepo.save(u);
+            throw new IllegalArgumentException(
+                    "กรอกรหัสผ่านผิดครบ " + MAX_FAILED_LOGIN + " ครั้ง "
+                    + "บัญชีถูกล็อกชั่วคราว " + LOCK_MINUTES + " นาที");
+        }
+
+        userRepo.save(u);
+        int left = MAX_FAILED_LOGIN - failed;
+        throw new IllegalArgumentException(
+                "ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง (เหลืออีก " + left + " ครั้งก่อนบัญชีถูกล็อก)");
+    }
+
+    // 3) รหัสผ่านถูก -> ล้างตัวนับ
+    if (u.getFailedLoginCount() != 0 || u.getLockUntil() != null) {
+        u.setFailedLoginCount(0);
+        u.setLockUntil(null);
+        userRepo.save(u);
+    }
+
     if (!u.isEmailVerified())
         throw new UnverifiedUserException(u.getId());
     return u;
+}
+
+/** ปลดล็อกบัญชีด้วยมือ (เผื่อใช้ตอนเดโม / ทดสอบ) */
+@Transactional
+public void unlock(Integer userId) {
+    User u = getById(userId);
+    u.setFailedLoginCount(0);
+    u.setLockUntil(null);
+    userRepo.save(u);
 }
 
 /** ตั้ง/เปลี่ยนรหัสผ่าน — ใช้ได้ทั้งบัญชี local และบัญชีที่มาจาก Google/ThaiD */
