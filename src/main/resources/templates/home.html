@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('หน้าแรก')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('home')}"></nav>
+
+<div class="wrap">
+    <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
+    <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+    <div class="home-shell">
+
+        <!-- ================= ซ้าย : โพสต์ + ทัวร์นาเมนต์ล่าสุด ================= -->
+        <section class="home-main">
+
+            <div class="page-head">
+                <div>
+                    <div class="eyebrow">Main Dashboard</div>
+                    <h1>สวัสดี <span th:text="${currentUser != null} ? ${currentUser.userName} : 'SportMate'">ผู้ใช้</span></h1>
+                </div>
+                <span class="spacer" style="flex:1"></span>
+                <a class="btn btn-flare btn-sm" th:href="@{/posts/new(type='Post')}">+ สร้างโพสต์</a>
+            </div>
+
+            <!-- ---- โพสต์ล่าสุด ---- -->
+            <div class="home-sec">
+                <div class="sec-head">
+                    <h2>โพสต์ล่าสุด</h2>
+                    <a class="sec-more" th:href="@{/posts}">ดูทั้งหมด ›</a>
+                </div>
+
+                <div th:if="${latestPosts.isEmpty()}" class="empty">
+                    <div class="big">ยังไม่มีโพสต์</div>
+                    <div>เป็นคนแรกที่ชวนเพื่อนมาเล่นกีฬาสิ!</div>
+                </div>
+
+                <div class="home-list">
+                    <a class="h-card" th:each="p : ${latestPosts}" th:href="@{'/posts/' + ${p.id}}">
+                        <div class="h-stripe"></div>
+                        <div class="h-body">
+                            <div class="h-top">
+                                <span class="sport-tag" th:text="${p.sport.name}">Football</span>
+                                <span class="pill" th:classappend="${p.public}?'green':'orange'"
+                                      th:text="${p.public}?'สาธารณะ':'ต้องอนุมัติ'">สาธารณะ</span>
+                            </div>
+                            <h3 th:text="${p.postName}">ชื่อกิจกรรม</h3>
+                            <div class="meta">
+                                <span><span class="line-icon calendar" aria-hidden="true"></span>
+                                    <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
+                                <span><span class="line-icon pin" aria-hidden="true"></span>
+                                    <span th:text="${p.location.name}">สถานที่</span></span>
+                            </div>
+                        </div>
+                        <div class="h-side">
+                            <div class="score-label">ผู้เข้าร่วม</div>
+                            <div class="score" th:classappend="${joinCounts[p.id] >= p.maxPlayer}?'full'">
+                                <span class="cur" th:text="${joinCounts[p.id]}">0</span><span class="sep">/</span><span th:text="${p.maxPlayer}">10</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- ---- ทัวร์นาเมนต์ล่าสุด ---- -->
+            <div class="home-sec">
+                <div class="sec-head">
+                    <h2>ทัวร์นาเมนต์ล่าสุด</h2>
+                    <a class="sec-more" th:href="@{/tournaments}">ดูทั้งหมด ›</a>
+                </div>
+
+                <div th:if="${latestTournaments.isEmpty()}" class="empty">
+                    <div class="big">ยังไม่มีทัวร์นาเมนต์</div>
+                    <div>ทัวร์นาเมนต์ใหม่ ๆ จะแสดงที่นี่</div>
+                </div>
+
+                <div class="home-list">
+                    <a class="h-card tour" th:each="p : ${latestTournaments}" th:href="@{'/posts/' + ${p.id}}">
+                        <div class="h-stripe"></div>
+                        <div class="h-body">
+                            <div class="h-top">
+                                <span class="sport-tag" th:text="${p.sport.name}">Football</span>
+                                <span class="pill grey" th:if="${p.expired}">จบแล้ว</span>
+                            </div>
+                            <h3 th:text="${p.postName}">ชื่อทัวร์นาเมนต์</h3>
+                            <div class="meta">
+                                <span><span class="line-icon calendar" aria-hidden="true"></span>
+                                    <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
+                                <span><span class="line-icon pin" aria-hidden="true"></span>
+                                    <span th:text="${p.location.name}">สถานที่</span></span>
+                            </div>
+                        </div>
+                        <div class="h-side">
+                            <div class="score-label">ผู้เข้าร่วม</div>
+                            <div class="score" th:classappend="${joinCounts[p.id] >= p.maxPlayer}?'full'">
+                                <span class="cur" th:text="${joinCounts[p.id]}">0</span><span class="sep">/</span><span th:text="${p.maxPlayer}">16</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+                <!-- ================= ขวา : ปฏิทินกิจกรรมของฉัน (client-side) ================= -->
+        <aside class="home-aside">
+            <div class="cal-card">
+
+                <div class="cal-head">
+                    <div>
+                        <div class="cal-title" id="calTitle">—</div>
+                        <div class="cal-sub" id="calSub">—</div>
+                    </div>
+                    <div class="cal-nav">
+                        <button type="button" id="calPrev" aria-label="เดือนก่อนหน้า">‹</button>
+                        <button type="button" id="calNext" aria-label="เดือนถัดไป">›</button>
+                    </div>
+                </div>
+
+                <div class="cal-grid" id="calGrid"></div>
+
+                <div class="cal-legend">
+                    <span><i class="lg-dot"></i> วันที่มีกิจกรรมของฉัน</span>
+                    <span class="cal-count" id="calCount">0 วันในเดือนนี้</span>
+                </div>
+
+                <div class="cal-agenda">
+                    <div class="agenda-head">
+                        <strong>กิจกรรมวันที่เลือก</strong>
+                        <button type="button" class="sec-more" id="calToday">วันนี้</button>
+                    </div>
+                    <div id="calAgenda"></div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</div>
+<script type="application/json" id="calData" th:utext="${agendaJson}">{}</script>
+<script th:inline="javascript">
+(function () {
+    var DATA = {};
+    try { DATA = JSON.parse(document.getElementById('calData').textContent || '{}'); } catch (e) { DATA = {}; }
+
+    var TODAY      = /*[[${todayIso}]]*/ '2026-01-01';
+    var POSTS_BASE = /*[[@{/posts/}]]*/ '/posts/';
+
+    var MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                  'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    var DOW = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+    var WD  = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+    var selected = TODAY;
+    var viewY = Number(TODAY.slice(0, 4));
+    var viewM = Number(TODAY.slice(5, 7)) - 1;
+
+    var grid    = document.getElementById('calGrid');
+    var titleEl = document.getElementById('calTitle');
+    var subEl   = document.getElementById('calSub');
+    var countEl = document.getElementById('calCount');
+    var boxEl   = document.getElementById('calAgenda');
+
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function iso(y, m, d) { return y + '-' + pad(m + 1) + '-' + pad(d); }
+    function esc(s) {
+        var span = document.createElement('span');
+        span.textContent = (s == null ? '' : s);
+        return span.innerHTML;
+    }
+
+    function renderAgenda() {
+        var dt = new Date(selected + 'T00:00:00');
+        subEl.textContent = 'วัน' + DOW[dt.getDay()] + 'ที่ ' + dt.getDate() + ' ' + MONTHS[dt.getMonth()];
+
+        var list = DATA[selected] || [];
+        if (!list.length) {
+            boxEl.innerHTML = '<div class="agenda-empty">ไม่มีกิจกรรมในวันนี้</div>';
+            return;
+        }
+        boxEl.innerHTML = list.map(function (a) {
+            return '<a class="agenda-item' + (a.tournament ? ' tour' : '') + '" href="' + POSTS_BASE + a.id + '">'
+                 + '<span class="agenda-time">' + esc(a.time) + '</span>'
+                 + '<span class="agenda-body">'
+                 +   '<span class="agenda-name">' + esc(a.name) + '</span>'
+                 +   '<span class="agenda-meta">' + esc(a.sport) + ' · ' + esc(a.place) + '</span>'
+                 + '</span>'
+                 + '<span class="pill ' + (a.pending ? 'orange' : 'green') + '">'
+                 + esc(a.pending ? 'รออนุมัติ' : a.role) + '</span>'
+                 + '</a>';
+        }).join('');
+    }
+
+    function renderCalendar() {
+        grid.innerHTML = '';
+        WD.forEach(function (w) {
+            var s = document.createElement('span');
+            s.className = 'cal-wd';
+            s.textContent = w;
+            grid.appendChild(s);
+        });
+
+        var lead = new Date(viewY, viewM, 1).getDay();          // อาทิตย์ = 0
+        var days = new Date(viewY, viewM + 1, 0).getDate();
+        for (var i = 0; i < lead; i++) {
+            var blank = document.createElement('span');
+            blank.className = 'cal-blank';
+            grid.appendChild(blank);
+        }
+
+        var marked = 0;
+        for (var d = 1; d <= days; d++) {
+            var key  = iso(viewY, viewM, d);
+            var list = DATA[key] || [];
+            if (list.length) marked++;
+
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'cal-day';
+            btn.setAttribute('data-iso', key);
+            if (list.length) {
+                btn.classList.add('marked');
+                btn.title = 'มีกิจกรรม ' + list.length + ' รายการ';
+            }
+            if (key === TODAY)    btn.classList.add('today');
+            if (key === selected) btn.classList.add('selected');
+            if (key < TODAY)      btn.classList.add('past');
+            btn.innerHTML = '<span>' + d + '</span>' + (list.length ? '<i class="cal-dot"></i>' : '');
+            grid.appendChild(btn);
+        }
+
+        titleEl.textContent = MONTHS[viewM] + ' ' + (viewY + 543);
+        countEl.textContent = marked + ' วันในเดือนนี้';
+        renderAgenda();
+    }
+
+    grid.addEventListener('click', function (e) {
+        var btn = e.target.closest ? e.target.closest('.cal-day') : null;
+        if (!btn || !grid.contains(btn)) return;
+        selected = btn.getAttribute('data-iso');
+        grid.querySelectorAll('.cal-day.selected').forEach(function (x) { x.classList.remove('selected'); });
+        btn.classList.add('selected');
+        renderAgenda();
+    });
+
+    document.getElementById('calPrev').addEventListener('click', function () {
+        viewM--; if (viewM < 0) { viewM = 11; viewY--; }
+        renderCalendar();
+    });
+    document.getElementById('calNext').addEventListener('click', function () {
+        viewM++; if (viewM > 11) { viewM = 0; viewY++; }
+        renderCalendar();
+    });
+    document.getElementById('calToday').addEventListener('click', function () {
+        selected = TODAY;
+        viewY = Number(TODAY.slice(0, 4));
+        viewM = Number(TODAY.slice(5, 7)) - 1;
+        renderCalendar();
+    });
+
+    renderCalendar();
+})();
+</script>
+</html>

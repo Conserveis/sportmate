@@ -755,3 +755,127 @@ h1,h2,h3,.display{
   .section{margin-top:24px}
   .filter-bar{margin-top:14px}
 }
+
+/* ===== HOME (หน้าแรก) : ซ้าย = โพสต์/ทัวร์นาเมนต์, ขวา = ปฏิทิน ===== */
+.home-shell{
+  display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;align-items:start;margin-top:8px;
+}
+.home-main{min-width:0}
+.home-aside{position:sticky;top:20px}
+
+.home-sec{margin-top:24px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.sec-head h2{font-size:1.05rem;font-weight:800}
+.sec-more{
+  font-size:.8rem;font-weight:600;color:var(--pitch);text-decoration:none;white-space:nowrap;
+}
+.sec-more:hover{color:var(--pitch-dark)}
+
+.home-list{display:flex;flex-direction:column;gap:12px}
+.h-card{
+  display:flex;align-items:stretch;gap:0;text-decoration:none;color:inherit;
+  background:var(--surface);border:1px solid var(--line-light);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);overflow:hidden;
+  transition:transform var(--duration) var(--ease),box-shadow var(--duration) var(--ease),border-color var(--duration) var(--ease);
+}
+.h-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--line)}
+.h-card:focus-visible{outline:3px solid var(--pitch);outline-offset:2px}
+.h-stripe{width:5px;flex:none;background:linear-gradient(180deg,var(--pitch),var(--pitch-dark))}
+.h-card.tour .h-stripe{background:linear-gradient(180deg,var(--flare),#FF9B5A)}
+.h-body{flex:1;min-width:0;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.h-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.h-body h3{font-size:1rem;font-weight:600;line-height:1.3}
+.h-side{
+  flex:none;width:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;border-left:1px solid var(--line-light);background:var(--surface-elevated);padding:10px;
+}
+
+/* ---- calendar card ---- */
+.cal-card{
+  background:var(--surface);border:1px solid var(--line-light);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:18px;
+}
+.cal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
+.cal-title{font-family:"Inter","Noto Sans Thai",sans-serif;font-size:1.05rem;font-weight:800}
+.cal-sub{font-size:.8rem;color:var(--muted);margin-top:2px}
+.cal-nav{display:flex;gap:6px}
+.cal-nav a{
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line);border-radius:50%;text-decoration:none;color:var(--muted);
+  font-size:1rem;line-height:1;transition:all var(--duration) var(--ease);
+}
+.cal-nav a:hover{background:var(--pitch-light);color:var(--pitch-dark);border-color:var(--pitch-light)}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal-wd{font-size:.68rem;color:var(--muted);font-weight:700;padding:4px 0}
+.cal-blank{height:34px}
+.cal-day{
+  position:relative;height:34px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;font-size:.82rem;font-weight:500;color:var(--ink);
+  text-decoration:none;transition:all var(--duration) var(--ease);
+}
+.cal-day:hover{background:var(--chalk)}
+.cal-day.past{color:#aab3ad}
+.cal-day.marked{background:var(--pitch-light);color:var(--pitch-dark);font-weight:700}
+.cal-day.today{box-shadow:inset 0 0 0 1.5px var(--flare)}
+.cal-day.selected{background:var(--pitch);color:#fff;font-weight:700}
+.cal-day.selected .cal-dot{background:#fff}
+.cal-dot{
+  position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
+  width:4px;height:4px;border-radius:50%;background:var(--flare);
+}
+
+.cal-legend{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin-top:14px;padding-top:12px;border-top:1px solid var(--line-light);
+  font-size:.74rem;color:var(--muted);
+}
+.lg-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--flare);margin-right:5px}
+.cal-count{font-weight:600;color:var(--ink)}
+
+.cal-agenda{margin-top:14px}
+.agenda-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:.85rem}
+.agenda-empty{
+  border:1.5px dashed var(--line);border-radius:var(--radius-sm);
+  padding:18px;text-align:center;color:var(--muted);font-size:.82rem;
+}
+.agenda-item{
+  display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;
+  border-left:3px solid var(--pitch);background:var(--surface-elevated);
+  border-radius:var(--radius-xs);padding:10px 12px;margin-bottom:8px;
+  transition:background var(--duration) var(--ease);
+}
+.agenda-item.tour{border-left-color:var(--flare)}
+.agenda-item:hover{background:var(--pitch-light)}
+.agenda-time{font-size:.78rem;font-weight:700;color:var(--pitch-dark);flex:none;width:42px}
+.agenda-body{flex:1;min-width:0;display:flex;flex-direction:column}
+.agenda-name{font-size:.86rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agenda-meta{font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+@media (max-width:960px){
+  .home-shell{grid-template-columns:1fr}
+  .home-aside{position:static;order:-1}
+}
+@media (max-width:480px){
+  .h-card{flex-wrap:wrap}
+  .h-side{width:100%;flex-direction:row;gap:8px;border-left:0;border-top:1px solid var(--line-light)}
+  .cal-card{padding:14px}
+}
+
+/* ---- ปฏิทินแบบไม่โหลดหน้าใหม่ : ปุ่มแทนลิงก์ ---- */
+.cal-nav button{
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line);border-radius:50%;background:none;cursor:pointer;
+  color:var(--muted);font-size:1rem;line-height:1;padding:0;
+  transition:all var(--duration) var(--ease);
+}
+.cal-nav button:hover{background:var(--pitch-light);color:var(--pitch-dark);border-color:var(--pitch-light)}
+button.cal-day{
+  width:100%;background:none;border:0;padding:0;cursor:pointer;
+  font-family:inherit;font-size:.82rem;font-weight:500;color:var(--ink);
+}
+button.sec-more{
+  background:none;border:0;padding:0;cursor:pointer;
+  font-family:inherit;font-size:.8rem;font-weight:600;color:var(--pitch);
+}
+button.sec-more:hover{color:var(--pitch-dark)}

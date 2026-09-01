@@ -185,6 +185,6 @@ public class AuthController {
 
     @GetMapping("/")
     public String home() {
-        return "redirect:/posts";
+        return "redirect:/home";
     }
 }

@@ -228,11 +228,12 @@
 <body>
 <nav class="nav" th:fragment="nav(active)">
     <div class="nav-inner">
-        <a class="brand" th:href="@{/posts}"><span class="dot"></span>SportMate</a>
+        <a class="brand" th:href="@{/home}"><span class="dot"></span>SportMate</a>
         <button class="hamburger" aria-label="เมนู" onclick="document.querySelector('.nav-links').classList.toggle('open');this.classList.toggle('open')">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
                 <div class="nav-links">
+            <a class="link" th:classappend="${active=='home'}?'active'" th:href="@{/home}">หน้าแรก</a>
             <a class="link" th:classappend="${active=='posts'}?'active'" th:href="@{/posts}">Post</a>
             <a class="link" th:classappend="${active=='tournaments'}?'active'" th:href="@{/tournaments}">Tournament</a>
             <a class="link" th:classappend="${active=='archive'}?'active'" th:href="@{/archive}">จัดเก็บกิจกรรม</a>
