@@ -240,8 +240,13 @@
             <a class="link" th:if="${currentUser != null and currentUser.admin}"
                th:classappend="${active=='admin'}?'active'" th:href="@{/admin}">Admin</a>
             <span class="spacer"></span>
-            <a class="bell" th:classappend="${active=='notifications'}?'active'" th:href="@{/notifications}" title="การแจ้งเตือน">
-                🔔<span class="bell-badge" th:if="${unreadCount != null and unreadCount > 0}" th:text="${unreadCount}">0</span>
+            <a class="bell" th:classappend="${active=='notifications'}?'active'" th:href="@{/notifications}"
+               title="การแจ้งเตือน" aria-label="การแจ้งเตือน">
+                <svg class="bell-ico" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 2.6a1.5 1.5 0 0 1 1.5 1.5v.35a6.5 6.5 0 0 1 5 6.32v3.06c0 1.2.4 2.36 1.14 3.3l.5.64c.5.63.05 1.56-.76 1.56H4.62c-.81 0-1.26-.93-.76-1.56l.5-.64a5.37 5.37 0 0 0 1.14-3.3v-3.06a6.5 6.5 0 0 1 5-6.32V4.1A1.5 1.5 0 0 1 12 2.6Z"/>
+                    <path d="M9.6 20.2h4.8a2.4 2.4 0 0 1-4.8 0Z"/>
+                </svg>
+                <span class="bell-badge" th:if="${unreadCount != null and unreadCount > 0}" th:text="${unreadCount}">0</span>
             </a>
             <a class="link who-link" th:if="${currentUser}"
                th:classappend="${active=='profile'}?'active'"

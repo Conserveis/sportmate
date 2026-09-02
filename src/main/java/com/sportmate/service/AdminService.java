@@ -77,10 +77,10 @@ public class AdminService {
                 "finished", "จบแล้ว",
                 "cancelled", "ยกเลิก");
         Map<String, String> colors = Map.of(
-                "open", "#2F6B4F",
-                "closed", "#8FBF9F",
-                "finished", "#C9DCCF",
-                "cancelled", "#E8734A");
+                "open", "#FF6A00",       // Orange Burst
+                "closed", "#0071FF",     // Blue Raspberry
+                "finished", "#C8FF40",   // Lime Charge
+                "cancelled", "#FF007A"); // Berry Vibe
 
         List<Object[]> raw = repo.postStatusCounts();
         long total = 0;

@@ -1,25 +1,26 @@
-/* ===== SportMate — Modern Athletic Identity ===== */
+/* ===== SportMate — FIZZON-inspired palette ===== */
 :root{
   /* ─── palette ─── */
-  --pitch:#0B7A4B;
-  --pitch-dark:#075F3A;
-  --pitch-light:#E8F5EE;
-  --ink:#16201B;
-  --chalk:#F4F5F0;
+  --pitch:#FF6A00;            /* Orange Burst — สีหลัก */
+  --pitch-dark:#D95400;
+  --pitch-light:#FFEBDA;
+  --ink:#0B1220;              /* Deep Navy */
+  --chalk:#FBF2E6;            /* Cream — พื้นหลังหน้า */
   --surface:#FFFFFF;
-  --surface-elevated:#FAFBFA;
-  --line:#DFE3DC;
-  --line-light:#ECF0E9;
-  --flare:#FF5A1F;
-  --flare-light:#FFF1EB;
-  --volt:#C7F23E;
-  --muted:#6B7A70;
+  --surface-elevated:#FFFAF3;
+  --line:#E7DCCB;
+  --line-light:#F2E9DC;
+  --flare:#0071FF;            /* Blue Raspberry — สีเน้น */
+  --flare-light:#E4EFFF;
+  --volt:#C8FF40;             /* Lime Charge */
+  --berry:#FF007A;            /* Berry Vibe */
+  --muted:#7A6E60;
 
   /* ─── elevation ─── */
-  --shadow-sm:0 1px 2px rgba(11,60,40,.06);
-  --shadow:0 1px 3px rgba(11,60,40,.08), 0 8px 20px -12px rgba(11,60,40,.12);
-  --shadow-lg:0 4px 6px rgba(11,60,40,.06), 0 16px 40px -16px rgba(11,60,40,.18);
-  --shadow-xl:0 8px 12px rgba(11,60,40,.08), 0 24px 50px -20px rgba(11,60,40,.22);
+  --shadow-sm:0 1px 2px rgba(11,18,32,.06);
+  --shadow:0 1px 3px rgba(11,18,32,.08), 0 8px 20px -12px rgba(11,18,32,.14);
+  --shadow-lg:0 4px 6px rgba(11,18,32,.06), 0 16px 40px -16px rgba(11,18,32,.20);
+  --shadow-xl:0 8px 12px rgba(11,18,32,.08), 0 24px 50px -20px rgba(11,18,32,.24);
 
   /* ─── shape ─── */
   --radius:16px;
@@ -481,16 +482,37 @@ h1,h2,h3,.display{
 
 /* ===== notification bell (nav) ===== */
 .bell{
-  position:relative;text-decoration:none;font-size:1.1rem;padding:8px 10px;
-  border-radius:var(--radius-xs);line-height:1;
-  transition:background var(--duration) var(--ease);
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:38px;height:38px;text-decoration:none;border-radius:50%;
+  color:rgba(255,255,255,.72);
+  transition:background var(--duration) var(--ease),color var(--duration) var(--ease);
 }
-.bell:hover{background:rgba(255,255,255,.1)}
-.bell.active{background:var(--volt)}
+.bell-ico{
+  width:19px;height:19px;fill:currentColor;display:block;
+  transition:transform var(--duration) var(--ease-spring);
+}
+.bell:hover{background:rgba(255,255,255,.12);color:#fff}
+.bell:hover .bell-ico{transform:rotate(-10deg)}
+.bell.active{background:var(--pitch);color:#fff}
+.bell:focus-visible{outline:2px solid var(--flare);outline-offset:2px}
+
+/* มีแจ้งเตือนค้าง — สั่นเบา ๆ ครั้งเดียวตอนโหลดหน้า */
+.bell:has(.bell-badge) .bell-ico{animation:bellRing 1.4s var(--ease) 1}
+@keyframes bellRing{
+  0%,70%,100%{transform:rotate(0)}
+  76%{transform:rotate(-12deg)}
+  82%{transform:rotate(9deg)}
+  88%{transform:rotate(-6deg)}
+  94%{transform:rotate(3deg)}
+}
+
 .bell-badge{
-  position:absolute;top:1px;right:2px;background:var(--flare);color:#fff;font-size:.6rem;
-  font-weight:700;min-width:16px;height:16px;border-radius:9px;display:inline-flex;align-items:center;
-  justify-content:center;padding:0 4px;font-family:"Inter",sans-serif;
+  position:absolute;top:3px;right:2px;
+  background:var(--flare);color:#fff;font-size:.6rem;font-weight:700;
+  min-width:15px;height:15px;border-radius:9px;
+  display:inline-flex;align-items:center;justify-content:center;padding:0 4px;
+  font-family:"Inter",sans-serif;line-height:1;
+  border:1.5px solid var(--ink);
 }
 
 /* ===== notifications page ===== */
@@ -996,3 +1018,56 @@ button.sec-more:hover{color:var(--pitch-dark)}
   .bars{height:160px}
   .bar{width:16px}
 }
+
+/* ===================== FIZZON PALETTE OVERRIDES ===================== */
+/* nav / brand */
+.nav{background:rgba(11,18,32,.94)}
+
+/* buttons */
+.btn-flare:hover{background:#0060DB}
+.card:hover .sport-tag{background:#FFDCC2}
+
+/* auth */
+.auth-shell{background:linear-gradient(160deg,var(--chalk) 0%,#F6E6D2 50%,#F0DCC4 100%)}
+.select-wrap select:hover{border-color:#D6C7B2}
+.select-wrap select:focus{background:#FFFDF9}
+
+/* profile */
+.profile-head{background:linear-gradient(135deg,var(--ink) 0%,#16304A 100%)}
+.avatar,.c-avatar{background:linear-gradient(135deg,var(--pitch),#FF9A45)}
+.avatar{box-shadow:0 4px 12px rgba(255,106,0,.32)}
+.bar-fill{background:linear-gradient(90deg,var(--pitch),#FF9A45)}
+.member-since{color:var(--pitch-dark);background:var(--pitch-light)}
+
+/* pills — เขียว = สำเร็จ (ใช้ lime), ส้ม = รอ/เตือน (ใช้ berry) */
+.pill.green{background:#F1FFD4;color:#4E7A00}
+.pill.orange{background:#FFE6F0;color:#C4005E}
+.c-act-danger:hover{color:var(--berry)}
+
+/* tournament stripes / accent gradients */
+.card.tour .stripe{background:linear-gradient(90deg,var(--flare),#4C9BFF)}
+.h-card.tour .h-stripe{background:linear-gradient(180deg,var(--flare),#4C9BFF)}
+.rank-fill{background:linear-gradient(90deg,var(--pitch),var(--pitch-dark))}
+.rank-fill.alt{background:linear-gradient(90deg,var(--flare),#4C9BFF)}
+
+/* notifications */
+.notif-ico.join,.notif-ico.join_approved{background:var(--pitch-light)}
+.notif-ico.join_request{background:#FFF6D6}
+.notif-ico.join_rejected,.notif-ico.cancel_join,.notif-ico.post_cancelled{background:#FFE6F0}
+.notif-ico.new_post{background:var(--flare-light)}
+
+/* calendar */
+.calendar-day.muted,.cal-day.past{color:#C0B29E}
+.cal-dot{background:var(--flare)}
+.lg-dot{background:var(--flare)}
+
+/* dashboard sections */
+.dash-head{background:linear-gradient(135deg,var(--ink) 0%,#16304A 100%)}
+.kpi-ico.posts{background:#FFF6D6}
+.kpi-ico.posts::after{background:#B07B12}
+.kpi-ico.live{background:#F1FFD4}
+.kpi-ico.live::after{background:#4E7A00}
+.kpi-ico.joins{background:var(--flare-light)}
+.kpi-ico.joins::after{background:var(--flare)}
+.bar.b-post{background:var(--pitch)}
+.bar.b-join{background:var(--flare)}
