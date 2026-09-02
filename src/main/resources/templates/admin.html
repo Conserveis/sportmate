@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('แดชบอร์ดผู้ดูแลระบบ')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('admin')}"></nav>
+
+<div class="wrap">
+    <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
+    <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+    <!-- ===== header ===== -->
+    <div class="adm-hero">
+        <div>
+            <div class="eyebrow">Admin Dashboard</div>
+            <h1>สวัสดี, <span th:text="${currentUser.userName}">admin</span></h1>
+            <p>ภาพรวมการใช้งาน โพสต์ และการเข้าร่วมกิจกรรมทั้งระบบ</p>
+        </div>
+        <div class="adm-hero-badge">ผู้ดูแลระบบ</div>
+    </div>
+
+    <!-- ===== KPI ===== -->
+    <div class="kpi-row">
+        <div class="kpi">
+            <div class="kpi-ico users"></div>
+            <div>
+                <div class="kpi-label">ผู้ใช้ทั้งหมด</div>
+                <div class="kpi-value" th:text="${s.users}">0</div>
+                <div class="kpi-sub up" th:text="'+' + ${s.newUsers30d} + ' ใน 30 วัน'">+0</div>
+            </div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-ico posts"></div>
+            <div>
+                <div class="kpi-label">โพสต์ทั้งหมด</div>
+                <div class="kpi-value" th:text="${s.posts}">0</div>
+                <div class="kpi-sub" th:text="${s.tournaments} + ' ทัวร์นาเมนต์'">0</div>
+            </div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-ico live"></div>
+            <div>
+                <div class="kpi-label">กิจกรรมที่เปิดรับ</div>
+                <div class="kpi-value" th:text="${s.activePosts}">0</div>
+                <div class="kpi-sub down" th:text="'ยกเลิกไปแล้ว ' + ${s.cancelledPosts}">0</div>
+            </div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-ico joins"></div>
+            <div>
+                <div class="kpi-label">การเข้าร่วม</div>
+                <div class="kpi-value" th:text="${s.joins}">0</div>
+                <div class="kpi-sub" th:text="'รออนุมัติ ' + ${s.pendingJoins}">0</div>
+            </div>
+        </div>
+        <div class="kpi kpi-dark">
+            <div>
+                <div class="kpi-label">คะแนนรีวิวเฉลี่ย</div>
+                <div class="kpi-value" th:text="${s.avgScore}">0.00</div>
+                <div class="kpi-sub" th:text="'จาก ' + ${s.reviews} + ' รีวิว'">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== แถวกราฟ ===== -->
+    <div class="adm-grid">
+
+        <!-- แนวโน้ม 6 เดือน -->
+        <div class="adm-card span2">
+            <div class="adm-head">
+                <h2>แนวโน้ม 6 เดือนล่าสุด</h2>
+                <div class="adm-legend">
+                    <span><i style="background:var(--pitch)"></i> โพสต์ที่สร้าง</span>
+                    <span><i style="background:var(--flare)"></i> การเข้าร่วม</span>
+                </div>
+            </div>
+            <div class="bars">
+                <div class="bar-col" th:each="m : ${trend}">
+                    <div class="bar-stack">
+                        <div class="bar b-post" th:style="'height:' + ${m.postsPct} + '%'"
+                             th:title="'โพสต์ ' + ${m.posts}">
+                            <span class="bar-num" th:text="${m.posts}">0</span>
+                        </div>
+                        <div class="bar b-join" th:style="'height:' + ${m.joinsPct} + '%'"
+                             th:title="'เข้าร่วม ' + ${m.joins}">
+                            <span class="bar-num" th:text="${m.joins}">0</span>
+                        </div>
+                    </div>
+                    <div class="bar-label" th:text="${m.label}">ม.ค.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- โดนัทสถานะโพสต์ -->
+        <div class="adm-card">
+            <div class="adm-head"><h2>สถานะโพสต์</h2></div>
+            <div class="donut-wrap">
+                <svg viewBox="0 0 140 140" class="donut">
+                    <circle cx="70" cy="70" r="54" class="donut-track"></circle>
+                    <circle th:each="seg : ${statusDonut}"
+                            cx="70" cy="70" r="54"
+                            class="donut-seg"
+                            th:attr="stroke=${seg.color},
+                                     stroke-dasharray=${seg.dash} + ' ' + ${seg.gap},
+                                     stroke-dashoffset=${seg.offset}"></circle>
+                    <text x="70" y="66" class="donut-c1" th:text="${s.fillRate} + '%'">0%</text>
+                    <text x="70" y="84" class="donut-c2">อัตราเติมเต็ม</text>
+                </svg>
+                <div class="donut-legend">
+                    <div th:each="seg : ${statusDonut}">
+                        <i th:style="'background:' + ${seg.color}"></i>
+                        <span th:text="${seg.label}">สถานะ</span>
+                        <b th:text="${seg.count}">0</b>
+                        <em th:text="${seg.pct} + '%'">0%</em>
+                    </div>
+                    <div th:if="${statusDonut.isEmpty()}" class="adm-empty">ยังไม่มีข้อมูล</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- โพสต์ล่าสุด -->
+        <div class="adm-card span2">
+            <div class="adm-head">
+                <h2>โพสต์ล่าสุด</h2>
+                <a class="sec-more" th:href="@{/posts}">ดูทั้งหมด ›</a>
+            </div>
+            <div class="adm-table-wrap">
+                <table class="adm-table">
+                    <thead>
+                    <tr>
+                        <th>กิจกรรม</th><th>กีฬา</th><th>ผู้จัด</th>
+                        <th>วันเวลา</th><th>ผู้เข้าร่วม</th><th>สถานะ</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${recentPosts}">
+                        <td><a class="user-link" th:href="@{'/posts/' + ${p.id}}" th:text="${p.name}">ชื่อ</a></td>
+                        <td><span class="sport-tag" th:text="${p.sport}">Sport</span></td>
+                        <td th:text="${p.owner}">owner</td>
+                        <td th:text="${p.datePlay}">-</td>
+                        <td><b th:text="${p.joined}">0</b><span style="color:var(--muted)" th:text="'/' + ${p.max}">/0</span></td>
+                        <td>
+                            <span class="pill"
+                                  th:classappend="${p.status == 'cancelled'} ? 'orange' : (${p.status == 'open'} ? 'green' : 'grey')"
+                                  th:text="${p.status}">open</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${recentPosts.isEmpty()}"><td colspan="6" class="adm-empty">ยังไม่มีโพสต์</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ผู้ใช้ใหม่ -->
+        <div class="adm-card">
+            <div class="adm-head"><h2>ผู้ใช้ใหม่</h2></div>
+            <div class="adm-list">
+                <a class="adm-item" th:each="u : ${recentUsers}" th:href="@{'/users/' + ${u.id}}">
+                    <span class="c-avatar" th:text="${#strings.toUpperCase(#strings.substring(u.name,0,1))}">U</span>
+                    <span class="adm-item-body">
+                        <span class="adm-item-name" th:text="${u.name}">user</span>
+                        <span class="adm-item-meta" th:text="${u.gmail}">mail</span>
+                    </span>
+                    <span class="pill grey" th:text="${u.provider}">local</span>
+                </a>
+                <div th:if="${recentUsers.isEmpty()}" class="adm-empty">ยังไม่มีผู้ใช้</div>
+            </div>
+        </div>
+
+        <!-- แยกตามกีฬา -->
+        <div class="adm-card">
+            <div class="adm-head"><h2>กีฬายอดนิยม</h2></div>
+            <div class="rank">
+                <div class="rank-row" th:each="b : ${bySport}">
+                    <div class="rank-top">
+                        <span th:text="${b.sport}">Sport</span>
+                        <span class="rank-num"><b th:text="${b.posts}">0</b> โพสต์ · <span th:text="${b.joins}">0</span> เข้าร่วม</span>
+                    </div>
+                    <div class="rank-track"><div class="rank-fill" th:style="'width:' + ${b.pct} + '%'"></div></div>
+                </div>
+                <div th:if="${bySport.isEmpty()}" class="adm-empty">ยังไม่มีข้อมูล</div>
+            </div>
+        </div>
+
+        <!-- ผู้จัดกิจกรรมยอดนิยม -->
+        <div class="adm-card span2">
+            <div class="adm-head"><h2>ผู้จัดกิจกรรมสูงสุด</h2></div>
+            <div class="rank">
+                <div class="rank-row" th:each="o : ${topOrganizers}">
+                    <div class="rank-top">
+                        <a class="user-link" th:href="@{'/users/' + ${o.id}}" th:text="${o.name}">user</a>
+                        <span class="rank-num"><b th:text="${o.posts}">0</b> โพสต์ · ★ <span th:text="${o.score}">0.00</span></span>
+                    </div>
+                    <div class="rank-track"><div class="rank-fill alt" th:style="'width:' + ${o.pct} + '%'"></div></div>
+                </div>
+                <div th:if="${topOrganizers.isEmpty()}" class="adm-empty">ยังไม่มีข้อมูล</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

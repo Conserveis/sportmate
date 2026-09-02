@@ -1,6 +1,11 @@
 package com.sportmate.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "UserType")
@@ -15,6 +20,7 @@ public class UserType {
 
     public static final String NORMAL = "Normal";
     public static final String MEMBER = "Member";
+    public static final String ADMIN = "Admin";
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }

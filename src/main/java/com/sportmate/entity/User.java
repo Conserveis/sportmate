@@ -89,6 +89,10 @@ public class User {
                 && membershipExpireAt != null
                 && membershipExpireAt.isAfter(LocalDateTime.now());
     }
+    @Transient
+    public boolean isAdmin() {
+        return userType != null && UserType.ADMIN.equals(userType.getName());
+    }
 
     // ---- getters / setters ----
     public Integer getId() { return id; }

@@ -40,7 +40,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: rootpass
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      TZ: Asia/Bangkok  
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@sportmate.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      TZ: Asia/Bangkok
     ports:
       - "8080:8080"
     depends_on:

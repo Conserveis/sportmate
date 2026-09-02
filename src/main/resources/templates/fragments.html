@@ -237,6 +237,8 @@
             <a class="link" th:classappend="${active=='posts'}?'active'" th:href="@{/posts}">Post</a>
             <a class="link" th:classappend="${active=='tournaments'}?'active'" th:href="@{/tournaments}">Tournament</a>
             <a class="link" th:classappend="${active=='archive'}?'active'" th:href="@{/archive}">จัดเก็บกิจกรรม</a>
+            <a class="link" th:if="${currentUser != null and currentUser.admin}"
+               th:classappend="${active=='admin'}?'active'" th:href="@{/admin}">Admin</a>
             <span class="spacer"></span>
             <a class="bell" th:classappend="${active=='notifications'}?'active'" th:href="@{/notifications}" title="การแจ้งเตือน">
                 🔔<span class="bell-badge" th:if="${unreadCount != null and unreadCount > 0}" th:text="${unreadCount}">0</span>
