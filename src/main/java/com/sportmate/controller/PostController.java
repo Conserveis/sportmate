@@ -107,7 +107,9 @@ public class PostController {
         model.addAttribute("hasJoined", eventService.hasJoined(me, p));
         model.addAttribute("isPending", eventService.isPending(me, p));
         model.addAttribute("isOwner", p.getOwner().getId().equals(me.getId()));
-        model.addAttribute("comments", chatService.comments(p));
+        model.addAttribute("comments", chatService.comments(me, p));
+        model.addAttribute("canViewComments", chatService.canAccess(me, p));
+        model.addAttribute("canComment", chatService.canComment(me, p));
         model.addAttribute("participantReviewed", participantReviewed);
         model.addAttribute("eventFinished", p.getDatePlay().isBefore(LocalDateTime.now()));
         return "post-detail";

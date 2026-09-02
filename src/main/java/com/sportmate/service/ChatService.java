@@ -22,7 +22,22 @@ public class ChatService {
         this.eventService = eventService;
     }
 
-    public List<Chat> comments(Post post) {
+        /** ดูความคิดเห็นได้เฉพาะเจ้าของโพสต์ และผู้เข้าร่วมที่ได้รับอนุมัติแล้วเท่านั้น */
+    public boolean canAccess(User user, Post post) {
+        if (user == null || post == null) return false;
+        if (post.getOwner().getId().equals(user.getId())) return true;
+        return eventService.hasJoined(user, post);   // approved เท่านั้น (pending = false)
+    }
+
+    /** ส่งความคิดเห็นได้ก็ต่อเมื่อเห็นความคิดเห็นได้ + กิจกรรมยังไม่ถูกยกเลิกและยังไม่หมดเวลา */
+    public boolean canComment(User user, Post post) {
+        return canAccess(user, post)
+                && !"cancelled".equals(post.getStatus())
+                && !post.isExpired();
+    }
+
+    public List<Chat> comments(User user, Post post) {
+        if (!canAccess(user, post)) return List.of();
         return chatRepo.findByPostOrderByTimeAsc(post);
     }
 
@@ -30,9 +45,14 @@ public class ChatService {
      //คอมเมนต์ในโพสต์
     @Transactional
     public Chat addComment(User user, Post post, String text) {
-        boolean owner = post.getOwner().getId().equals(user.getId());
-        if (!owner && !eventService.hasJoined(user, post)) {
-            throw new IllegalStateException("ต้องเข้าร่วมกิจกรรมก่อนจึงจะคอมเมนต์ได้");
+        if (!canAccess(user, post)) {
+            throw new IllegalStateException("ต้องเข้าร่วมกิจกรรมและได้รับการอนุมัติก่อนจึงจะคอมเมนต์ได้");
+        }
+        if ("cancelled".equals(post.getStatus())) {
+            throw new IllegalStateException("กิจกรรมนี้ถูกยกเลิกแล้ว ไม่สามารถแสดงความคิดเห็นได้");
+        }
+        if (post.isExpired()) {
+            throw new IllegalStateException("กิจกรรมนี้จบไปแล้ว ไม่สามารถแสดงความคิดเห็นได้");
         }
         if (text == null || text.isBlank()) {
             throw new IllegalArgumentException("ข้อความว่างเปล่า");
@@ -55,6 +75,9 @@ public class ChatService {
         }
         if (!c.getUser().getId().equals(user.getId())) {
             throw new IllegalStateException("แก้ไขได้เฉพาะความคิดเห็นของตัวเองเท่านั้น");
+        }
+        if (c.getPost().isExpired() || "cancelled".equals(c.getPost().getStatus())) {
+            throw new IllegalStateException("กิจกรรมนี้จบแล้ว ไม่สามารถแก้ไขความคิดเห็นได้");
         }
         if (text == null || text.isBlank()) {
             throw new IllegalArgumentException("ข้อความว่างเปล่า");

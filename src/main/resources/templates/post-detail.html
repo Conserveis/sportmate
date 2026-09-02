@@ -43,10 +43,13 @@
             <!-- comments -->
             <div class="panel" style="margin-top:18px">
                 <h2 style="font-family:'Noto Sans Thai',sans-serif;text-transform:uppercase;font-size:1.1rem;margin-bottom:6px">
-                    ความคิดเห็น (<span th:text="${comments.size()}">0</span>)</h2>
+                    ความคิดเห็น<span th:if="${canViewComments}"> (<span th:text="${comments.size()}">0</span>)</span></h2>
 
-                <div th:if="${comments.isEmpty()}" style="color:var(--muted);font-size:.9rem;padding:8px 0">
-                    ยังไม่มีความคิดเห็น
+                <div th:unless="${canViewComments}" class="locked-note">
+                    เฉพาะผู้เข้าร่วมที่ได้รับการอนุมัติแล้วเท่านั้นที่จะเห็นและร่วมพูดคุยในความคิดเห็นได้
+                </div>
+
+                <div th:if="${canViewComments and comments.isEmpty()}" style="color:var(--muted);font-size:.9rem;padding:8px 0">                    ยังไม่มีความคิดเห็น
                 </div>
 
                 <div class="comment" th:each="c : ${comments}" th:id="'comment-'+${c.id}">
@@ -60,7 +63,7 @@
                         <div class="c-actions"
                              th:if="${currentUser != null and (c.user.id == currentUser.id or isOwner)}">
                             <button type="button" class="c-act"
-                                    th:if="${c.user.id == currentUser.id}"
+                                    th:if="${c.user.id == currentUser.id and canComment}"
                                     th:attr="data-target='edit-'+${c.id}"
                                     onclick="toggleCommentEdit(this)">แก้ไข</button>
                             <form method="post" style="margin:0;display:inline"
@@ -70,9 +73,9 @@
                             </form>
                         </div>
 
-                        <form class="c-edit-form" th:id="'edit-'+${c.id}" method="post"
-                              th:if="${currentUser != null and c.user.id == currentUser.id}"
-                              th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/edit'}">
+                         <form class="c-edit-form" th:id="'edit-'+${c.id}" method="post"
+                              th:if="${currentUser != null and c.user.id == currentUser.id and canComment}"
+                              th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/edit'}"> 
                             <input name="text" th:value="${c.text}" required maxlength="1000">
                             <button type="submit" class="btn btn-primary btn-sm">บันทึก</button>
                             <button type="button" class="btn btn-ghost btn-sm"
@@ -81,14 +84,24 @@
                     </div>
                 </div>
 
-                <!-- comment form: only joined or owner -->
-                <form th:if="${hasJoined or isOwner}" class="comment-form" method="post"
+                <!-- comment form: เจ้าของ/ผู้เข้าร่วมที่อนุมัติแล้ว + กิจกรรมยังไม่จบ -->
+                <form th:if="${canComment}" class="comment-form" method="post"
                       th:action="@{'/posts/' + ${post.id} + '/comment'}">
-                    <input name="text" placeholder="พิมพ์ความคิดเห็น..." required>
+                    <input name="text" placeholder="พิมพ์ความคิดเห็น..." required maxlength="1000">
                     <button class="btn btn-primary btn-sm">ส่ง</button>
                 </form>
-                <div th:unless="${hasJoined or isOwner}" class="locked-note">
-                    เข้าร่วมกิจกรรมก่อนจึงจะแสดงความคิดเห็นได้
+
+                <div th:if="${canViewComments and !canComment}" class="locked-note"
+                     th:text="${post.status == 'cancelled'}
+                              ? 'กิจกรรมนี้ถูกยกเลิกแล้ว ไม่สามารถแสดงความคิดเห็นได้'
+                              : 'กิจกรรมนี้จบไปแล้ว ไม่สามารถแสดงความคิดเห็นเพิ่มได้'">
+                </div>
+
+                <div th:if="${!canViewComments and isPending}" class="locked-note">
+                    คำขอเข้าร่วมของคุณอยู่ระหว่างรอการอนุมัติ เมื่อได้รับอนุมัติแล้วจะเห็นความคิดเห็นทั้งหมด
+                </div>
+                <div th:if="${!canViewComments and !isPending}" class="locked-note">
+                    เข้าร่วมกิจกรรมก่อนจึงจะเห็นและแสดงความคิดเห็นได้
                 </div>
             </div>
         </div>

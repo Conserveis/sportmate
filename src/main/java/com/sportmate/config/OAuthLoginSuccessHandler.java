@@ -24,7 +24,7 @@ public class OAuthLoginSuccessHandler extends SimpleUrlAuthenticationSuccessHand
                                     RememberMeService rememberMeService) {
         this.oAuthAccountService = oAuthAccountService;
         this.rememberMeService = rememberMeService;
-        setDefaultTargetUrl("/posts");
+        setDefaultTargetUrl("/home");
         setAlwaysUseDefaultTargetUrl(true);
     }
 

@@ -6,13 +6,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.sportmate.config.RememberMeService;
 import com.sportmate.entity.User;
 import com.sportmate.service.OAuthAccountService;
 
-import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import com.sportmate.config.RememberMeService;
+import jakarta.servlet.http.HttpSession;
 
 
 //จำลองหน้ายืนยันตัวตนของ ThaiD 
@@ -44,6 +44,6 @@ public class ThaiDMockController {
         User user = oAuthAccountService.findOrCreateFromThaiDMock(pid, fullName);
         session.setAttribute("uid", user.getId());
         rememberMeService.remember(request, response, user.getId());
-        return "redirect:/posts";
+        return "redirect:/home";
     }
 }

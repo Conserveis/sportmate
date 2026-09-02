@@ -71,7 +71,7 @@ public class AuthController {
             } else {
                 rememberMeService.clear(request, response);
             }
-            return "redirect:/posts";
+            return "redirect:/home";
         } catch (UserService.UnverifiedUserException ue) {
             // บัญชียังไม่ยืนยัน OTP -> พาไปหน้ายืนยัน
             session.setAttribute("otpSession", userService.startVerifyExisting(ue.getUserId()));
@@ -155,7 +155,7 @@ public class AuthController {
             } else {
                 rememberMeService.clear(request, response);
             }
-            return "redirect:/posts";
+            return "redirect:/home";
         } catch (Exception e) {
             model.addAttribute("error", ErrorMessage.forUser(e));
             fillOtpModel(model, s);
