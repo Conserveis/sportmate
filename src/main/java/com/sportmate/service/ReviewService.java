@@ -86,9 +86,13 @@ public class ReviewService {
     }
 
     // ---- helper ----
-    private Event loadFinishedEvent(Integer eventId) {
+        private Event loadFinishedEvent(Integer eventId) {
         Event e = eventRepo.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("ไม่พบข้อมูลการเข้าร่วม"));
+        if ("cancelled".equals(e.getPost().getStatus()))
+            throw new IllegalStateException("กิจกรรมนี้ถูกยกเลิกโดยผู้จัด ไม่สามารถให้คะแนนได้");
+        if ("cancelled".equals(e.getStatus()))
+            throw new IllegalStateException("คุณยกเลิกการเข้าร่วมกิจกรรมนี้ไปแล้ว ไม่สามารถให้คะแนนได้");
         if (!e.getPost().getDatePlay().isBefore(LocalDateTime.now()))
             throw new IllegalStateException("กิจกรรมยังไม่สิ้นสุด ไม่สามารถรีวิวได้");
         return e;

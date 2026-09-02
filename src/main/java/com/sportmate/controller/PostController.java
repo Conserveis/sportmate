@@ -261,7 +261,7 @@ public class PostController {
             postService.cancel(id, me(session));
             ra.addFlashAttribute("msg", "ยกเลิกกิจกรรมสำเร็จ");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
+            return "redirect:/posts/" + id;
         }
         return "redirect:/profile";
     }

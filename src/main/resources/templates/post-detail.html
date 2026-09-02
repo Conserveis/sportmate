@@ -7,6 +7,9 @@
 <div class="wrap">
     <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
     <div th:if="${error}" class="flash err" th:text="${error}"></div>
+    <div th:if="${post.status == 'cancelled'}" class="flash err">
+        กิจกรรมนี้ถูกยกเลิกโดยผู้จัดแล้ว
+    </div>
 
     <a th:href="@{${post.tournament?'/tournaments':'/posts'}}"
     style="color:var(--muted);text-decoration:none;font-size:.88rem"><span class="line-icon arrow" aria-hidden="true"></span> กลับ</a>
@@ -49,7 +52,8 @@
                     เฉพาะผู้เข้าร่วมที่ได้รับการอนุมัติแล้วเท่านั้นที่จะเห็นและร่วมพูดคุยในความคิดเห็นได้
                 </div>
 
-                <div th:if="${canViewComments and comments.isEmpty()}" style="color:var(--muted);font-size:.9rem;padding:8px 0">                    ยังไม่มีความคิดเห็น
+                <div th:if="${canViewComments and comments.isEmpty()}" style="color:var(--muted);font-size:.9rem;padding:8px 0">
+                    ยังไม่มีความคิดเห็น
                 </div>
 
                 <div class="comment" th:each="c : ${comments}" th:id="'comment-'+${c.id}">
@@ -73,9 +77,9 @@
                             </form>
                         </div>
 
-                         <form class="c-edit-form" th:id="'edit-'+${c.id}" method="post"
+                        <form class="c-edit-form" th:id="'edit-'+${c.id}" method="post"
                               th:if="${currentUser != null and c.user.id == currentUser.id and canComment}"
-                              th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/edit'}"> 
+                              th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/edit'}">
                             <input name="text" th:value="${c.text}" required maxlength="1000">
                             <button type="submit" class="btn btn-primary btn-sm">บันทึก</button>
                             <button type="button" class="btn btn-ghost btn-sm"
@@ -119,11 +123,27 @@
                      th:text="|ต้องการอีก ${post.minPlayer - joinCount} คนให้ครบขั้นต่ำ|">-</div>
 
                 <!-- actions -->
-                                <div th:if="${isOwner}">
+                <div th:if="${isOwner}">
                     <div style="color:var(--muted);font-size:.85rem;margin-bottom:8px">คุณเป็นเจ้าของกิจกรรมนี้</div>
-                    <a th:if="${post.status != 'cancelled' and !post.expired}"
-                       class="btn btn-ghost" style="width:100%;display:block;text-align:center"
-                       th:href="@{'/posts/' + ${post.id} + '/edit'}">แก้ไขรายละเอียด</a>
+
+                    <div th:if="${post.status == 'cancelled'}" class="pill orange"
+                         style="display:block;padding:8px">✕ กิจกรรมนี้ถูกยกเลิกแล้ว</div>
+
+                    <div th:if="${post.status != 'cancelled' and !post.expired}">
+                        <a class="btn btn-ghost" style="width:100%;display:block;text-align:center"
+                           th:href="@{'/posts/' + ${post.id} + '/edit'}">แก้ไขรายละเอียด</a>
+
+                        <form th:if="${!post.cancelLocked}" method="post" style="margin-top:8px"
+                              th:action="@{'/posts/' + ${post.id} + '/cancel'}"
+                              onsubmit="return confirm('ยกเลิกกิจกรรมนี้? ผู้เข้าร่วมทุกคนจะได้รับการแจ้งเตือน และยกเลิกแล้วกู้คืนไม่ได้')">
+                            <button class="btn btn-ghost" style="width:100%;color:var(--flare);border-color:var(--flare)">
+                                ยกเลิกกิจกรรม
+                            </button>
+                        </form>
+                        <div th:if="${post.cancelLocked}" class="locked-note" style="margin-top:8px"
+                             th:text="|ไม่สามารถยกเลิกกิจกรรมได้แล้ว (ยกเลิกได้ถึง ${#temporals.format(post.cancelDeadline,'dd/MM/yyyy HH:mm')})|">
+                        </div>
+                    </div>
                 </div>
 
                 <div th:unless="${isOwner}">
@@ -186,8 +206,8 @@
                             <button class="btn btn-ghost btn-sm" style="padding:4px 10px;font-size:.78rem;color:#B4340F;border-color:#F6C6B6">ปฏิเสธ</button>
                         </form>
                     </div>
-                                        <!-- ผู้จัดรีวิวผู้เข้าร่วม (หลังกิจกรรมจบแล้วเท่านั้น) -->
-                    <div th:if="${isOwner and eventFinished and e.status=='approved'}"
+                    <!-- ผู้จัดรีวิวผู้เข้าร่วม (หลังกิจกรรมจบแล้วเท่านั้น) -->
+                    <div th:if="${isOwner and eventFinished and post.status != 'cancelled' and e.status=='approved'}"
                          style="flex-basis:100%;margin-top:8px">
                         <div th:if="${participantReviewed[e.id]}" class="pill green">✓ รีวิวแล้ว</div>
                         <form th:unless="${participantReviewed[e.id]}" method="post"

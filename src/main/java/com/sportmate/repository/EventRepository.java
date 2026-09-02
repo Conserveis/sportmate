@@ -54,21 +54,23 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     """)
     List<Event> findApprovedJoinedByUser(@Param("user") User user);
 
-    // หน้า "จัดเก็บกิจกรรม"
+        // หน้า "จัดเก็บกิจกรรม" — ไม่เอากิจกรรมที่ผู้จัดยกเลิก
     @Query("""
         SELECT e FROM Event e
         WHERE e.user = :user
           AND e.status = 'approved'
+          AND e.post.status <> 'cancelled'
           AND e.post.datePlay < :now
         ORDER BY e.post.datePlay DESC
     """)
     List<Event> findArchivedByUser(@Param("user") User user, @Param("now") LocalDateTime now);
 
-    // กิจกรรมที่ยังกำลังจะมาถึง (สำหรับโปรไฟล์)
+        // กิจกรรมที่ยังกำลังจะมาถึง (สำหรับโปรไฟล์) — ไม่เอากิจกรรมที่ถูกยกเลิก
     @Query("""
         SELECT e FROM Event e
         WHERE e.user = :user
           AND e.status IN ('pending','approved')
+          AND e.post.status <> 'cancelled'
           AND e.post.datePlay >= :now
         ORDER BY e.post.datePlay ASC
     """)
