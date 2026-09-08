@@ -163,18 +163,42 @@ public class PostService {
         p.setStatus("open");
         Post saved = postRepo.save(p);
 
-        // แจ้งเตือนผู้ที่ติดตามหมวดกีฬานี้ว่ามีกิจกรรมใหม่ 
+                // โพสต์ทันที → แจ้งเตือนเลย / ตั้งเวลาไว้ → ปล่อยให้ scheduler จัดการเมื่อถึงเวลา
         if (publishAt == null) {
-            String label = tournament ? "ทัวร์นาเมนต์" : "กิจกรรม";
-            for (User follower : userRepo.findFollowersOfSport(sportId)) {
-                if (!follower.getId().equals(owner.getId())) {
-                    notificationService.push(follower,
-                            label + sport.getName() + "ใหม่: \"" + postName + "\"",
-                            "/posts/" + saved.getId(), "new_post");
-                }
+            notifyFollowers(saved);
+        }
+        return saved;
+    }
+
+    /**
+     * แจ้งเตือนผู้ที่ติดตามหมวดกีฬาของโพสต์นี้ว่ามีกิจกรรมใหม่
+     * ใช้ NotifiedAt เป็นตัวกันแจ้งซ้ำ — เรียกกี่ครั้งก็ยิงจริงแค่ครั้งเดียว
+     */
+    @Transactional
+    public void notifyFollowers(Post p) {
+        if (p == null || p.getNotifiedAt() != null) return;
+        if ("cancelled".equals(p.getStatus())) return;
+
+        String label = p.isTournament() ? "ทัวร์นาเมนต์" : "กิจกรรม";
+        for (User follower : userRepo.findFollowersOfSport(p.getSport().getId())) {
+            if (!follower.getId().equals(p.getOwner().getId())) {
+                notificationService.push(follower,
+                        label + p.getSport().getName() + "ใหม่: \"" + p.getPostName() + "\"",
+                        "/posts/" + p.getId(), "new_post");
             }
         }
-            return saved;
+        p.setNotifiedAt(LocalDateTime.now());
+        postRepo.save(p);
+    }
+
+    /** ให้ scheduler เรียก: หาโพสต์ที่ถึงเวลาเผยแพร่แล้วและยังไม่แจ้ง แล้วยิงแจ้งเตือน */
+    @Transactional
+    public int notifyDuePosts() {
+        List<Post> due = postRepo.findDueForNotify(LocalDateTime.now());
+        for (Post p : due) {
+            notifyFollowers(p);
+        }
+        return due.size();
     }
 
     /**

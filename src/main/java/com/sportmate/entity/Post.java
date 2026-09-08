@@ -52,6 +52,10 @@ public class Post {
     @Column(name = "PublishAt")
     private LocalDateTime publishAt;   // null = เผยแพร่ทันที
 
+    /** เวลาที่ยิงแจ้งเตือนผู้ติดตามกีฬาไปแล้ว — null = ยังไม่ได้แจ้ง (กันแจ้งซ้ำ) */
+    @Column(name = "NotifiedAt")
+    private LocalDateTime notifiedAt;
+
     @Column(name = "MaxPlayer", nullable = false)
     private Integer maxPlayer;
 
@@ -108,6 +112,8 @@ public class Post {
     public void setDateCreate(LocalDateTime dateCreate) { this.dateCreate = dateCreate; }
     public LocalDateTime getPublishAt() { return publishAt; }
     public void setPublishAt(LocalDateTime publishAt) { this.publishAt = publishAt; }
+    public LocalDateTime getNotifiedAt() { return notifiedAt; }
+    public void setNotifiedAt(LocalDateTime notifiedAt) { this.notifiedAt = notifiedAt; }
     public Integer getMaxPlayer() { return maxPlayer; }
     public void setMaxPlayer(Integer maxPlayer) { this.maxPlayer = maxPlayer; }
     public Integer getMinPlayer() { return minPlayer; }

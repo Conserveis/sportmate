@@ -91,4 +91,15 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
                       @Param("locationId") Integer locationId,
                       @Param("fromDt") LocalDateTime fromDt,
                       @Param("toDt") LocalDateTime toDt);
+
+    /** โพสต์ที่ตั้งเวลาไว้ ถึงเวลาเผยแพร่แล้ว แต่ยังไม่ได้แจ้งเตือน */
+    @Query("""
+        SELECT p FROM Post p
+        WHERE p.publishAt IS NOT NULL
+          AND p.publishAt <= :now
+          AND p.notifiedAt IS NULL
+          AND p.status <> 'cancelled'
+        ORDER BY p.publishAt ASC
+    """)
+    List<Post> findDueForNotify(@Param("now") LocalDateTime now);
 }
