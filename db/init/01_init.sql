@@ -114,6 +114,7 @@ CREATE TABLE `Post` (
   `DatePlay` datetime NOT NULL,
   `DateCreate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `PublishAt` datetime DEFAULT NULL,
+  `NotifiedAt` datetime DEFAULT NULL,
   `MaxPlayer` int NOT NULL,
   `MinPlayer` int NOT NULL,
   `IsPublic` tinyint(1) NOT NULL DEFAULT '1',
@@ -124,6 +125,7 @@ CREATE TABLE `Post` (
   KEY `SportID` (`SportID`),
   KEY `LocationID` (`LocationID`),
   KEY `idx_post_status_publish` (`Status`,`PublishAt`),
+  KEY `idx_post_notify` (`NotifiedAt`,`PublishAt`),
   CONSTRAINT `Post_ibfk_1` FOREIGN KEY (`OwnerUserID`) REFERENCES `User` (`UserID`),
   CONSTRAINT `Post_ibfk_2` FOREIGN KEY (`PostTypeID`) REFERENCES `PostType` (`PostTypeID`),
   CONSTRAINT `Post_ibfk_3` FOREIGN KEY (`SportID`) REFERENCES `Sport` (`SportID`),
@@ -134,9 +136,13 @@ CREATE TABLE `Post` (
 
 LOCK TABLES `Post` WRITE;
 /*!40000 ALTER TABLE `Post` DISABLE KEYS */;
-INSERT INTO `Post` VALUES (1,2,1,3,1,'หาเพื่อนเตะบอล 5v5 เย็นนี้','มาสนุกกันครับ ขาดอีก 4 คน','2026-07-23 09:48:52','2026-07-22 09:48:52',NULL,10,6,1,'open'),(2,1,1,1,3,'แบดมินตันคู่ผสม','ระดับกลาง สนุก ๆ','2026-07-24 09:48:52','2026-07-22 09:48:52',NULL,6,4,1,'open'),(3,1,1,4,6,'วิ่งเช้าเมื่อวาน (หมดเวลาแล้ว)','โพสต์นี้หมดเวลา ควรหายจากหน้า Post','2026-07-21 09:48:52','2026-07-22 09:48:52',NULL,8,3,1,'open'),(4,2,2,2,1,'บาสเกตบอลทัวร์นาเมนต์ประจำเดือน','ทีมละ 5 คน ชิงถ้วยรางวัล','2026-07-29 09:48:52','2026-07-22 09:48:52',NULL,40,10,1,'open'),(5,3,1,5,4,'หาเพื่อนซ้อมระบำใต้น้ำ','','2026-08-25 20:00:00','2026-08-25 10:59:37',NULL,10,3,1,'open'),(6,3,1,4,1,'test post','private','2026-08-25 22:59:00','2026-08-25 22:50:57',NULL,5,3,0,'open'),(7,3,1,3,1,'test comment','','2026-08-30 04:50:00','2026-08-30 04:41:15',NULL,10,4,1,'open'),(8,7,1,3,1,'test review','','2026-08-30 05:21:00','2026-08-30 05:20:41',NULL,10,4,1,'open'),(9,7,1,3,1,'ะำหะนะ','','2026-08-30 05:27:00','2026-08-30 05:26:49',NULL,10,4,1,'open'),(10,2,1,3,1,'test review','','2026-08-30 05:42:00','2026-08-30 05:41:55',NULL,10,4,1,'open'),(11,2,1,3,1,'test review','','2026-08-30 05:43:00','2026-08-30 05:42:17',NULL,10,4,1,'open'),(12,7,1,3,1,'test cancle','','2026-08-31 05:20:00','2026-08-31 05:17:34',NULL,10,4,1,'open'),(13,1,1,3,1,'test cancle','','2026-09-01 07:18:00','2026-08-31 05:18:42',NULL,10,4,1,'cancelled'),(14,7,2,3,1,'test cancle','','2026-08-31 05:39:00','2026-08-31 05:33:09',NULL,10,4,1,'open'),(15,7,1,3,1,'test edit post','','2026-08-31 05:43:00','2026-08-31 05:41:28',NULL,10,4,1,'open'),(16,3,1,3,1,'ะำหะนะ','','2026-09-04 06:45:00','2026-09-02 06:45:59',NULL,10,4,1,'open'),(17,3,1,3,1,'demo','','2026-09-04 07:16:00','2026-09-02 07:16:16',NULL,10,4,0,'open');
+INSERT INTO `Post` (`PostID`,`OwnerUserID`,`PostTypeID`,`SportID`,`LocationID`,`PostName`,`Description`,`DatePlay`,`DateCreate`,`PublishAt`,`MaxPlayer`,`MinPlayer`,`IsPublic`,`Status`) VALUES (1,2,1,3,1,'หาเพื่อนเตะบอล... 5v5 เย็นนี้','มาสนุกกันครับ ขาดอีก 4 คน','2026-07-23 09:48:52','2026-07-22 09:48:52',NULL,10,6,1,'open'),(2,1,1,1,3,'แบดมินตันคู่ผสม','ระดับกลาง สนุก ๆ','2026-07-24 09:48:52','2026-07-22 09:48:52',NULL,6,4,1,'open'),(3,1,1,4,6,'วิ่งเช้าเมื่อวาน (หมดเวลาแล้ว)','โพสต์นี้หมดเวลา ควรหายจากหน้า Post','2026-07-21 09:48:52','2026-07-22 09:48:52',NULL,8,3,1,'open'),(4,2,2,2,1,'บาสเกตบอลทัวร์นาเมนต์ประจำเดือน','ทีมละ 5 คน ชิงถ้วยรางวัล','2026-07-29 09:48:52','2026-07-22 09:48:52',NULL,40,10,1,'open'),(5,3,1,5,4,'หาเพื่อนซ้อมระบำใต้น้ำ','','2026-08-25 20:00:00','2026-08-25 10:59:37',NULL,10,3,1,'open'),(6,3,1,4,1,'test post','private','2026-08-25 22:59:00','2026-08-25 22:50:57',NULL,5,3,0,'open'),(7,3,1,3,1,'test comment','','2026-08-30 04:50:00','2026-08-30 04:41:15',NULL,10,4,1,'open'),(8,7,1,3,1,'test review','','2026-08-30 05:21:00','2026-08-30 05:20:41',NULL,10,4,1,'open'),(9,7,1,3,1,'ะำหะนะ','','2026-08-30 05:27:00','2026-08-30 05:26:49',NULL,10,4,1,'open'),(10,2,1,3,1,'test review','','2026-08-30 05:42:00','2026-08-30 05:41:55',NULL,10,4,1,'open'),(11,2,1,3,1,'test review','','2026-08-30 05:43:00','2026-08-30 05:42:17',NULL,10,4,1,'open'),(12,7,1,3,1,'test cancle','','2026-08-31 05:20:00','2026-08-31 05:17:34',NULL,10,4,1,'open'),(13,1,1,3,1,'test cancle','','2026-09-01 07:18:00','2026-08-31 05:18:42',NULL,10,4,1,'cancelled'),(14,7,2,3,1,'test cancle','','2026-08-31 05:39:00','2026-08-31 05:33:09',NULL,10,4,1,'open'),(15,7,1,3,1,'test edit post','','2026-08-31 05:43:00','2026-08-31 05:41:28',NULL,10,4,1,'open'),(16,3,1,3,1,'ะำหะนะ','','2026-09-04 06:45:00','2026-09-02 06:45:59',NULL,10,4,1,'open'),(17,3,1,3,1,'demo','','2026-09-04 07:16:00','2026-09-02 07:16:16',NULL,10,4,0,'open');
 /*!40000 ALTER TABLE `Post` ENABLE KEYS */;
 UNLOCK TABLES;
+
+-- โพสต์ตัวอย่างทั้งหมดถือว่าแจ้งเตือนไปแล้ว กัน scheduler ยิงย้อนหลังตอนรันครั้งแรก
+UPDATE `Post` SET `NotifiedAt` = COALESCE(`PublishAt`, `DateCreate`)
+WHERE `PublishAt` IS NULL OR `PublishAt` <= NOW();
 DROP TABLE IF EXISTS `PostType`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
