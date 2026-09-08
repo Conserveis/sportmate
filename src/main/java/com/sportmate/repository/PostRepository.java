@@ -102,4 +102,16 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
         ORDER BY p.publishAt ASC
     """)
     List<Post> findDueForNotify(@Param("now") LocalDateTime now);
+
+        /** กิจกรรมที่กำลังจะถึงภายในช่วงเวลาที่กำหนด — ใช้ส่งแจ้งเตือนล่วงหน้า */
+    @Query("""
+        SELECT p FROM Post p
+        WHERE p.status <> 'cancelled'
+          AND p.datePlay > :now
+          AND p.datePlay <= :until
+          AND (p.publishAt IS NULL OR p.publishAt <= :now)
+        ORDER BY p.datePlay ASC
+    """)
+    List<Post> findUpcomingForReminder(@Param("now") LocalDateTime now,
+                                       @Param("until") LocalDateTime until);
 }
