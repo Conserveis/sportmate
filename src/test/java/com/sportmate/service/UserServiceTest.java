@@ -1,11 +1,11 @@
 package com.sportmate.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class UserServiceTest {
 
@@ -39,5 +39,36 @@ class UserServiceTest {
     @DisplayName("รหัสผ่าน null ต้องโยน IllegalArgumentException")
     void testNullPassword() {
         assertThrows(IllegalArgumentException.class, () -> UserService.validatePassword(null));
+    }
+        @ParameterizedTest
+    @ValueSource(strings = {
+            "somchai@gmail.com",
+            "65010001@kmitl.ac.th",
+            "  Test.User@GMAIL.com  ",   // trim + lowercase ให้อัตโนมัติ
+            "user+tag@kmitl.ac.th"
+    })
+    @DisplayName("อีเมลที่ถูกต้อง: เฉพาะโดเมน gmail.com และ kmitl.ac.th")
+    void testValidEmails(String email) {
+        assertDoesNotThrow(() -> UserService.validateEmail(email));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "",
+            "abc",                  // ไม่มี @
+            "a@hotmail.com",        // โดเมนไม่อนุญาต
+            "a@gmail.com.co",       // โดเมนปลอม
+            "a@sub.gmail.com",      // subdomain ไม่นับ
+            "@gmail.com"            // ไม่มีชื่อผู้ใช้
+    })
+    @DisplayName("อีเมลที่ไม่ถูกต้อง: ผิดรูปแบบหรือโดเมนไม่อนุญาต")
+    void testInvalidEmails(String email) {
+        assertThrows(IllegalArgumentException.class, () -> UserService.validateEmail(email));
+    }
+
+    @Test
+    @DisplayName("อีเมล null ต้องโยน IllegalArgumentException")
+    void testNullEmail() {
+        assertThrows(IllegalArgumentException.class, () -> UserService.validateEmail(null));
     }
 }

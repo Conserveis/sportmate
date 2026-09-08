@@ -50,15 +50,16 @@ public class UserService {
      * ยังไม่เขียนอะไรลง DB ทั้งสิ้น บัญชีจะถูกสร้างก็ต่อเมื่อ OTP ผ่านเท่านั้น
      */
     public OtpSession startRegistration(String userName, String gmail, String rawPassword) {
+        String email = validateEmail(gmail);
         if (userRepo.existsByUserName(userName))
             throw new IllegalArgumentException("ชื่อผู้ใช้งานนี้มีผู้ใช้แล้ว");
-        if (userRepo.existsByGmail(gmail))
+        if (userRepo.existsByGmail(email))
             throw new IllegalArgumentException("อีเมลนี้มีผู้ใช้แล้ว");
         validatePassword(rawPassword);
 
         OtpSession s = new OtpSession();
         s.setUserName(userName);
-        s.setGmail(gmail);
+        s.setGmail(email);
         s.setPasswordHash(encoder.encode(rawPassword));
         s.issueNewCode();
         return s;
@@ -236,6 +237,32 @@ public void setPassword(Integer userId, String currentPassword, String newPasswo
     userRepo.save(u);
 }
 
+/** โดเมนอีเมลที่อนุญาตให้ใช้สมัคร / แก้ไขโปรไฟล์ */
+public static final java.util.Set<String> ALLOWED_EMAIL_DOMAINS =
+        java.util.Set.of("gmail.com", "kmitl.ac.th");
+
+private static final java.util.regex.Pattern EMAIL_PATTERN =
+        java.util.regex.Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+
+/**
+ * ตรวจรูปแบบอีเมล + จำกัดโดเมน แล้วคืนค่าอีเมลที่ trim/lowercase แล้ว
+ * อนุญาตเฉพาะ @gmail.com และ @kmitl.ac.th
+ */
+public static String validateEmail(String rawEmail) {
+    String email = rawEmail == null ? "" : rawEmail.trim().toLowerCase();
+
+    if (email.isBlank())
+        throw new IllegalArgumentException("กรุณากรอกอีเมล");
+    if (!EMAIL_PATTERN.matcher(email).matches())
+        throw new IllegalArgumentException("รูปแบบอีเมลไม่ถูกต้อง (ตัวอย่าง: name@gmail.com)");
+
+    String domain = email.substring(email.indexOf('@') + 1);
+    if (!ALLOWED_EMAIL_DOMAINS.contains(domain))
+        throw new IllegalArgumentException("อนุญาตเฉพาะอีเมล @gmail.com และ @kmitl.ac.th เท่านั้น");
+
+    return email;
+}
+
 public static void validatePassword(String password) {
     if (password == null || password.length() < 8) {
         throw new IllegalArgumentException("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร");
@@ -292,7 +319,7 @@ private String providerLabel(String provider) {
         User u = getById(userId);
 
         String newName  = userName == null ? "" : userName.trim();
-        String newMail  = gmail == null ? "" : gmail.trim().toLowerCase();
+        String newMail  = validateEmail(gmail);
         String newPhone = phone == null ? "" : phone.trim();
 
         // --- ชื่อผู้ใช้งาน ---
@@ -303,11 +330,7 @@ private String providerLabel(String provider) {
         if (!newName.equals(u.getUserName()) && userRepo.existsByUserName(newName))
             throw new IllegalArgumentException("ชื่อผู้ใช้งานนี้มีผู้ใช้แล้ว");
 
-        // --- อีเมล ---
-        if (newMail.isBlank())
-            throw new IllegalArgumentException("กรุณากรอกอีเมล");
-        if (!newMail.matches("^[\\w.+-]+@[\\w-]+\\.[\\w.-]+$"))
-            throw new IllegalArgumentException("รูปแบบอีเมลไม่ถูกต้อง");
+        // --- อีเมล --- (validateEmail() ตรวจรูปแบบ + โดเมนไปแล้วด้านบน)
         if (!newMail.equalsIgnoreCase(u.getGmail()) && userRepo.existsByGmail(newMail))
             throw new IllegalArgumentException("อีเมลนี้มีผู้ใช้แล้ว");
 

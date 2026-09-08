@@ -16,7 +16,11 @@
             </div>
             <div class="field">
                 <label>อีเมล</label>
-                <input type="email" name="gmail" th:value="${gmail}" required>
+                <input type="email" name="gmail" th:value="${gmail}" required
+                       pattern="[A-Za-z0-9._%+\-]+@(gmail\.com|kmitl\.ac\.th)"
+                       title="ใช้ได้เฉพาะอีเมล @gmail.com หรือ @kmitl.ac.th"
+                       oninput="this.value = this.value.toLowerCase()">
+                <div class="hint">ใช้ได้เฉพาะอีเมล @gmail.com และ @kmitl.ac.th</div>
             </div>
             <div class="field">
                 <label>รหัสผ่าน</label>
