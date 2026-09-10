@@ -10,7 +10,9 @@
 
     <!-- header -->
     <div class="profile-head">
-        <div class="avatar" th:text="${#strings.substring(user.userName,0,1).toUpperCase()}">U</div>
+        <img class="avatar" th:if="${user.avatarUrl != null}" th:src="@{${user.avatarUrl}}" alt="รูปโปรไฟล์">
+        <div class="avatar" th:if="${user.avatarUrl == null}"
+             th:text="${#strings.substring(user.userName,0,1).toUpperCase()}">U</div>
         <div style="flex:1">
             <div class="uname">
                 <span th:text="${user.userName}">username</span>
@@ -124,7 +126,10 @@
         <div class="panel review-item" th:each="r, it : ${stats.reviews}"
             th:classappend="${it.index >= 5} ? ' review-hidden' : ''">
             <div class="review-top">
-                <div class="c-avatar" th:text="${#strings.substring(r.event.user.userName,0,1).toUpperCase()}">U</div>
+                <img class="c-avatar" th:if="${r.event.user.avatarUrl != null}"
+                     th:src="@{${r.event.user.avatarUrl}}" alt="">
+                <div class="c-avatar" th:if="${r.event.user.avatarUrl == null}"
+                     th:text="${#strings.substring(r.event.user.userName,0,1).toUpperCase()}">U</div>
                 <div style="flex:1">
                     <a class="c-name user-link" th:href="@{'/users/' + ${r.event.user.id}}"
                        th:text="${r.event.user.userName}">ผู้รีวิว</a>
@@ -162,7 +167,10 @@
         <h2>รีวิวจากผู้จัด (<span th:text="${stats.participantReviewCount}">0</span>)</h2>
         <div class="panel review-item" th:each="r : ${stats.participantReviews}">
             <div class="review-top">
-                <div class="c-avatar" th:text="${#strings.substring(r.event.post.owner.userName,0,1).toUpperCase()}">U</div>
+                <img class="c-avatar" th:if="${r.event.post.owner.avatarUrl != null}"
+                     th:src="@{${r.event.post.owner.avatarUrl}}" alt="">
+                <div class="c-avatar" th:if="${r.event.post.owner.avatarUrl == null}"
+                     th:text="${#strings.substring(r.event.post.owner.userName,0,1).toUpperCase()}">U</div>
                 <div style="flex:1">
                     <a class="c-name user-link" th:href="@{'/users/' + ${r.event.post.owner.id}}"
                        th:text="${r.event.post.owner.userName}">ผู้จัด</a>

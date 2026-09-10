@@ -251,7 +251,9 @@
             <a class="link who-link" th:if="${currentUser}"
                th:classappend="${active=='profile'}?'active'"
                th:href="@{/profile}" title="ไปที่โปรไฟล์ของฉัน">
-                <span class="who-avatar"
+                <img class="who-avatar" th:if="${currentUser.avatarUrl != null}"
+                     th:src="@{${currentUser.avatarUrl}}" alt="">
+                <span class="who-avatar" th:if="${currentUser.avatarUrl == null}"
                       th:text="${#strings.isEmpty(currentUser.userName)} ? '?' : ${#strings.toUpperCase(#strings.substring(currentUser.userName,0,1))}">S</span>
                 <span class="who-name" th:text="${currentUser.userName}">user</span>
                 <span class="badge-member" th:if="${currentUser.member}">Member</span>

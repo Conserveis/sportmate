@@ -22,6 +22,10 @@ RUN groupadd -r sportmate && useradd -r -g sportmate sportmate
 COPY --from=build /app/target/*.jar app.jar
 RUN chown sportmate:sportmate app.jar
 
+# โฟลเดอร์เก็บรูปโปรไฟล์ — ต้องสร้างและ chown ก่อนสลับ user
+# ไม่งั้น process ที่รันด้วย user sportmate จะเขียนไฟล์ไม่ได้ (Permission denied)
+RUN mkdir -p /app/uploads/avatars && chown -R sportmate:sportmate /app/uploads
+
 USER sportmate
 
 EXPOSE 8080

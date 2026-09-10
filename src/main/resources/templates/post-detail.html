@@ -57,7 +57,10 @@
                 </div>
 
                 <div class="comment" th:each="c : ${comments}" th:id="'comment-'+${c.id}">
-                    <div class="c-avatar" th:text="${#strings.substring(c.user.userName,0,1).toUpperCase()}">U</div>
+                    <img class="c-avatar" th:if="${c.user.avatarUrl != null}"
+                         th:src="@{${c.user.avatarUrl}}" alt="">
+                    <div class="c-avatar" th:if="${c.user.avatarUrl == null}"
+                         th:text="${#strings.substring(c.user.userName,0,1).toUpperCase()}">U</div>
                     <div class="c-body">
                         <a class="c-name user-link" th:href="@{'/users/' + ${c.user.id}}"
                            th:text="${c.user.userName}">user</a>
@@ -187,7 +190,10 @@
                 <h2 style="font-family:'Noto Sans Thai',sans-serif;text-transform:uppercase;font-size:1rem;margin-bottom:10px">รายชื่อผู้เข้าร่วม</h2>
                 <div th:if="${participants.isEmpty()}" style="color:var(--muted);font-size:.88rem">ยังไม่มีผู้เข้าร่วม</div>
                 <div class="comment" th:each="e : ${participants}" style="padding:10px 0;align-items:center;flex-wrap:wrap">
-                    <div class="c-avatar" th:text="${#strings.substring(e.user.userName,0,1).toUpperCase()}">U</div>
+                    <img class="c-avatar" th:if="${e.user.avatarUrl != null}"
+                         th:src="@{${e.user.avatarUrl}}" alt="">
+                    <div class="c-avatar" th:if="${e.user.avatarUrl == null}"
+                         th:text="${#strings.substring(e.user.userName,0,1).toUpperCase()}">U</div>
                     <div class="c-body" style="flex:1">
                         <div>
                             <a class="c-name user-link" th:href="@{'/users/' + ${e.user.id}}"

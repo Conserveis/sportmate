@@ -8,9 +8,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.sportmate.entity.User;
+import com.sportmate.service.AvatarService;
 import com.sportmate.service.EventService;
 import com.sportmate.service.PostService;
 import com.sportmate.service.PublicProfileService;
@@ -26,13 +28,16 @@ public class ProfileController {
     private final EventService eventService;
     private final PostService postService;
     private final PublicProfileService publicProfileService;
+    private final AvatarService avatarService;
 
     public ProfileController(UserService userService, EventService eventService,
-                             PostService postService, PublicProfileService publicProfileService) {
+                             PostService postService, PublicProfileService publicProfileService,
+                             AvatarService avatarService) {
         this.userService = userService;
         this.eventService = eventService;
         this.postService = postService;
         this.publicProfileService = publicProfileService;
+        this.avatarService = avatarService;
     }
 
     private User me(HttpSession session) {
@@ -121,6 +126,29 @@ public class ProfileController {
         try {
             userService.updateProfile((Integer) session.getAttribute("uid"), userName, gmail, phone);
             ra.addFlashAttribute("msg", "อัปเดตข้อมูลส่วนตัวแล้ว");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
+        }
+        return "redirect:/profile/edit";
+    }
+
+        @PostMapping("/profile/avatar")
+    public String uploadAvatar(@RequestParam("avatar") MultipartFile avatar,
+                               HttpSession session, RedirectAttributes ra) {
+        try {
+            avatarService.upload((Integer) session.getAttribute("uid"), avatar);
+            ra.addFlashAttribute("msg", "เปลี่ยนรูปโปรไฟล์แล้ว");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
+        }
+        return "redirect:/profile/edit";
+    }
+
+    @PostMapping("/profile/avatar/remove")
+    public String removeAvatar(HttpSession session, RedirectAttributes ra) {
+        try {
+            avatarService.remove((Integer) session.getAttribute("uid"));
+            ra.addFlashAttribute("msg", "ลบรูปโปรไฟล์แล้ว");
         } catch (Exception e) {
             ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }

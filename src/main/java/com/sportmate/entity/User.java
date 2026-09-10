@@ -39,6 +39,10 @@ public class User {
     @Column(name = "ProviderId")
     private String providerId; //Authen
 
+    /** ชื่อไฟล์รูปโปรไฟล์ (ไม่ใช่ path เต็ม) — null = ใช้ตัวอักษรย่อแทน */
+    @Column(name = "AvatarPath")
+    private String avatarPath;
+
     @Column(name = "PhoneNumber")
     private String phoneNumber;
 
@@ -132,6 +136,14 @@ public class User {
     public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
     public String getProviderId() { return providerId; }
     public void setProviderId(String providerId) { this.providerId = providerId; }
+    public String getAvatarPath() { return avatarPath; }
+    public void setAvatarPath(String avatarPath) { this.avatarPath = avatarPath; }
+
+    /** URL สำหรับใช้ใน template — null ถ้ายังไม่มีรูป */
+    @Transient
+    public String getAvatarUrl() {
+        return avatarPath == null || avatarPath.isBlank() ? null : "/uploads/avatars/" + avatarPath;
+    }
 
     @Transient
     public boolean isExternalAccount() {

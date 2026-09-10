@@ -48,7 +48,10 @@ services:
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@sportmate.local}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      TZ: Asia/Bangkok  
+      TZ: Asia/Bangkok
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - sportmate_uploads:/app/uploads
     # ไม่ publish port ออกนอกเครื่อง — ให้ caddy เป็นด่านหน้าเพียงตัวเดียว
     depends_on:
       mysql:
@@ -77,6 +80,7 @@ services:
 
 volumes:
   sportmate_data:
+  sportmate_uploads:
   caddy_data:
   caddy_config:
 

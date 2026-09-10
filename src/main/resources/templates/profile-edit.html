@@ -17,6 +17,38 @@
         </div>
     </div>
 
+    <!-- profile picture -->
+    <div class="section">
+        <h2>รูปโปรไฟล์</h2>
+        <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+            <img class="avatar" th:if="${user.avatarUrl != null}"
+                 th:src="@{${user.avatarUrl}}" alt="รูปโปรไฟล์">
+            <div class="avatar" th:if="${user.avatarUrl == null}"
+                 th:text="${#strings.substring(user.userName,0,1).toUpperCase()}">U</div>
+
+            <div style="flex:1;min-width:240px">
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                    <form method="post" th:action="@{/profile/avatar}" enctype="multipart/form-data"
+                          id="avatarForm" style="margin:0">
+                        <input type="file" name="avatar" id="avatarInput" class="file-hidden"
+                               accept="image/jpeg,image/png,image/webp"
+                               onchange="document.getElementById('avatarForm').submit()">
+                        <label for="avatarInput" class="btn btn-primary btn-sm" style="cursor:pointer">
+                            เปลี่ยนรูปโปรไฟล์
+                        </label>
+                    </form>
+                    <form method="post" th:action="@{/profile/avatar/remove}"
+                          th:if="${user.avatarUrl != null}" style="margin:0">
+                        <button class="btn btn-ghost btn-sm">ลบรูปโปรไฟล์</button>
+                    </form>
+                </div>
+                <div style="color:var(--muted);font-size:.85rem;margin-top:10px">
+                    รองรับ JPG, PNG, WebP ขนาดไม่เกิน 2 MB
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- interested sports -->
     <div class="section">
         <h2>กีฬาที่สนใจ</h2>

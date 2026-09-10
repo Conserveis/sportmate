@@ -1071,3 +1071,14 @@ button.sec-more:hover{color:var(--pitch-dark)}
 .kpi-ico.joins::after{background:var(--flare)}
 .bar.b-post{background:var(--pitch)}
 .bar.b-join{background:var(--flare)}
+
+/* รูปโปรไฟล์ที่อัปโหลดเอง — ครอปให้เต็มวงกลมไม่ยืด */
+img.avatar, img.who-avatar, img.c-avatar{ object-fit:cover; }
+
+/* ซ่อน input file แต่ยังให้ label คลิกได้ และ validation ยังทำงาน
+   (ใช้ opacity:0 + position แทน display:none เพื่อไม่ให้ browser ข้าม required) */
+.file-hidden{
+  position:absolute; width:1px; height:1px;
+  opacity:0; overflow:hidden; z-index:-1;
+}
+.file-hidden:focus + label{ outline:2px solid var(--volt); outline-offset:2px; }

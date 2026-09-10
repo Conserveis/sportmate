@@ -15,7 +15,10 @@
 
     <!-- ===== header ===== -->
     <div class="profile-head" style="margin-top:12px">
-        <div class="avatar" th:text="${#strings.substring(profile.user.userName,0,1).toUpperCase()}">U</div>
+        <img class="avatar" th:if="${profile.user.avatarUrl != null}"
+             th:src="@{${profile.user.avatarUrl}}" alt="รูปโปรไฟล์">
+        <div class="avatar" th:if="${profile.user.avatarUrl == null}"
+             th:text="${#strings.substring(profile.user.userName,0,1).toUpperCase()}">U</div>
         <div style="flex:1">
             <div class="uname">
                 <span th:text="${profile.user.userName}">username</span>
@@ -97,7 +100,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- ================= ฝั่งผู้จัดกิจกรรม ================= -->
     <div th:if="${profile.organizer}">
 
@@ -232,7 +235,10 @@
         <h2>รีวิวจากผู้จัด (<span th:text="${profile.participantReviewCount}">0</span>)</h2>
         <div class="panel review-item" th:each="r : ${profile.participantReviews}">
             <div class="review-top">
-                <div class="c-avatar" th:text="${#strings.substring(r.event.post.owner.userName,0,1).toUpperCase()}">U</div>
+                <img class="c-avatar" th:if="${r.event.post.owner.avatarUrl != null}"
+                     th:src="@{${r.event.post.owner.avatarUrl}}" alt="">
+                <div class="c-avatar" th:if="${r.event.post.owner.avatarUrl == null}"
+                     th:text="${#strings.substring(r.event.post.owner.userName,0,1).toUpperCase()}">U</div>
                 <div style="flex:1">
                     <span class="c-name" th:text="${r.event.post.owner.userName}">ผู้จัด</span>
                     <span class="stars" style="margin-left:8px"

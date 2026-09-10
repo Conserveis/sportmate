@@ -44,6 +44,9 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@sportmate.local}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       TZ: Asia/Bangkok
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - sportmate_uploads:/app/uploads
     ports:
       - "8080:8080"
     depends_on:
@@ -54,6 +57,7 @@ services:
 
 volumes:
   sportmate_data:
+  sportmate_uploads:
 
 networks:
   sportmate-net:
