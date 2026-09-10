@@ -14,6 +14,10 @@
 
     <div class="flash err" th:if="${error}" th:text="${error}"></div>
 
+    <div class="flash" th:if="${post.editsLeft > 0}"
+         th:text="|แก้ไขได้อีก ${post.editsLeft} ครั้ง (สูงสุด 3 ครั้ง/โพสต์) · เลื่อนวันเวลานัดได้ช้าสุดถึง ${#temporals.format(post.postponeDeadline,'dd/MM/yyyy HH:mm')}|">
+    </div>
+
     <div class="form-card">
         <form method="post" th:action="@{'/posts/' + ${post.id} + '/edit'}">
 
@@ -42,9 +46,12 @@
             <div class="field">
                 <label>วันและเวลานัด</label>
                 <input type="datetime-local" name="datePlay"
-                       min="2026-01-01T00:00" max="2028-12-31T23:59" required
+                       min="2026-01-01T00:00" required
+                       th:max="${#temporals.format(post.postponeDeadline,'yyyy-MM-dd') + 'T' + #temporals.format(post.postponeDeadline,'HH:mm')}"
                        th:value="${#temporals.format(post.datePlay,'yyyy-MM-dd') + 'T' + #temporals.format(post.datePlay,'HH:mm')}">
-                <div class="hint">ตั้งได้ระหว่าง 01/01/2026 – 31/12/2028</div>
+                <div class="hint"
+                     th:text="|เลื่อนออกไปได้ไม่เกิน 72 ชม. จากกำหนดเดิม (${#temporals.format(post.baseDatePlay,'dd/MM/yyyy HH:mm')}) — ช้าสุดถึง ${#temporals.format(post.postponeDeadline,'dd/MM/yyyy HH:mm')}|">
+                </div>
             </div>
 
             <div class="row2">

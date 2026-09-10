@@ -16,6 +16,12 @@ import jakarta.persistence.Transient;
 @Entity
 @Table(name = "Post")
 public class Post {
+
+    /** จำนวนครั้งสูงสุดที่แก้ไขโพสต์ได้ */
+    public static final int MAX_EDIT = 3;
+    /** เลื่อนวันเวลานัดออกไปได้สูงสุดกี่ชั่วโมง (นับจากกำหนดเดิมตอนสร้าง) */
+    public static final int MAX_POSTPONE_HOURS = 72;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PostID")
@@ -46,6 +52,14 @@ public class Post {
     @Column(name = "DatePlay", nullable = false)
     private LocalDateTime datePlay;
 
+    /** วันเวลานัดเดิมตอนสร้างโพสต์ — ฐานคำนวณเพดานเลื่อนเวลา 72 ชม. */
+    @Column(name = "OriginalDatePlay")
+    private LocalDateTime originalDatePlay;
+
+    /** จำนวนครั้งที่แก้ไขไปแล้ว */
+    @Column(name = "EditCount", nullable = false)
+    private Integer editCount = 0;
+
     @Column(name = "DateCreate", nullable = false)
     private LocalDateTime dateCreate = LocalDateTime.now();
 
@@ -73,18 +87,55 @@ public class Post {
         return datePlay != null && datePlay.isBefore(LocalDateTime.now());
     }
 
-    /** เส้นตายในการยกเลิก = ก่อนวันจัดกิจกรรม 1 วัน */
+    /** เส้นตายยกเลิก "การเข้าร่วม" ของผู้เล่น = ก่อนวันนัดปัจจุบัน 1 วัน */
     @Transient
     public LocalDateTime getCancelDeadline() {
         return datePlay == null ? null : datePlay.minusDays(1);
     }
 
-    /** true = เลยเส้นตายแล้ว ยกเลิกไม่ได้ (เหลือน้อยกว่า 1 วันก่อนวันจัด) */
     @Transient
     public boolean isCancelLocked() {
         return datePlay != null && LocalDateTime.now().isAfter(datePlay.minusDays(1));
     }
 
+    /** กำหนดเดิมตอนสร้างโพสต์ — โพสต์เก่าที่ยังไม่มีค่า ถือว่าค่าปัจจุบันคือกำหนดเดิม */
+    @Transient
+    public LocalDateTime getBaseDatePlay() {
+        return originalDatePlay != null ? originalDatePlay : datePlay;
+    }
+
+    /**
+     * เส้นตายยกเลิก "กิจกรรม" ของเจ้าของ = ก่อน "กำหนดเดิม" 1 วัน
+     * ผูกกับกำหนดเดิมเพื่อกันเจ้าของเลื่อนวันเพื่อรีเซ็ตเส้นตายยกเลิก
+     */
+    @Transient
+    public LocalDateTime getOwnerCancelDeadline() {
+        LocalDateTime base = getBaseDatePlay();
+        return base == null ? null : base.minusDays(1);
+    }
+
+    @Transient
+    public boolean isOwnerCancelLocked() {
+        LocalDateTime base = getBaseDatePlay();
+        return base != null && LocalDateTime.now().isAfter(base.minusDays(1));
+    }
+
+    /** เลื่อนวันเวลานัดได้ช้าสุดถึงเมื่อไหร่ (กำหนดเดิม + 72 ชม.) */
+    @Transient
+    public LocalDateTime getPostponeDeadline() {
+        LocalDateTime base = getBaseDatePlay();
+        return base == null ? null : base.plusHours(MAX_POSTPONE_HOURS);
+    }
+
+    @Transient
+    public int getEditsLeft() {
+        return Math.max(0, MAX_EDIT - (editCount == null ? 0 : editCount));
+    }
+
+    @Transient
+    public boolean isEditLocked() {
+        return getEditsLeft() <= 0;
+    }
 
     @Transient
     public boolean isTournament() {
@@ -122,4 +173,8 @@ public class Post {
     public void setPublic(boolean aPublic) { isPublic = aPublic; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public LocalDateTime getOriginalDatePlay() { return originalDatePlay; }
+    public void setOriginalDatePlay(LocalDateTime originalDatePlay) { this.originalDatePlay = originalDatePlay; }
+    public Integer getEditCount() { return editCount; }
+    public void setEditCount(Integer editCount) { this.editCount = editCount; }
 }

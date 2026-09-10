@@ -221,6 +221,15 @@ public class PostController {
             ra.addFlashAttribute("error", "เฉพาะเจ้าของโพสต์เท่านั้นที่แก้ไขได้");
             return "redirect:/posts/" + id;
         }
+        if ("cancelled".equals(p.getStatus()) || p.isExpired()) {
+            ra.addFlashAttribute("error", "กิจกรรมนี้แก้ไขไม่ได้แล้ว");
+            return "redirect:/posts/" + id;
+        }
+        if (p.isEditLocked()) {
+            ra.addFlashAttribute("error",
+                    "แก้ไขโพสต์นี้ครบ " + com.sportmate.entity.Post.MAX_EDIT + " ครั้งแล้ว");
+            return "redirect:/posts/" + id;
+        }
         model.addAttribute("post", p);
         model.addAttribute("sports", userService.allSports());
         model.addAttribute("locations", postLocations());
@@ -260,10 +269,11 @@ public class PostController {
         try {
             postService.cancel(id, me(session));
             ra.addFlashAttribute("msg", "ยกเลิกกิจกรรมสำเร็จ");
+            return "redirect:/profile";
         } catch (Exception e) {
+            ra.addFlashAttribute("error", ErrorMessage.forUser(e));
             return "redirect:/posts/" + id;
         }
-        return "redirect:/profile";
     }
 
     // helpers

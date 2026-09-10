@@ -166,6 +166,8 @@ public class PostService {
         p.setPostName(postName);
         p.setDescription(description);
         p.setDatePlay(datePlay);
+        p.setOriginalDatePlay(datePlay);   // ฐานคำนวณเพดานเลื่อน 72 ชม.
+        p.setEditCount(0);
         p.setDateCreate(LocalDateTime.now());
         p.setPublishAt(publishAt);   // null = เผยแพร่ทันที
         p.setMaxPlayer(maxPlayer);
@@ -214,8 +216,8 @@ public class PostService {
 
     /**
      * แก้ไขรายละเอียดโพสต์ — เฉพาะเจ้าของเท่านั้น
-     * แก้ไม่ได้ถ้า: ถูกยกเลิกแล้ว / เลยวันจัดกิจกรรมแล้ว
-     * เปลี่ยนประเภท (Post <-> Tournament) ไม่ได้
+     * เงื่อนไข: แก้ได้ไม่เกิน 3 ครั้ง/โพสต์ และเลื่อนวันเวลานัดออกไปได้ไม่เกิน 72 ชม.
+     *          จากกำหนดเดิมตอนสร้างโพสต์
      */
     @Transactional
     public Post update(Integer postId, User requester, Integer sportId, Integer locationId,
@@ -231,8 +233,18 @@ public class PostService {
             throw new IllegalStateException("กิจกรรมนี้ถูกยกเลิกแล้ว ไม่สามารถแก้ไขได้");
         if (p.isExpired())
             throw new IllegalStateException("กิจกรรมนี้ผ่านไปแล้ว ไม่สามารถแก้ไขได้");
+        if (p.isEditLocked())
+            throw new IllegalStateException(
+                    "แก้ไขโพสต์นี้ครบ " + Post.MAX_EDIT + " ครั้งแล้ว ไม่สามารถแก้ไขเพิ่มได้");
 
         validateSchedule(datePlay, publishAt);
+
+        // เพดานเลื่อนเวลา 72 ชม. นับจากกำหนดเดิม (ไม่ใช่จากค่าที่แก้ครั้งก่อน)
+        LocalDateTime limit = p.getPostponeDeadline();
+        if (limit != null && datePlay.isAfter(limit))
+            throw new IllegalStateException(
+                    "เลื่อนวันและเวลานัดออกไปได้ไม่เกิน " + Post.MAX_POSTPONE_HOURS
+                    + " ชั่วโมงจากกำหนดเดิม (เลื่อนได้ช้าสุดถึง " + fmt(limit) + ")");
 
         if (minPlayer == null || minPlayer < 3)
             throw new IllegalArgumentException("จำนวนคนขั้นต่ำต้องตั้งแต่ 3 คนขึ้นไป");
@@ -253,6 +265,9 @@ public class PostService {
         LocalDateTime oldDatePlay = p.getDatePlay();
         Integer oldLocationId = p.getLocation().getId();
 
+        // โพสต์เก่าที่ยังไม่มี OriginalDatePlay — ล็อกฐานไว้ตั้งแต่การแก้ครั้งแรก
+        if (p.getOriginalDatePlay() == null) p.setOriginalDatePlay(oldDatePlay);
+
         p.setSport(sport);
         p.setLocation(location);
         p.setPostName(postName);
@@ -265,6 +280,7 @@ public class PostService {
         if (p.getPublishAt() != null && p.getPublishAt().isAfter(LocalDateTime.now())) {
             p.setPublishAt(publishAt);
         }
+        p.setEditCount((p.getEditCount() == null ? 0 : p.getEditCount()) + 1);
         Post saved = postRepo.save(p);
 
         boolean important = !java.util.Objects.equals(oldDatePlay, datePlay)
@@ -279,6 +295,10 @@ public class PostService {
         return saved;
     }
 
+    private static String fmt(LocalDateTime t) {
+        return t.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+    }
+
     @Transactional
     public void cancel(Integer postId, User requester) {
         Post p = getById(postId);
@@ -288,14 +308,15 @@ public class PostService {
         if ("cancelled".equals(p.getStatus())) {
             throw new IllegalStateException("กิจกรรมนี้ถูกยกเลิกไปแล้ว");
         }
-        if (p.isCancelLocked()) {
+        // ใช้ "กำหนดเดิม" เป็นฐาน — เลื่อนวันแล้วเส้นตายยกเลิกไม่ขยับตาม
+        if (p.isOwnerCancelLocked()) {
             throw new IllegalStateException(
-                    "ไม่สามารถยกเลิกโพสต์ได้ ต้องยกเลิกก่อนวันจัดกิจกรรมอย่างน้อย 1 วัน");
+                    "ไม่สามารถยกเลิกโพสต์ได้ ต้องยกเลิกก่อนกำหนดเดิมของกิจกรรมอย่างน้อย 1 วัน (ถึง "
+                    + fmt(p.getOwnerCancelDeadline()) + ")");
         }
         p.setStatus("cancelled");
         postRepo.save(p);
 
-        // แจ้งเตือนผู้เข้าร่วมทุกคนว่ากิจกรรมถูกยกเลิก
         for (Event ev : eventRepo.findParticipants(p)) {
             notificationService.push(ev.getUser(),
                     "กิจกรรม \"" + p.getPostName() + "\" ถูกยกเลิกโดยผู้จัด",

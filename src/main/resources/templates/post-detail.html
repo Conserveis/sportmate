@@ -133,19 +133,27 @@
                          style="display:block;padding:8px">✕ กิจกรรมนี้ถูกยกเลิกแล้ว</div>
 
                     <div th:if="${post.status != 'cancelled' and !post.expired}">
-                        <a class="btn btn-ghost" style="width:100%;display:block;text-align:center"
+                        <a th:if="${!post.editLocked}" class="btn btn-ghost"
+                           style="width:100%;display:block;text-align:center"
                            th:href="@{'/posts/' + ${post.id} + '/edit'}">แก้ไขรายละเอียด</a>
+                        <div th:if="${!post.editLocked}" class="locked-note" style="margin-top:8px"
+                             th:text="|แก้ไขได้อีก ${post.editsLeft}/3 ครั้ง · เลื่อนเวลาได้ถึง ${#temporals.format(post.postponeDeadline,'dd/MM/yyyy HH:mm')}|">
+                        </div>
+                        <div th:if="${post.editLocked}" class="locked-note" style="margin-top:8px">
+                            ใช้สิทธิ์แก้ไขครบ 3 ครั้งแล้ว
+                        </div>
 
-                        <form th:if="${!post.cancelLocked}" method="post" style="margin-top:8px"
+                        <form th:if="${!post.ownerCancelLocked}" method="post" style="margin-top:8px"
                               th:action="@{'/posts/' + ${post.id} + '/cancel'}"
                               onsubmit="return confirm('ยกเลิกกิจกรรมนี้? ผู้เข้าร่วมทุกคนจะได้รับการแจ้งเตือน และยกเลิกแล้วกู้คืนไม่ได้')">
                             <button class="btn btn-ghost" style="width:100%;color:var(--flare);border-color:var(--flare)">
                                 ยกเลิกกิจกรรม
                             </button>
                         </form>
-                        <div th:if="${post.cancelLocked}" class="locked-note" style="margin-top:8px"
-                             th:text="|ไม่สามารถยกเลิกกิจกรรมได้แล้ว (ยกเลิกได้ถึง ${#temporals.format(post.cancelDeadline,'dd/MM/yyyy HH:mm')})|">
+                        <div th:if="${post.ownerCancelLocked}" class="locked-note" style="margin-top:8px"
+                             th:text="|ไม่สามารถยกเลิกกิจกรรมได้แล้ว (ยกเลิกได้ถึง ${#temporals.format(post.ownerCancelDeadline,'dd/MM/yyyy HH:mm')} — นับจากกำหนดเดิม ไม่ขยับตามการเลื่อนเวลา)|">
                         </div>
+                    </div>
                     </div>
                 </div>
 

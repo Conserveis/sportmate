@@ -237,15 +237,18 @@
                 </div>
             </a>
             <span class="pill orange" th:if="${p.status=='cancelled'}">ยกเลิกแล้ว</span>
-            <a th:if="${p.status!='cancelled' and !p.expired}" class="btn btn-ghost btn-sm"
-               th:href="@{'/posts/' + ${p.id} + '/edit'}">แก้ไข</a>
-            <form th:if="${p.status!='cancelled' and !p.expired and !p.cancelLocked}" method="post"
+            <a th:if="${p.status!='cancelled' and !p.expired and !p.editLocked}" class="btn btn-ghost btn-sm"
+               th:href="@{'/posts/' + ${p.id} + '/edit'}"
+               th:text="|แก้ไข (${p.editsLeft}/3)|">แก้ไข</a>
+            <span class="pill" th:if="${p.status!='cancelled' and !p.expired and p.editLocked}"
+                  style="font-size:.75rem">แก้ไขครบ 3 ครั้งแล้ว</span>
+            <form th:if="${p.status!='cancelled' and !p.expired and !p.ownerCancelLocked}" method="post"
                   th:action="@{'/posts/' + ${p.id} + '/cancel'}"
                   onsubmit="return confirm('ยกเลิกกิจกรรมนี้?')">
                 <button class="btn btn-ghost btn-sm">ยกเลิก</button>
             </form>
-            <span class="pill" th:if="${p.status!='cancelled' and !p.expired and p.cancelLocked}"
-                  style="font-size:.75rem">ยกเลิกไม่ได้ (ใกล้วันจัดแล้ว)</span>
+            <span class="pill" th:if="${p.status!='cancelled' and !p.expired and p.ownerCancelLocked}"
+                  style="font-size:.75rem">ยกเลิกไม่ได้ (เลยกำหนดเดิมแล้ว)</span>
         </div>
     </div>
 </div>
