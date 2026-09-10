@@ -38,10 +38,12 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     """)
     List<Event> findParticipants(@Param("post") Post post);
 
-    // ประวัติการเข้าร่วมทั้งหมดของผู้ใช้
+        // ประวัติการเข้าร่วมทั้งหมดของผู้ใช้ — ไม่เอากิจกรรมที่ผู้จัดยกเลิก
     @Query("""
         SELECT e FROM Event e
-        WHERE e.user = :user AND e.status IN ('pending','approved')
+        WHERE e.user = :user
+          AND e.status IN ('pending','approved')
+          AND e.post.status <> 'cancelled'
         ORDER BY e.post.datePlay DESC
     """)
     List<Event> findJoinedByUser(@Param("user") User user);
@@ -49,7 +51,9 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     // ประวัติการเข้าร่วมที่ได้รับอนุมัติแล้วของผู้ใช้
     @Query("""
         SELECT e FROM Event e
-        WHERE e.user = :user AND e.status = 'approved'
+        WHERE e.user = :user
+          AND e.status = 'approved'
+          AND e.post.status <> 'cancelled'
         ORDER BY e.post.datePlay DESC
     """)
     List<Event> findApprovedJoinedByUser(@Param("user") User user);
