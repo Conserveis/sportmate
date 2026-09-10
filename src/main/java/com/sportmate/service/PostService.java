@@ -1,6 +1,8 @@
 package com.sportmate.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -54,7 +56,7 @@ public class PostService {
      * @param date       วันที่ (อาจเป็น null)
      * @param time       เวลา (อาจเป็น null — ใช้ร่วมกับ date)
      */
-    public List<Post> search(boolean tournament, Integer sportId, Integer locationId,
+        public List<Post> search(boolean tournament, Integer sportId, Integer locationId,
                              java.time.LocalDate date, java.time.LocalTime time) {
         LocalDateTime fromDt = null, toDt = null;
         if (date != null) {
@@ -64,7 +66,16 @@ public class PostService {
         String ptype = tournament ? PostType.TOURNAMENT : PostType.POST;
         // โพสต์ปกติ = เอาเฉพาะที่ยังไม่หมดเวลา, ทัวร์นาเมนต์ = เอาทั้งหมด
         boolean onlyActive = !tournament;
-        return postRepo.search(ptype, LocalDateTime.now(), onlyActive, sportId, locationId, fromDt, toDt);
+        List<Post> result =
+                postRepo.search(ptype, LocalDateTime.now(), onlyActive, sportId, locationId, fromDt, toDt);
+
+        // หน้า Tournament: เรียงวันนัดจากใหม่ไปเก่า (ที่จบไปแล้วตกไปอยู่ล่างสุด)
+        if (tournament) {
+            result = new ArrayList<>(result);
+            result.sort(Comparator.comparing(Post::getDatePlay,
+                    Comparator.nullsLast(Comparator.reverseOrder())));
+        }
+        return result;
     }
 
     /** โพสต์ที่ยัง active สำหรับหน้า Post (หมดเวลาแล้วหายไป) */
