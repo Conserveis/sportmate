@@ -55,6 +55,22 @@ services:
     networks:
       - sportmate-net
 
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: sportmate-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      TZ: Asia/Bangkok
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    networks:
+      - sportmate-net
+    
 volumes:
   sportmate_data:
   sportmate_uploads:
