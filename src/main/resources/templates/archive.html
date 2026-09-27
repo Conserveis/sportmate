@@ -4,63 +4,199 @@
 <body>
 <nav th:replace="~{fragments :: nav('archive')}"></nav>
 
-<div class="wrap">
+<div class="wrap v2" th:with="mons=${ {'JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'} }">
     <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
     <div th:if="${error}" class="flash err" th:text="${error}"></div>
 
-    <div class="page-head">
+    <!-- ================= หัวหน้า + สรุป ================= -->
+    <section class="v2a-head">
         <div>
             <div class="eyebrow">Archive</div>
             <h1>จัดเก็บกิจกรรม</h1>
+            <p class="v2-lead">กิจกรรมที่คุณเคยเข้าร่วม ย้อนดูรายละเอียด แล้วให้คะแนนผู้จัดได้ที่นี่</p>
         </div>
-    </div>
+        <div class="v2a-stats">
+            <div class="v2a-stat"><span>กิจกรรมทั้งหมด</span><b id="s-all" th:text="${events.size()}">0</b></div>
+            <div class="v2a-stat dark"><span>รอรีวิว</span><b id="s-pending">0</b></div>
+            <div class="v2a-stat volt"><span>รีวิวแล้ว</span><b id="s-done">0</b></div>
+        </div>
+    </section>
 
-    <div th:if="${events.isEmpty()}" class="empty">
-        <div class="big">ยังไม่มีกิจกรรมที่จัดเก็บ</div>
-        <div>กิจกรรมที่คุณเข้าร่วมจะย้ายมาที่นี่เมื่อผ่านเวลานัดไปแล้ว</div>
-    </div>
+    <!-- ================= แถบเตือน ================= -->
+    <section class="v2a-remind v2-hidden" id="remind">
+        <span class="v2a-remind-ico"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg></span>
+        <span class="v2a-remind-text">
+            <b>คุณมี <span id="r-count">0</span> กิจกรรมที่ยังไม่ได้ให้คะแนนผู้จัด</b>
+            <span>รีวิวของคุณช่วยให้คนอื่นเลือกเข้าร่วมกิจกรรมได้มั่นใจขึ้น</span>
+        </span>
+        <button type="button" class="v2-btn v2a-dark-btn" id="showPending">ดูที่รอรีวิว ›</button>
+    </section>
 
-    <div class="grid">
-        <div class="card" th:each="e : ${events}">
-            <div class="stripe" style="background:var(--muted)"></div>
-            <div class="card-body">
-                <div style="display:flex;gap:6px;align-items:center">
+    <!-- ================= แท็บ + ค้นหา ================= -->
+    <section class="v2a-bar" th:unless="${events.isEmpty()}">
+        <div class="v2t-tabs" role="tablist">
+            <button type="button" class="active" data-tab="all">ทั้งหมด <span id="c-all">0</span></button>
+            <button type="button" data-tab="pending">รอรีวิว <span id="c-pending">0</span></button>
+            <button type="button" data-tab="done">รีวิวแล้ว <span id="c-done">0</span></button>
+        </div>
+        <label class="v2a-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input type="search" id="q" placeholder="ค้นหาชื่อกิจกรรม หรือผู้จัด" aria-label="ค้นหากิจกรรม">
+        </label>
+    </section>
+
+    <!-- ================= ไทม์ไลน์ (JS จัดกลุ่มตามเดือน) ================= -->
+    <section class="v2a-timeline" id="timeline">
+        <article class="v2a-item" th:each="e : ${events}"
+                 th:with="done=${reviewed[e.id] ?: false}, d=${e.post.datePlay}"
+                 th:classappend="${done} ? 'is-done'"
+                 th:attr="data-done=${done}, data-ym=${#temporals.format(d,'yyyy-MM')}, data-time=${d},
+                          data-q=${#strings.toLowerCase(e.post.postName + ' ' + e.post.owner.userName)}">
+            <span class="v2a-date">
+                <span class="m" th:text="${mons[d.monthValue - 1]}">SEP</span>
+                <span class="d" th:text="${#temporals.format(d,'dd')}">14</span>
+                <span class="t" th:text="${#temporals.format(d,'HH:mm')}">19:05</span>
+            </span>
+
+            <div class="v2a-main">
+                <span class="v2-card-top">
                     <span class="sport-tag" th:text="${e.post.sport.name}">Sport</span>
                     <span class="pill" th:classappend="${e.post.tournament}?'orange':'grey'"
                           th:text="${e.post.tournament?'Tournament':'จบแล้ว'}">จบแล้ว</span>
-                </div>
+                </span>
                 <h3 th:text="${e.post.postName}">ชื่อกิจกรรม</h3>
-                <div class="meta">
-                    <span><span class="line-icon calendar" aria-hidden="true"></span> <b th:text="${#temporals.format(e.post.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
-                    <span><span class="line-icon pin" aria-hidden="true"></span> <span th:text="${e.post.location.name}">สถานที่</span></span>
-                    <span><span class="line-icon person" aria-hidden="true"></span> จัดโดย <a class="user-link" th:href="@{'/users/' + ${e.post.owner.id}}"
-                                     th:text="${e.post.owner.userName}">เจ้าของ</a></span>
+                <span class="v2-meta v2a-meta">
+                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+                        <span th:text="${e.post.location.name}">สถานที่</span></span>
+                    <span><span class="v2p-avatar"
+                                th:text="${#strings.isEmpty(e.post.owner.userName)} ? '?' : ${#strings.toUpperCase(#strings.substring(e.post.owner.userName,0,1))}">U</span>
+                        จัดโดย <a class="user-link" th:href="@{'/users/' + ${e.post.owner.id}}" th:text="${e.post.owner.userName}">เจ้าของ</a></span>
+                </span>
+                <a class="v2-btn outline v2a-detail" th:href="@{'/posts/' + ${e.post.id}}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>ดู / คอมเมนต์</a>
+            </div>
+
+            <!-- ---- แผงรีวิว ---- -->
+            <div class="v2a-review">
+                <div class="v2a-review-head">
+                    <span>ให้คะแนนผู้จัด</span>
+                    <span class="pill green" th:if="${done}">✓ รีวิวแล้ว</span>
+                    <span class="v2a-word" th:unless="${done}">แตะดาวเพื่อให้คะแนน</span>
                 </div>
 
-                <!-- comment link -->
-                <a class="btn btn-ghost btn-sm" style="align-self:flex-start;margin-top:4px"
-                   th:href="@{'/posts/' + ${e.post.id}}">ดู / คอมเมนต์</a>
+                <div th:if="${done}" class="v2a-thanks">ขอบคุณสำหรับรีวิว ผู้จัดจะเห็นคะแนนนี้ในโปรไฟล์ของเขา</div>
 
-                <!-- review the organizer -->
-                <div th:if="${reviewed[e.id]}" class="pill green" style="align-self:flex-start;margin-top:6px">✓ รีวิวแล้ว</div>
-                <form th:unless="${reviewed[e.id]}" method="post" th:action="@{/archive/review}"
-                      style="margin-top:8px;border-top:1px solid var(--line);padding-top:10px">
+                <form th:unless="${done}" class="v2a-form" method="post" th:action="@{/archive/review}">
                     <input type="hidden" name="eventId" th:value="${e.id}">
-                    <div style="font-size:.82rem;color:var(--muted);margin-bottom:4px">ให้คะแนนผู้จัด</div>
-                    <div class="rate">
-                        <input type="radio" th:id="'r5_'+${e.id}" name="score" value="5"><label th:for="'r5_'+${e.id}">★</label>
-                        <input type="radio" th:id="'r4_'+${e.id}" name="score" value="4"><label th:for="'r4_'+${e.id}">★</label>
-                        <input type="radio" th:id="'r3_'+${e.id}" name="score" value="3"><label th:for="'r3_'+${e.id}">★</label>
-                        <input type="radio" th:id="'r2_'+${e.id}" name="score" value="2"><label th:for="'r2_'+${e.id}">★</label>
-                        <input type="radio" th:id="'r1_'+${e.id}" name="score" value="1"><label th:for="'r1_'+${e.id}">★</label>
+                    <div class="v2a-stars" role="radiogroup" aria-label="ให้คะแนนผู้จัด">
+                        <th:block th:each="n : ${#numbers.sequence(5,1)}">
+                            <input type="radio" name="score" th:id="'r' + ${n} + '_' + ${e.id}" th:value="${n}" required>
+                            <label th:for="'r' + ${n} + '_' + ${e.id}" th:title="${n} + ' ดาว'">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>
+                                <span class="v2-hidden" th:text="${n} + ' ดาว'">5 ดาว</span>
+                            </label>
+                        </th:block>
                     </div>
-                    <input name="comment" placeholder="ความคิดเห็น (ไม่บังคับ)"
-                           style="width:100%;padding:7px 10px;border:1.5px solid var(--line);border-radius:8px;margin:6px 0;font:inherit">
-                    <button class="btn btn-primary btn-sm">ส่งรีวิว</button>
+                    <div class="v2a-send">
+                        <input name="comment" placeholder="ความคิดเห็น (ไม่บังคับ)" aria-label="ความคิดเห็น">
+                        <button class="v2-btn pitch" type="submit" disabled>ส่งรีวิว</button>
+                    </div>
                 </form>
             </div>
-        </div>
-    </div>
+        </article>
+    </section>
+
+    <!-- ================= ว่าง ================= -->
+    <section class="v2-empty v2a-empty" id="archEmpty" th:classappend="${!events.isEmpty()} ? 'v2-hidden'">
+        <span class="v2-empty-ico" style="background:#F1FFD4"><svg viewBox="0 0 24 24" fill="none" stroke="#4E7A00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <div><b id="emptyTitle">ยังไม่มีกิจกรรมที่จัดเก็บ</b><span id="emptySub">กิจกรรมที่คุณเข้าร่วมจะย้ายมาที่นี่เมื่อผ่านเวลานัดไปแล้ว</span></div>
+        <a class="v2-btn flare" th:href="@{/posts}">หากิจกรรมใหม่ ›</a>
+    </section>
 </div>
+
+<script>
+(function () {
+    var MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                  'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    var WORDS = ['', 'ควรปรับปรุง', 'พอใช้', 'ดี', 'ดีมาก', 'ยอดเยี่ยม'];
+    var tl = document.getElementById('timeline');
+    var items = Array.prototype.slice.call(tl.querySelectorAll('.v2a-item'));
+    if (!items.length) return;
+
+    /* ---- จัดกลุ่มตามเดือน (ใหม่ → เก่า) ---- */
+    items.sort(function (a, b) { return a.dataset.time < b.dataset.time ? 1 : -1; });
+    var groups = {};
+    items.forEach(function (it) {
+        var ym = it.dataset.ym;
+        if (!groups[ym]) {
+            var g = document.createElement('div');
+            g.className = 'v2a-group';
+            g.innerHTML = '<div class="v2a-month"><span class="y">' + ym.slice(0, 4) + '</span>'
+                + '<b>' + MONTHS[Number(ym.slice(5, 7)) - 1] + '</b><span class="n"></span></div>'
+                + '<div class="v2a-list"></div>';
+            tl.appendChild(g);
+            groups[ym] = g;
+        }
+        groups[ym].querySelector('.v2a-list').appendChild(it);
+    });
+
+    /* ---- ดาว: แสดงคำ + เปิดปุ่มส่ง ---- */
+    items.forEach(function (it) {
+        var form = it.querySelector('.v2a-form');
+        if (!form) return;
+        var word = it.querySelector('.v2a-word');
+        var btn = form.querySelector('button[type=submit]');
+        form.querySelectorAll('input[name=score]').forEach(function (r) {
+            r.addEventListener('change', function () {
+                word.textContent = WORDS[Number(r.value)];
+                word.classList.add('chosen');
+                btn.disabled = false;
+            });
+        });
+    });
+
+    /* ---- แท็บ + ค้นหา ---- */
+    var tab = 'all', query = '';
+    var total = items.length;
+    var done = items.filter(function (i) { return i.dataset.done === 'true'; }).length;
+    var pending = total - done;
+    function set(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+    set('s-pending', pending); set('s-done', done); set('r-count', pending);
+    set('c-all', total); set('c-pending', pending); set('c-done', done);
+    document.getElementById('remind').classList.toggle('v2-hidden', pending === 0);
+
+    function render() {
+        var shown = 0;
+        items.forEach(function (it) {
+            var isDone = it.dataset.done === 'true';
+            var ok = (tab === 'all' || (tab === 'done') === isDone) && (!query || it.dataset.q.indexOf(query) > -1);
+            it.classList.toggle('v2-hidden', !ok);
+            if (ok) shown++;
+        });
+        Object.keys(groups).forEach(function (k) {
+            var n = groups[k].querySelectorAll('.v2a-item:not(.v2-hidden)').length;
+            groups[k].classList.toggle('v2-hidden', n === 0);
+            groups[k].querySelector('.n').textContent = n + ' กิจกรรม';
+        });
+        var empty = document.getElementById('archEmpty');
+        empty.classList.toggle('v2-hidden', shown > 0);
+        if (!shown) {
+            set('emptyTitle', tab === 'pending' && !query ? 'รีวิวครบทุกกิจกรรมแล้ว!' : 'ไม่พบกิจกรรมที่ตรงกับเงื่อนไข');
+            set('emptySub', tab === 'pending' && !query ? 'ขอบคุณที่ช่วยให้คะแนนผู้จัดทุกคน' : 'ลองเปลี่ยนแท็บหรือคำค้นหา');
+        }
+    }
+    function pick(t) {
+        tab = t;
+        document.querySelectorAll('.v2a-bar .v2t-tabs button').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === t); });
+        render();
+    }
+    document.querySelectorAll('.v2a-bar .v2t-tabs button').forEach(function (b) {
+        b.addEventListener('click', function () { pick(b.dataset.tab); });
+    });
+    document.getElementById('showPending').addEventListener('click', function () { pick('pending'); });
+    document.getElementById('q').addEventListener('input', function (e) { query = e.target.value.trim().toLowerCase(); render(); });
+    render();
+})();
+</script>
 </body>
 </html>

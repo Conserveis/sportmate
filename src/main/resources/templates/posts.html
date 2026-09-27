@@ -4,51 +4,209 @@
 <body>
 <nav th:replace="~{fragments :: nav('posts')}"></nav>
 
-<div class="wrap">
+<div class="wrap v2">
     <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
     <div th:if="${error}" class="flash err" th:text="${error}"></div>
 
-    <div class="page-head">
+    <!-- ================= หัวหน้า ================= -->
+    <section class="v2p-head">
         <div>
             <div class="eyebrow">Find your team</div>
             <h1>โพสต์หาเพื่อนเล่นกีฬา</h1>
+            <p class="v2-lead">เลือกกิจกรรมที่ใช่ แล้วกดเข้าร่วมได้ทันที หรือเปิดโพสต์ชวนเพื่อนเอง</p>
         </div>
-        <span class="spacer" style="flex:1"></span>
-        <a class="btn btn-flare" th:href="@{/posts/new(type='Post')}">+ สร้างโพสต์</a>
-    </div>
+        <a class="v2-btn flare" th:href="@{/posts/new(type='Post')}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>สร้างโพสต์</a>
+    </section>
 
-    <!-- ตัวกรองค้นหา -->
-    <div th:replace="~{fragments :: filterBar('/posts')}"></div>
+    <!-- ================= กล่องค้นหา (ส่งค่าไป GET /posts เหมือนเดิม) ================= -->
+    <form class="v2p-filter" method="get" th:action="@{/posts}" id="postFilter">
+        <!-- แถว 1 : ประเภทกีฬา (กดแล้วค้นหาทันที) -->
+        <div class="v2p-filter-row v2p-sports">
+            <span class="v2p-label">ประเภทกีฬา</span>
+            <label class="v2-chip" th:classappend="${fSportId == null} ? 'active'">
+                <input type="radio" name="sportId" value="" th:checked="${fSportId == null}">ทั้งหมด
+            </label>
+            <label class="v2-chip" th:each="s : ${sports}"
+                   th:classappend="${fSportId != null and fSportId == s.id} ? 'active'">
+                <input type="radio" name="sportId" th:value="${s.id}"
+                       th:checked="${fSportId != null and fSportId == s.id}"><span th:text="${s.name}">Football</span>
+            </label>
+        </div>
 
-    <div th:if="${posts.isEmpty()}" class="empty">
-        <div class="big">ไม่พบโพสต์ที่ตรงกับเงื่อนไข</div>
-        <div>ลองปรับตัวกรอง หรือเป็นคนแรกที่ชวนคนอื่นมาเล่นกีฬาสิ!</div>
-    </div>
-
-    <div class="grid">
-        <a class="card" th:each="p : ${posts}" th:href="@{'/posts/' + ${p.id}}" style="text-decoration:none">
-            <div class="stripe"></div>
-            <div class="card-body">
-                <span class="sport-tag" th:text="${p.sport.name}">Football</span>
-                <h3 th:text="${p.postName}">ชื่อกิจกรรม</h3>
-                <div class="meta">
-                    <span><span class="line-icon calendar" aria-hidden="true"></span> <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
-                    <span><span class="line-icon pin" aria-hidden="true"></span> <span th:text="${p.location.name}">สถานที่</span></span>
-                    <span><span class="line-icon person" aria-hidden="true"></span> โดย <span th:text="${p.owner.userName}">เจ้าของ</span></span>
-                </div>
+        <!-- แถว 2 : สถานที่ / วันที่ / เวลา -->
+        <div class="v2p-filter-row v2p-fields">
+            <div class="field v2p-field">
+                <label for="fLoc">สถานที่</label>
+                <select id="fLoc" name="locationId">
+                    <option value="">ทั้งหมด</option>
+                    <option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.name}"
+                            th:selected="${fLocationId != null and fLocationId == l.id}"></option>
+                </select>
             </div>
-            <div class="card-foot">
-                <div>
-                    <div class="score-label">ผู้เข้าร่วม</div>
-                    <div class="score" th:classappend="${joinCounts[p.id] >= p.maxPlayer}?'full'">
-                        <span class="cur" th:text="${joinCounts[p.id]}">0</span><span class="sep">/</span><span th:text="${p.maxPlayer}">10</span>
-                    </div>
-                </div>
-                <span class="pill" th:classappend="${p.public}?'green':'orange'"
-                      th:text="${p.public}?'สาธารณะ':'ต้องอนุมัติ'">สาธารณะ</span>
+            <div class="field v2p-field">
+                <label for="fDate">วันที่</label>
+                <input id="fDate" type="date" name="date" th:value="${fDate}">
             </div>
+            <div class="field v2p-field">
+                <label for="fTime">เวลา (ตั้งแต่)</label>
+                <input id="fTime" type="time" name="time" th:value="${fTime}">
+            </div>
+            <div class="v2p-actions">
+                <button class="v2-btn pitch" type="submit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>ค้นหา</button>
+                <a class="v2-btn outline v2p-reset" th:href="@{/posts}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>ล้าง</a>
+            </div>
+        </div>
+
+        <!-- แถว 3 : ตัวกรองด่วน (ทำงานฝั่งเบราว์เซอร์) -->
+        <div class="v2p-quick">
+            <span class="v2p-label">ตัวกรองด่วน:</span>
+            <button type="button" class="v2p-toggle" data-q="open" aria-pressed="false"><i></i>ยังมีที่ว่าง</button>
+            <button type="button" class="v2p-toggle" data-q="public" aria-pressed="false"><i></i>สาธารณะเท่านั้น</button>
+            <span class="v2p-hint">กรองได้หลายเงื่อนไขพร้อมกัน</span>
+        </div>
+    </form>
+
+    <!-- ================= แถบผลลัพธ์ ================= -->
+    <section class="v2p-results" th:unless="${posts.isEmpty()}">
+        <div class="v2p-found">พบ <b id="foundCount" th:text="${posts.size()}">0</b> โพสต์</div>
+        <div class="v2p-tools">
+            <label class="v2p-label" for="sortBy">เรียงตาม</label>
+            <select id="sortBy">
+                <option value="soon">ใกล้ถึงเวลาเล่น</option>
+                <option value="new">โพสต์ล่าสุด</option>
+                <option value="full">ใกล้เต็ม</option>
+            </select>
+            <div class="v2p-view" role="group" aria-label="มุมมอง">
+                <button type="button" data-view="grid" class="active" aria-label="มุมมองการ์ด">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+                <button type="button" data-view="list" aria-label="มุมมองรายการ">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= การ์ดโพสต์ ================= -->
+    <section class="v2p-grid" id="postGrid" th:unless="${posts.isEmpty()}">
+        <a class="v2p-card" th:each="p : ${posts}"
+           th:with="cur=${joinCounts[p.id] ?: 0}, max=${p.maxPlayer},
+                    left=${max - cur}, isFull=${cur >= max},
+                    mons=${ {'JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'} }"
+           th:classappend="${isFull} ? 'full'"
+           th:attr="data-open=${!isFull}, data-public=${p.public}, data-time=${p.datePlay},
+                    data-id=${p.id}, data-left=${isFull ? 9999 : left}"
+           th:href="@{'/posts/' + ${p.id}}">
+            <span class="v2p-body">
+                <span class="v2p-top">
+                    <span class="v2p-title-wrap">
+                        <span class="v2-card-top">
+                            <span class="sport-tag" th:text="${p.sport.name}">Football</span>
+                            <span class="v2p-hot" th:if="${!isFull and left <= 2}">ใกล้เต็ม</span>
+                        </span>
+                        <h3 th:text="${p.postName}">ชื่อกิจกรรม</h3>
+                    </span>
+                    <span class="v2p-date">
+                        <span class="m" th:text="${mons[p.datePlay.monthValue - 1]}">SEP</span>
+                        <span class="d" th:text="${#temporals.format(p.datePlay,'dd')}">30</span>
+                    </span>
+                </span>
+                <span class="v2-meta">
+                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                        <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
+                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+                        <span th:text="${p.location.name}">สถานที่</span></span>
+                    <span><span class="v2p-avatar"
+                                th:text="${#strings.isEmpty(p.owner.userName)} ? '?' : ${#strings.toUpperCase(#strings.substring(p.owner.userName,0,1))}">U</span>
+                        โดย <b th:text="${p.owner.userName}">เจ้าของ</b></span>
+                </span>
+            </span>
+            <span class="v2p-foot">
+                <span class="v2p-foot-row">
+                    <span>
+                        <span class="score-label">ผู้เข้าร่วม</span>
+                        <span class="v2-score"><span class="cur" th:text="${cur}">0</span><span class="sep">/</span><span th:text="${max}">10</span></span>
+                    </span>
+                    <span class="pill" th:classappend="${p.public}?'green':'orange'"
+                          th:text="${p.public}?'สาธารณะ':'ต้องอนุมัติ'">สาธารณะ</span>
+                </span>
+                <span class="v2-bar"><i th:style="'width:' + ${max > 0 ? (cur * 100 / max) : 0} + '%'"></i></span>
+                <span class="v2p-foot-row">
+                    <span class="v2-left" th:text="${isFull} ? 'เต็มแล้ว' : ${'ขาดอีก ' + left + ' คน'}">ขาดอีก 2 คน</span>
+                    <span class="v2p-cta" th:text="${isFull} ? 'ดูรายละเอียด ›' : (${p.public} ? 'เข้าร่วม ›' : 'ขอเข้าร่วม ›')">เข้าร่วม ›</span>
+                </span>
+            </span>
         </a>
-    </div>
+    </section>
+
+    <!-- ================= ไม่พบโพสต์ ================= -->
+    <section class="v2-empty v2p-empty" id="postEmpty" th:classappend="${!posts.isEmpty()} ? 'v2-hidden'">
+        <span class="v2-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+        <div><b>ไม่พบโพสต์ที่ตรงกับเงื่อนไข</b><span>ลองปรับตัวกรอง หรือเป็นคนแรกที่ชวนคนอื่นมาเล่นกีฬาสิ!</span></div>
+        <a class="v2-btn outline" th:href="@{/posts}">ล้างตัวกรอง</a>
+        <a class="v2-btn flare" th:href="@{/posts/new(type='Post')}">+ สร้างโพสต์</a>
+    </section>
 </div>
+
+<script>
+(function () {
+    var form = document.getElementById('postFilter');
+
+    /* ปุ่มกีฬา: เลือกแล้วค้นหาทันที */
+    form.querySelectorAll('.v2p-sports input[type=radio]').forEach(function (r) {
+        r.addEventListener('change', function () { form.submit(); });
+    });
+
+    var grid = document.getElementById('postGrid');
+    if (!grid) return;
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('.v2p-card'));
+    var empty = document.getElementById('postEmpty');
+    var found = document.getElementById('foundCount');
+    var q = { open: false, public: false };
+
+    /* ตัวกรองด่วน */
+    function applyQuick() {
+        var n = 0;
+        cards.forEach(function (c) {
+            var hide = (q.open && c.dataset.open !== 'true') || (q.public && c.dataset.public !== 'true');
+            c.classList.toggle('v2-hidden', hide);
+            if (!hide) n++;
+        });
+        found.textContent = n;
+        empty.classList.toggle('v2-hidden', n > 0);
+        grid.classList.toggle('v2-hidden', n === 0);
+    }
+    document.querySelectorAll('.v2p-toggle').forEach(function (b) {
+        b.addEventListener('click', function () {
+            var k = b.dataset.q;
+            q[k] = !q[k];
+            b.classList.toggle('active', q[k]);
+            b.setAttribute('aria-pressed', q[k]);
+            applyQuick();
+        });
+    });
+
+    /* เรียงลำดับ */
+    document.getElementById('sortBy').addEventListener('change', function (e) {
+        var by = e.target.value;
+        cards.sort(function (a, b) {
+            if (by === 'new')  return Number(b.dataset.id) - Number(a.dataset.id);
+            if (by === 'full') return Number(a.dataset.left) - Number(b.dataset.left);
+            return a.dataset.time < b.dataset.time ? -1 : a.dataset.time > b.dataset.time ? 1 : 0;
+        });
+        cards.forEach(function (c) { grid.appendChild(c); });
+    });
+    document.getElementById('sortBy').dispatchEvent(new Event('change'));
+
+    /* สลับมุมมอง การ์ด / รายการ */
+    document.querySelectorAll('.v2p-view button').forEach(function (b) {
+        b.addEventListener('click', function () {
+            document.querySelectorAll('.v2p-view button').forEach(function (x) { x.classList.toggle('active', x === b); });
+            grid.classList.toggle('is-list', b.dataset.view === 'list');
+        });
+    });
+})();
+</script>
 </body>
 </html>

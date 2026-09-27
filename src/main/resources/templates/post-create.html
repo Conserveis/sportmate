@@ -4,85 +4,222 @@
 <body>
 <nav th:replace="~{fragments :: nav(${type=='Tournament'?'tournaments':'posts'})}"></nav>
 
-<div class="wrap">
-    <div class="page-head">
+<div class="wrap v2" th:with="isTour=${type=='Tournament'}">
+    <section class="v2p-head">
         <div>
-            <div class="eyebrow" th:text="${type=='Tournament'?'New tournament':'New post'}">New</div>
-            <h1 th:text="${type=='Tournament'?'สร้างทัวร์นาเมนต์':'สร้างโพสต์หาเพื่อน'}">สร้างกิจกรรม</h1>
+            <div class="eyebrow" th:classappend="${isTour} ? 'v2t-eyebrow'" th:text="${isTour?'New tournament':'New post'}">New</div>
+            <h1 th:text="${isTour?'สร้างทัวร์นาเมนต์':'สร้างโพสต์หาเพื่อน'}">สร้างกิจกรรม</h1>
+            <p class="v2-lead" th:text="${isTour} ? 'ตั้งค่าการแข่ง แล้วเปิดรับสมัครให้สมาชิกคนอื่นเข้าร่วม' : 'กรอกรายละเอียดไม่กี่ขั้นตอน แล้วชวนเพื่อนมาเล่นด้วยกัน'">-</p>
         </div>
-    </div>
+    </section>
 
     <div class="flash err" th:if="${error}" th:text="${error}"></div>
 
-    <div class="form-card">
-        <form method="post" th:action="@{/posts}">
-            <input type="hidden" name="type" th:value="${type}">
+    <form class="v2c-layout" method="post" th:action="@{/posts}" id="createForm" th:classappend="${isTour} ? 'is-tour'">
+        <input type="hidden" name="type" th:value="${type}">
 
-            <div class="field">
-                <label>ชื่อกิจกรรม</label>
-                <input name="postName" required placeholder="เช่น หาเพื่อนเตะบอล 5v5">
-            </div>
-
-            <div class="row2">
-                <div class="field">
-                    <label>ประเภทกีฬา</label>
-                    <select name="sportId" required>
-                        <option th:each="s : ${sports}" th:value="${s.id}" th:text="${s.name}"></option>
-                    </select>
+        <div class="v2c-main">
+            <!-- 1 ข้อมูลกิจกรรม -->
+            <section class="v2c-step">
+                <div class="v2c-step-head"><i>1</i><span><b>ข้อมูลกิจกรรม</b><small>ตั้งชื่อให้คนอื่นเข้าใจง่ายว่าจะเล่นอะไร</small></span></div>
+                <div class="v2c-field">
+                    <label for="postName">ชื่อกิจกรรม</label>
+                    <input id="postName" name="postName" required maxlength="100"
+                           th:placeholder="${isTour} ? 'เช่น บาส 3x3 ชิงแชมป์ประจำเดือน' : 'เช่น หาเพื่อนเตะบอล 5v5'">
+                    <span class="v2c-count"><span id="nameLen">0</span>/100</span>
                 </div>
-                <div class="field">
-                    <label>สถานที่</label>
-                    <select name="locationId" required>
-                        <option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.name}"></option>
-                    </select>
+                <div class="v2c-field">
+                    <span class="v2c-label">ประเภทกีฬา</span>
+                    <div class="v2c-sports" role="radiogroup" aria-label="ประเภทกีฬา">
+                        <label class="v2c-sport" th:each="s, it : ${sports}">
+                            <input type="radio" name="sportId" th:value="${s.id}" th:checked="${it.first}" required>
+                            <span th:text="${s.name}">Football</span>
+                        </label>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="field">
-                <label>วันและเวลานัด</label>
-                                <input type="datetime-local" name="datePlay"
-                       min="2026-01-01T00:00" max="2028-12-31T23:59" required>
-                <div class="hint">ตั้งได้ระหว่าง 01/01/2026 – 31/12/2028</div>
-            </div>
-
-            <div class="row2">
-                <div class="field">
-                    <label>จำนวนขั้นต่ำ</label>
-                    <input type="number" name="minPlayer" min="3" value="4" required>
-                    <div class="hint">อย่างน้อย 3 คน</div>
+            <!-- 2 เวลาและสถานที่ -->
+            <section class="v2c-step">
+                <div class="v2c-step-head"><i>2</i><span><b>เวลาและสถานที่</b><small>เลือกสนามและเวลานัดเจอ</small></span></div>
+                <div class="v2c-row">
+                    <div class="v2c-field">
+                        <label for="locationId">สถานที่</label>
+                        <select id="locationId" name="locationId" required>
+                            <option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.name}"></option>
+                        </select>
+                    </div>
+                    <div class="v2c-field">
+                        <label for="datePlay">วันและเวลานัด</label>
+                        <input id="datePlay" type="datetime-local" name="datePlay" min="2026-01-01T00:00" max="2028-12-31T23:59" required>
+                        <span class="v2c-hint">ตั้งได้ระหว่าง 01/01/2026 – 31/12/2028</span>
+                    </div>
                 </div>
-                <div class="field">
-                    <label>จำนวนสูงสุด</label>
-                    <input type="number" name="maxPlayer" min="3" value="10" required>
+            </section>
+
+            <!-- 3 จำนวนผู้เล่น -->
+            <section class="v2c-step">
+                <div class="v2c-step-head"><i>3</i><span><b>จำนวนผู้เล่น</b><small th:text="${isTour} ? 'จำนวนผู้สมัครแข่ง ขั้นต่ำอย่างน้อย 3 คน' : 'รวมตัวคุณเองด้วย ขั้นต่ำอย่างน้อย 3 คน'">รวมตัวคุณเองด้วย ขั้นต่ำอย่างน้อย 3 คน</small></span></div>
+                <div class="v2c-row">
+                    <div class="v2c-field">
+                        <label for="minPlayer">จำนวนขั้นต่ำ</label>
+                        <div class="v2c-stepper">
+                            <button type="button" data-step="-1" data-for="minPlayer" aria-label="ลดจำนวนขั้นต่ำ">−</button>
+                            <input id="minPlayer" type="number" name="minPlayer" min="3" value="4" required>
+                            <button type="button" data-step="1" data-for="minPlayer" aria-label="เพิ่มจำนวนขั้นต่ำ">+</button>
+                        </div>
+                    </div>
+                    <div class="v2c-field">
+                        <label for="maxPlayer">จำนวนสูงสุด</label>
+                        <div class="v2c-stepper">
+                            <button type="button" data-step="-1" data-for="maxPlayer" aria-label="ลดจำนวนสูงสุด">−</button>
+                            <input id="maxPlayer" type="number" name="maxPlayer" min="3" value="10" required>
+                            <button type="button" data-step="1" data-for="maxPlayer" aria-label="เพิ่มจำนวนสูงสุด">+</button>
+                        </div>
+                    </div>
                 </div>
+                <div class="v2c-warn v2-hidden" id="playerWarn">จำนวนสูงสุดต้องไม่น้อยกว่าจำนวนขั้นต่ำ</div>
+            </section>
+
+            <!-- 4 การเข้าร่วมและการเผยแพร่ -->
+            <section class="v2c-step">
+                <div class="v2c-step-head"><i>4</i><span><b>การเข้าร่วมและการเผยแพร่</b><small>กำหนดว่าใครเข้าร่วมได้ และจะเผยแพร่เมื่อไหร่</small></span></div>
+                <div class="v2c-modes" role="radiogroup" aria-label="การเข้าร่วม">
+                    <label class="v2c-mode">
+                        <input type="radio" name="isPublic" value="true" checked>
+                        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></span>
+                        <span class="t"><b>สาธารณะ</b><small>ใครก็กดเข้าร่วมได้ทันที</small></span>
+                    </label>
+                    <label class="v2c-mode">
+                        <input type="radio" name="isPublic" value="false">
+                        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+                        <span class="t"><b>ส่วนตัว</b><small>คุณต้องอนุมัติคำขอก่อน</small></span>
+                    </label>
+                </div>
+                <div class="v2c-field">
+                    <label for="publishAt">ตั้งเวลาเผยแพร่ล่วงหน้า <span class="v2c-opt">(ไม่บังคับ)</span></label>
+                    <input id="publishAt" type="datetime-local" name="publishAt" min="2026-01-01T00:00" max="2028-12-31T23:59">
+                    <span class="v2c-hint">เว้นว่างไว้ = เผยแพร่ทันที</span>
+                </div>
+                <div class="v2c-field">
+                    <label for="description">รายละเอียด <span class="v2c-opt">(ไม่บังคับ)</span></label>
+                    <textarea id="description" name="description" rows="4"
+                              th:placeholder="${isTour} ? 'เช่น รูปแบบการแข่ง กติกา รางวัล และสิ่งที่ต้องเตรียม' : 'เช่น ระดับฝีมือ สิ่งที่ต้องเตรียม หรือจุดนัดพบ'"></textarea>
+                </div>
+            </section>
+
+            <div class="v2c-submit">
+                <a class="v2-btn outline" th:href="@{${isTour?'/tournaments':'/posts'}}">ยกเลิก</a>
+                <button class="v2-btn pitch v2c-go" type="submit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    <span th:text="${isTour} ? 'สร้างทัวร์นาเมนต์' : 'สร้างกิจกรรม'">สร้างกิจกรรม</span></button>
+            </div>
+        </div>
+
+        <!-- ================= ตัวอย่างสด ================= -->
+        <aside class="v2c-aside">
+            <span class="v2c-aside-k">ตัวอย่างที่คนอื่นจะเห็น</span>
+            <div class="v2p-card v2c-preview" th:classappend="${isTour} ? 'full'">
+                <span class="v2p-body">
+                    <span class="v2p-top">
+                        <span class="v2p-title-wrap">
+                            <span class="v2-card-top">
+                                <span class="sport-tag" id="pvSport">Sport</span>
+                                <span class="v2t-badge" th:if="${isTour}">Tournament</span>
+                                <span class="pill green" id="pvMode">สาธารณะ</span>
+                            </span>
+                            <h3 id="pvName">ชื่อกิจกรรมของคุณ</h3>
+                        </span>
+                        <span class="v2p-date"><span class="m" id="pvMon">---</span><span class="d" id="pvDay">--</span></span>
+                    </span>
+                    <span class="v2-meta">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b id="pvWhen">ยังไม่ได้เลือกเวลา</b></span>
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span id="pvLoc">สถานที่</span></span>
+                        <span th:if="${currentUser != null}">โดย <b th:text="${currentUser.userName}">คุณ</b></span>
+                    </span>
+                </span>
+                <span class="v2p-foot">
+                    <span class="v2p-foot-row">
+                        <span><span class="score-label">ผู้เข้าร่วม</span>
+                            <span class="v2-score"><span class="cur">0</span><span class="sep">/</span><span id="pvMax">10</span></span></span>
+                        <span class="v2p-cta">เข้าร่วม ›</span>
+                    </span>
+                    <span class="v2-bar"><i style="width:0%"></i></span>
+                    <span class="v2-left" id="pvNeed">ต้องการอย่างน้อย 4 คน</span>
+                </span>
             </div>
 
-            <div class="field">
-                <label>การเข้าร่วม</label>
-                <select name="isPublic">
-                    <option value="true">สาธารณะ — เข้าร่วมได้ทันที</option>
-                    <option value="false">ส่วนตัว — เจ้าของต้องอนุมัติก่อน</option>
-                </select>
+            <div class="v2c-tips">
+                <b>เคล็ดลับ</b>
+                <ul th:if="${isTour}">
+                    <li>เขียนกติกา รูปแบบการแข่ง และรางวัลในรายละเอียดให้ชัด</li>
+                    <li>ทัวร์นาเมนต์สร้างได้เฉพาะสมาชิก และจะแสดงในหน้า Tournament</li>
+                    <li>ตั้งจำนวนสูงสุดให้พอดีกับสายการแข่ง เช่น 8 หรือ 16 คน</li>
+                </ul>
+                <ul th:unless="${isTour}">
+                    <li>ใส่ระดับฝีมือในรายละเอียด ช่วยให้ได้เพื่อนเล่นที่เหมาะกัน</li>
+                    <li>เลื่อนเวลาได้ภายหลัง แต่แก้ไขได้สูงสุด 3 ครั้ง</li>
+                    <li>ยกเลิกกิจกรรมแล้ว ผู้เข้าร่วมทุกคนจะได้รับแจ้งเตือน</li>
+                </ul>
             </div>
-
-            <div class="field">
-                <label>ตั้งเวลาเผยแพร่ล่วงหน้า <span style="font-weight:400;color:var(--muted)">(ไม่บังคับ)</span></label>
-                                <input type="datetime-local" name="publishAt"
-                       min="2026-01-01T00:00" max="2028-12-31T23:59">
-                <div class="hint">เว้นว่างไว้ = เผยแพร่ทันที</div>
-            </div>
-
-            <div class="field">
-                <label>รายละเอียด</label>
-                <textarea name="description" rows="3" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
-            </div>
-
-            <div style="display:flex;gap:10px;margin-top:8px">
-                <button class="btn btn-primary">สร้างกิจกรรม</button>
-                <a class="btn btn-ghost" th:href="@{${type=='Tournament'?'/tournaments':'/posts'}}">ยกเลิก</a>
-            </div>
-        </form>
-    </div>
+        </aside>
+    </form>
 </div>
+
+<script>
+(function () {
+    var MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    var $ = function (id) { return document.getElementById(id); };
+    var form = $('createForm');
+
+    function update() {
+        var name = $('postName').value.trim();
+        $('nameLen').textContent = $('postName').value.length;
+        $('pvName').textContent = name || 'ชื่อกิจกรรมของคุณ';
+
+        var sp = form.querySelector('input[name=sportId]:checked');
+        $('pvSport').textContent = sp ? sp.parentElement.textContent.trim() : 'Sport';
+        form.querySelectorAll('.v2c-sport').forEach(function (l) { l.classList.toggle('active', l.querySelector('input').checked); });
+
+        var loc = $('locationId');
+        $('pvLoc').textContent = loc.options[loc.selectedIndex] ? loc.options[loc.selectedIndex].text : 'สถานที่';
+
+        var pub = form.querySelector('input[name=isPublic]:checked').value === 'true';
+        $('pvMode').textContent = pub ? 'สาธารณะ' : 'ต้องอนุมัติ';
+        $('pvMode').className = 'pill ' + (pub ? 'green' : 'orange');
+        form.querySelectorAll('.v2c-mode').forEach(function (l) { l.classList.toggle('active', l.querySelector('input').checked); });
+        document.querySelector('.v2c-preview .v2p-cta').textContent = form.classList.contains('is-tour') ? 'สมัครเข้าแข่ง ›' : (pub ? 'เข้าร่วม ›' : 'ขอเข้าร่วม ›');
+
+        var v = $('datePlay').value;
+        if (v) {
+            var d = new Date(v);
+            $('pvMon').textContent = MON[d.getMonth()];
+            $('pvDay').textContent = String(d.getDate()).padStart(2, '0');
+            $('pvWhen').textContent = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear() + ' ' + v.slice(11, 16);
+        }
+
+        var mn = Number($('minPlayer').value), mx = Number($('maxPlayer').value);
+        $('pvMax').textContent = mx || '-';
+        $('pvNeed').textContent = 'ต้องการอย่างน้อย ' + (mn || '-') + ' คน';
+        var bad = mn && mx && mx < mn;
+        $('playerWarn').classList.toggle('v2-hidden', !bad);
+        $('maxPlayer').setCustomValidity(bad ? 'จำนวนสูงสุดต้องไม่น้อยกว่าจำนวนขั้นต่ำ' : '');
+    }
+
+    /* ปุ่ม + / − */
+    form.querySelectorAll('.v2c-stepper button').forEach(function (b) {
+        b.addEventListener('click', function () {
+            var inp = $(b.dataset.for);
+            var n = (Number(inp.value) || 0) + Number(b.dataset.step);
+            inp.value = Math.max(Number(inp.min) || 0, n);
+            update();
+        });
+    });
+
+    form.addEventListener('input', update);
+    form.addEventListener('change', update);
+    update();
+})();
+</script>
 </body>
 </html>

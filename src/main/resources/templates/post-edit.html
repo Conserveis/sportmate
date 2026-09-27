@@ -4,96 +4,276 @@
 <body>
 <nav th:replace="~{fragments :: nav(${post.tournament?'tournaments':'posts'})}"></nav>
 
-<div class="wrap">
-    <div class="page-head">
+<div class="wrap v2" th:with="isTour=${post.tournament},
+     mons=${ {'JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'} }">
+
+    <a class="v2u-back" th:href="@{'/posts/' + ${post.id}}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>กลับไปหน้ากิจกรรม</a>
+
+    <section class="v2p-head v2e-head">
         <div>
-            <div class="eyebrow">Edit</div>
-            <h1 th:text="${post.tournament?'แก้ไขทัวร์นาเมนต์':'แก้ไขโพสต์'}">แก้ไขกิจกรรม</h1>
+            <div class="eyebrow" th:classappend="${isTour} ? 'v2t-eyebrow'">Edit</div>
+            <h1 th:text="${isTour?'แก้ไขทัวร์นาเมนต์':'แก้ไขโพสต์'}">แก้ไขกิจกรรม</h1>
+            <p class="v2-lead">กำลังแก้ไข <b th:text="${post.postName}">ชื่อกิจกรรม</b></p>
         </div>
-    </div>
+        <!-- สิทธิ์แก้ไขที่เหลือ -->
+        <div class="v2e-quota" th:with="left=${post.editsLeft}">
+            <span class="k">สิทธิ์แก้ไขคงเหลือ</span>
+            <span class="v2e-dots">
+                <i th:each="n : ${#numbers.sequence(1,3)}" th:classappend="${n <= left} ? 'on'"></i>
+            </span>
+            <b th:text="|${left}/3 ครั้ง|">3/3 ครั้ง</b>
+        </div>
+    </section>
 
     <div class="flash err" th:if="${error}" th:text="${error}"></div>
 
-    <div class="flash" th:if="${post.editsLeft > 0}"
-         th:text="|แก้ไขได้อีก ${post.editsLeft} ครั้ง (สูงสุด 3 ครั้ง/โพสต์) · เลื่อนวันเวลานัดได้ช้าสุดถึง ${#temporals.format(post.postponeDeadline,'dd/MM/yyyy HH:mm')}|">
+    <!-- กรอบเวลาเลื่อนนัด -->
+    <div class="v2e-info">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        <span class="t">
+            <b>เลื่อนวันเวลานัดได้ไม่เกิน 72 ชั่วโมงจากกำหนดเดิม</b>
+            <span>กำหนดเดิม <b th:text="${#temporals.format(post.baseDatePlay,'dd/MM/yyyy HH:mm')}">-</b>
+                · เลื่อนได้ช้าสุดถึง <b th:text="${#temporals.format(post.postponeDeadline,'dd/MM/yyyy HH:mm')}">-</b></span>
+        </span>
     </div>
 
-    <div class="form-card">
-        <form method="post" th:action="@{'/posts/' + ${post.id} + '/edit'}">
+    <form class="v2c-layout" method="post" th:action="@{'/posts/' + ${post.id} + '/edit'}" id="createForm"
+          th:classappend="${isTour} ? 'is-tour'">
 
-            <div class="field">
-                <label>ชื่อกิจกรรม</label>
-                <input name="postName" required th:value="${post.postName}">
-            </div>
-
-            <div class="row2">
-                <div class="field">
-                    <label>ประเภทกีฬา</label>
-                    <select name="sportId" required>
-                        <option th:each="s : ${sports}" th:value="${s.id}" th:text="${s.name}"
-                                th:selected="${s.id == post.sport.id}"></option>
-                    </select>
+        <div class="v2c-main">
+            <!-- 1 -->
+            <section class="v2c-step">
+                <div class="v2c-step-head"><i>1</i><span><b>ข้อมูลกิจกรรม</b><small>ชื่อและประเภทกีฬา</small></span></div>
+                <div class="v2c-field">
+                    <label for="postName">ชื่อกิจกรรม</label>
+                    <input id="postName" name="postName" required maxlength="100" th:value="${post.postName}">
+                    <span class="v2c-count"><span id="nameLen">0</span>/100</span>
                 </div>
-                <div class="field">
-                    <label>สถานที่</label>
-                    <select name="locationId" required>
-                        <option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.name}"
-                                th:selected="${l.id == post.location.id}"></option>
-                    </select>
+                <div class="v2c-field">
+                    <span class="v2c-label">ประเภทกีฬา</span>
+                    <div class="v2c-sports" role="radiogroup" aria-label="ประเภทกีฬา">
+                        <label class="v2c-sport" th:each="s : ${sports}">
+                            <input type="radio" name="sportId" th:value="${s.id}" th:checked="${s.id == post.sport.id}" required>
+                            <span th:text="${s.name}">Football</span>
+                        </label>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="field">
-                <label>วันและเวลานัด</label>
-                <input type="datetime-local" name="datePlay"
-                       min="2026-01-01T00:00" required
-                       th:max="${#temporals.format(post.postponeDeadline,'yyyy-MM-dd') + 'T' + #temporals.format(post.postponeDeadline,'HH:mm')}"
-                       th:value="${#temporals.format(post.datePlay,'yyyy-MM-dd') + 'T' + #temporals.format(post.datePlay,'HH:mm')}">
-                <div class="hint"
-                     th:text="|เลื่อนออกไปได้ไม่เกิน 72 ชม. จากกำหนดเดิม (${#temporals.format(post.baseDatePlay,'dd/MM/yyyy HH:mm')}) — ช้าสุดถึง ${#temporals.format(post.postponeDeadline,'dd/MM/yyyy HH:mm')}|">
+            <!-- 2 -->
+            <section class="v2c-step">
+                <div class="v2c-step-head"><i>2</i><span><b>เวลาและสถานที่</b><small>ผู้เข้าร่วมจะได้รับแจ้งเตือนเมื่อเปลี่ยน</small></span></div>
+                <div class="v2c-row">
+                    <div class="v2c-field">
+                        <label for="locationId">สถานที่</label>
+                        <select id="locationId" name="locationId" required>
+                            <option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.name}"
+                                    th:selected="${l.id == post.location.id}"></option>
+                        </select>
+                    </div>
+                    <div class="v2c-field">
+                        <label for="datePlay">วันและเวลานัด</label>
+                        <input id="datePlay" type="datetime-local" name="datePlay" min="2026-01-01T00:00" required
+                               th:max="${#temporals.format(post.postponeDeadline,'yyyy-MM-dd') + 'T' + #temporals.format(post.postponeDeadline,'HH:mm')}"
+                               th:value="${#temporals.format(post.datePlay,'yyyy-MM-dd') + 'T' + #temporals.format(post.datePlay,'HH:mm')}">
+                        <span class="v2c-hint" th:text="|ช้าสุดถึง ${#temporals.format(post.postponeDeadline,'dd/MM/yyyy HH:mm')}|">-</span>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="row2">
-                <div class="field">
-                    <label>จำนวนขั้นต่ำ</label>
-                    <input type="number" name="minPlayer" min="3" required th:value="${post.minPlayer}">
-                    <div class="hint">อย่างน้อย 3 คน</div>
+            <!-- 3 -->
+            <section class="v2c-step">
+                <div class="v2c-step-head"><i>3</i><span><b>จำนวนผู้เล่น</b><small>ลดจำนวนสูงสุดต่ำกว่าผู้เข้าร่วมปัจจุบันไม่ได้</small></span></div>
+                <div class="v2c-row">
+                    <div class="v2c-field">
+                        <label for="minPlayer">จำนวนขั้นต่ำ</label>
+                        <div class="v2c-stepper">
+                            <button type="button" data-step="-1" data-for="minPlayer" aria-label="ลดจำนวนขั้นต่ำ">−</button>
+                            <input id="minPlayer" type="number" name="minPlayer" min="3" required th:value="${post.minPlayer}">
+                            <button type="button" data-step="1" data-for="minPlayer" aria-label="เพิ่มจำนวนขั้นต่ำ">+</button>
+                        </div>
+                    </div>
+                    <div class="v2c-field">
+                        <label for="maxPlayer">จำนวนสูงสุด</label>
+                        <div class="v2c-stepper">
+                            <button type="button" data-step="-1" data-for="maxPlayer" aria-label="ลดจำนวนสูงสุด">−</button>
+                            <input id="maxPlayer" type="number" name="maxPlayer" min="3" required th:value="${post.maxPlayer}">
+                            <button type="button" data-step="1" data-for="maxPlayer" aria-label="เพิ่มจำนวนสูงสุด">+</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="field">
-                    <label>จำนวนสูงสุด</label>
-                    <input type="number" name="maxPlayer" min="3" required th:value="${post.maxPlayer}">
-                    <div class="hint">ลดต่ำกว่าจำนวนผู้เข้าร่วมปัจจุบันไม่ได้</div>
+                <div class="v2c-warn v2-hidden" id="playerWarn">จำนวนสูงสุดต้องไม่น้อยกว่าจำนวนขั้นต่ำ</div>
+            </section>
+
+            <!-- 4 -->
+            <section class="v2c-step">
+                <div class="v2c-step-head"><i>4</i><span><b>การเข้าร่วมและรายละเอียด</b><small>กำหนดว่าใครเข้าร่วมได้</small></span></div>
+                <div class="v2c-modes" role="radiogroup" aria-label="การเข้าร่วม">
+                    <label class="v2c-mode">
+                        <input type="radio" name="isPublic" value="true" th:checked="${post.public}">
+                        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></span>
+                        <span class="t"><b>สาธารณะ</b><small>ใครก็กดเข้าร่วมได้ทันที</small></span>
+                    </label>
+                    <label class="v2c-mode">
+                        <input type="radio" name="isPublic" value="false" th:checked="${!post.public}">
+                        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+                        <span class="t"><b>ส่วนตัว</b><small>คุณต้องอนุมัติคำขอก่อน</small></span>
+                    </label>
                 </div>
+                <div class="v2c-field" th:if="${post.publishAt != null}">
+                    <label for="publishAt">ตั้งเวลาเผยแพร่ล่วงหน้า</label>
+                    <input id="publishAt" type="datetime-local" name="publishAt" min="2026-01-01T00:00" max="2028-12-31T23:59"
+                           th:value="${#temporals.format(post.publishAt,'yyyy-MM-dd') + 'T' + #temporals.format(post.publishAt,'HH:mm')}">
+                    <span class="v2c-hint">แก้ได้เฉพาะกรณีที่ยังไม่ถึงเวลาเผยแพร่</span>
+                </div>
+                <div class="v2c-field">
+                    <label for="description">รายละเอียด <span class="v2c-opt">(ไม่บังคับ)</span></label>
+                    <textarea id="description" name="description" rows="4" th:text="${post.description}"></textarea>
+                </div>
+            </section>
+
+            <div class="v2c-submit">
+                <a class="v2-btn outline" th:href="@{'/posts/' + ${post.id}}">ยกเลิก</a>
+                <button class="v2-btn pitch v2c-go" type="submit" id="saveBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>บันทึกการแก้ไข</button>
+            </div>
+        </div>
+
+        <!-- ================= ด้านขวา ================= -->
+        <aside class="v2c-aside">
+            <div class="v2e-changes" id="changes">
+                <b>การเปลี่ยนแปลง</b>
+                <span class="v2e-none" id="noChange">ยังไม่มีการเปลี่ยนแปลง</span>
+                <ul id="changeList"></ul>
+                <span class="v2e-cost">การบันทึกจะใช้สิทธิ์แก้ไข 1 ครั้ง</span>
             </div>
 
-            <div class="field">
-                <label>การเข้าร่วม</label>
-                <select name="isPublic">
-                    <option value="true" th:selected="${post.public}">สาธารณะ — เข้าร่วมได้ทันที</option>
-                    <option value="false" th:selected="${!post.public}">ส่วนตัว — เจ้าของต้องอนุมัติก่อน</option>
-                </select>
+            <span class="v2c-aside-k">ตัวอย่างหลังแก้ไข</span>
+            <div class="v2p-card v2c-preview" th:classappend="${isTour} ? 'full'">
+                <span class="v2p-body">
+                    <span class="v2p-top">
+                        <span class="v2p-title-wrap">
+                            <span class="v2-card-top">
+                                <span class="sport-tag" id="pvSport">Sport</span>
+                                <span class="v2t-badge" th:if="${isTour}">Tournament</span>
+                                <span class="pill green" id="pvMode">สาธารณะ</span>
+                            </span>
+                            <h3 id="pvName">-</h3>
+                        </span>
+                        <span class="v2p-date"><span class="m" id="pvMon">---</span><span class="d" id="pvDay">--</span></span>
+                    </span>
+                    <span class="v2-meta">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b id="pvWhen">-</b></span>
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span id="pvLoc">-</span></span>
+                    </span>
+                </span>
+                <span class="v2p-foot">
+                    <span class="v2p-foot-row">
+                        <span><span class="score-label">จำนวนผู้เล่น</span>
+                            <span class="v2-score"><span class="cur" id="pvMin">-</span><span class="sep">–</span><span id="pvMax">-</span></span></span>
+                        <span class="v2p-cta" th:text="${isTour} ? 'สมัครเข้าแข่ง ›' : 'เข้าร่วม ›'">เข้าร่วม ›</span>
+                    </span>
+                    <span class="v2-left">ขั้นต่ำ – สูงสุด (คน)</span>
+                </span>
             </div>
-
-            <div class="field" th:if="${post.publishAt != null}">
-                <label>ตั้งเวลาเผยแพร่ล่วงหน้า</label>
-                <input type="datetime-local" name="publishAt"
-                       min="2026-01-01T00:00" max="2028-12-31T23:59"
-                       th:value="${#temporals.format(post.publishAt,'yyyy-MM-dd') + 'T' + #temporals.format(post.publishAt,'HH:mm')}">
-                <div class="hint">แก้ได้เฉพาะกรณีที่ยังไม่ถึงเวลาเผยแพร่</div>
-            </div>
-
-            <div class="field">
-                <label>รายละเอียด</label>
-                <textarea name="description" rows="3" th:text="${post.description}"></textarea>
-            </div>
-
-            <div style="display:flex;gap:10px;margin-top:8px">
-                <button class="btn btn-primary">บันทึกการแก้ไข</button>
-                <a class="btn btn-ghost" th:href="@{'/posts/' + ${post.id}}">ยกเลิก</a>
-            </div>
-        </form>
-    </div>
+        </aside>
+    </form>
 </div>
+
+<script>
+(function () {
+    var MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    var $ = function (id) { return document.getElementById(id); };
+    var form = $('createForm');
+
+    function snapshot() {
+        var sp = form.querySelector('input[name=sportId]:checked');
+        var loc = $('locationId');
+        return {
+            name: $('postName').value.trim(),
+            sport: sp ? sp.parentElement.textContent.trim() : '',
+            loc: loc.options[loc.selectedIndex] ? loc.options[loc.selectedIndex].text : '',
+            when: $('datePlay').value,
+            min: $('minPlayer').value,
+            max: $('maxPlayer').value,
+            pub: form.querySelector('input[name=isPublic]:checked') ? form.querySelector('input[name=isPublic]:checked').value : 'true',
+            desc: $('description').value.trim(),
+            publish: $('publishAt') ? $('publishAt').value : ''
+        };
+    }
+    var original = snapshot();
+    var LABEL = { name: 'ชื่อกิจกรรม', sport: 'ประเภทกีฬา', loc: 'สถานที่', when: 'วันเวลานัด',
+                  min: 'จำนวนขั้นต่ำ', max: 'จำนวนสูงสุด', pub: 'การเข้าร่วม', desc: 'รายละเอียด', publish: 'เวลาเผยแพร่' };
+    var FIELD = { name: 'postName', loc: 'locationId', when: 'datePlay', min: 'minPlayer', max: 'maxPlayer', desc: 'description', publish: 'publishAt' };
+
+    function fmt(v) {
+        var d = new Date(v);
+        return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear() + ' ' + v.slice(11, 16);
+    }
+
+    function update() {
+        var now = snapshot();
+        $('nameLen').textContent = $('postName').value.length;
+        $('pvName').textContent = now.name || '-';
+        $('pvSport').textContent = now.sport || 'Sport';
+        $('pvLoc').textContent = now.loc;
+        var pub = now.pub === 'true';
+        $('pvMode').textContent = pub ? 'สาธารณะ' : 'ต้องอนุมัติ';
+        $('pvMode').className = 'pill ' + (pub ? 'green' : 'orange');
+        if (now.when) {
+            var d = new Date(now.when);
+            $('pvMon').textContent = MON[d.getMonth()];
+            $('pvDay').textContent = String(d.getDate()).padStart(2, '0');
+            $('pvWhen').textContent = fmt(now.when);
+        }
+        $('pvMin').textContent = now.min || '-';
+        $('pvMax').textContent = now.max || '-';
+
+        form.querySelectorAll('.v2c-sport').forEach(function (l) { l.classList.toggle('active', l.querySelector('input').checked); });
+        form.querySelectorAll('.v2c-mode').forEach(function (l) { l.classList.toggle('active', l.querySelector('input').checked); });
+
+        var bad = Number(now.min) && Number(now.max) && Number(now.max) < Number(now.min);
+        $('playerWarn').classList.toggle('v2-hidden', !bad);
+        $('maxPlayer').setCustomValidity(bad ? 'จำนวนสูงสุดต้องไม่น้อยกว่าจำนวนขั้นต่ำ' : '');
+
+        /* รายการที่เปลี่ยน */
+        var list = $('changeList');
+        list.innerHTML = '';
+        var n = 0;
+        Object.keys(LABEL).forEach(function (k) {
+            var changed = now[k] !== original[k];
+            if (FIELD[k] && $(FIELD[k])) $(FIELD[k]).closest('.v2c-field').classList.toggle('is-changed', changed);
+            if (!changed) return;
+            n++;
+            var li = document.createElement('li');
+            var from = k === 'when' || k === 'publish' ? (original[k] ? fmt(original[k]) : '-') : k === 'pub' ? (original[k] === 'true' ? 'สาธารณะ' : 'ส่วนตัว') : original[k];
+            var to = k === 'when' || k === 'publish' ? (now[k] ? fmt(now[k]) : '-') : k === 'pub' ? (now[k] === 'true' ? 'สาธารณะ' : 'ส่วนตัว') : now[k];
+            var b = document.createElement('b'); b.textContent = LABEL[k];
+            li.appendChild(b);
+            if (k !== 'desc') {
+                var s = document.createElement('span');
+                s.textContent = (from || '-') + ' → ' + (to || '-');
+                li.appendChild(s);
+            }
+            list.appendChild(li);
+        });
+        $('noChange').classList.toggle('v2-hidden', n > 0);
+        $('changes').classList.toggle('has', n > 0);
+        $('saveBtn').disabled = n === 0;
+    }
+
+    form.querySelectorAll('.v2c-stepper button').forEach(function (b) {
+        b.addEventListener('click', function () {
+            var inp = $(b.dataset.for);
+            inp.value = Math.max(Number(inp.min) || 0, (Number(inp.value) || 0) + Number(b.dataset.step));
+            update();
+        });
+    });
+    form.addEventListener('input', update);
+    form.addEventListener('change', update);
+    update();
+})();
+</script>
 </body>
 </html>

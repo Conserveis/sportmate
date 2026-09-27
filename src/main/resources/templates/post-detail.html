@@ -4,245 +4,286 @@
 <body>
 <nav th:replace="~{fragments :: nav(${post.tournament?'tournaments':'posts'})}"></nav>
 
-<div class="wrap">
+<div class="wrap v2" th:with="cancelled=${post.status == 'cancelled'},
+                             pct=${post.maxPlayer > 0 ? (joinCount * 100 / post.maxPlayer) : 0},
+                             minPct=${post.maxPlayer > 0 ? (post.minPlayer * 100 / post.maxPlayer) : 0},
+                             isFull=${joinCount >= post.maxPlayer}">
     <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
     <div th:if="${error}" class="flash err" th:text="${error}"></div>
-    <div th:if="${post.status == 'cancelled'}" class="flash err">
+
+    <a class="v2u-back" th:href="@{${post.tournament?'/tournaments':'/posts'}}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        <span th:text="${post.tournament} ? 'กลับไปทัวร์นาเมนต์' : 'กลับไปหน้าโพสต์'">กลับ</span></a>
+
+    <div class="v2d-alert" th:if="${cancelled}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
         กิจกรรมนี้ถูกยกเลิกโดยผู้จัดแล้ว
     </div>
 
-    <a th:href="@{${post.tournament?'/tournaments':'/posts'}}"
-    style="color:var(--muted);text-decoration:none;font-size:.88rem"><span class="line-icon arrow" aria-hidden="true"></span> กลับ</a>
-
-    <div class="detail-grid">
-        <!-- LEFT: details + comments -->
-        <div>
-            <div class="panel">
-                <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
-                    <span class="sport-tag" th:text="${post.sport.name}">Sport</span>
-                    <span class="pill grey" th:if="${post.expired}">หมดเวลาแล้ว</span>
-                    <span class="pill orange" th:if="${post.status=='cancelled'}">ยกเลิกแล้ว</span>
-                </div>
-                <div class="detail-title" th:text="${post.postName}">ชื่อกิจกรรม</div>
-
-                <div class="kv">
-                    <span class="k">วันเวลา</span>
-                    <span th:text="${#temporals.format(post.datePlay,'dd MMMM yyyy, HH:mm')}">-</span>
-                    <span class="k">สถานที่</span><span th:text="${post.location.name}">-</span>
-                    <span class="k">ผู้จัดกิจกรรม</span>
-                    <span>
-                        <a class="user-link" th:href="@{'/users/' + ${post.owner.id}}"
-                           th:text="${post.owner.userName}">-</a>
-                        <span class="stars" th:if="${post.owner.avgScore.doubleValue() > 0}"
-                              th:text="'คะแนน ' + ${#numbers.formatDecimal(post.owner.avgScore,1,2)}">คะแนน</span>
-                    </span>
-                    <span class="k">การเข้าร่วม</span>
-                    <span th:text="${post.public}?'สาธารณะ (เข้าร่วมได้ทันที)':'ส่วนตัว (ต้องอนุมัติ)'">-</span>
-                    <span class="k" th:if="${post.description}">รายละเอียด</span>
-                    <span th:if="${post.description}" th:text="${post.description}">-</span>
-                </div>
+    <!-- ================= HERO ================= -->
+    <section class="v2d-hero" th:classappend="${post.tournament} ? 'is-tour'"
+             th:attr="data-play=${post.datePlay}">
+        <div class="v2d-hero-main">
+            <div class="v2d-tags">
+                <span class="sport-tag v2d-sport" th:text="${post.sport.name}">Sport</span>
+                <span class="v2d-tag" th:if="${post.tournament}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/></svg>Tournament</span>
+                <span class="v2d-tag" th:text="${post.public} ? 'สาธารณะ' : 'ต้องอนุมัติ'">สาธารณะ</span>
+                <span class="v2d-tag grey" th:if="${post.expired and !cancelled}">หมดเวลาแล้ว</span>
+                <span class="v2d-tag red" th:if="${cancelled}">ยกเลิกแล้ว</span>
+                <span class="v2d-tag live" th:if="${!post.expired and !cancelled}"><i></i><span th:text="${isFull} ? 'เต็มแล้ว' : 'เปิดรับอยู่'">เปิดรับอยู่</span></span>
             </div>
-
-            <!-- comments -->
-            <div class="panel" style="margin-top:18px">
-                <h2 style="font-family:'Noto Sans Thai',sans-serif;text-transform:uppercase;font-size:1.1rem;margin-bottom:6px">
-                    ความคิดเห็น<span th:if="${canViewComments}"> (<span th:text="${comments.size()}">0</span>)</span></h2>
-
-                <div th:unless="${canViewComments}" class="locked-note">
-                    เฉพาะผู้เข้าร่วมที่ได้รับการอนุมัติแล้วเท่านั้นที่จะเห็นและร่วมพูดคุยในความคิดเห็นได้
-                </div>
-
-                <div th:if="${canViewComments and comments.isEmpty()}" style="color:var(--muted);font-size:.9rem;padding:8px 0">
-                    ยังไม่มีความคิดเห็น
-                </div>
-
-                <div class="comment" th:each="c : ${comments}" th:id="'comment-'+${c.id}">
-                    <img class="c-avatar" th:if="${c.user.avatarUrl != null}"
-                         th:src="@{${c.user.avatarUrl}}" alt="">
-                    <div class="c-avatar" th:if="${c.user.avatarUrl == null}"
-                         th:text="${#strings.substring(c.user.userName,0,1).toUpperCase()}">U</div>
-                    <div class="c-body">
-                        <a class="c-name user-link" th:href="@{'/users/' + ${c.user.id}}"
-                           th:text="${c.user.userName}">user</a>
-                        <span class="c-time" th:text="${#temporals.format(c.time,'dd/MM HH:mm')}">time</span>
-                        <div class="c-text" th:text="${c.text}">ข้อความ</div>
-
-                        <div class="c-actions"
-                             th:if="${currentUser != null and (c.user.id == currentUser.id or isOwner)}">
-                            <button type="button" class="c-act"
-                                    th:if="${c.user.id == currentUser.id and canComment}"
-                                    th:attr="data-target='edit-'+${c.id}"
-                                    onclick="toggleCommentEdit(this)">แก้ไข</button>
-                            <form method="post" style="margin:0;display:inline"
-                                  th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/delete'}"
-                                  onsubmit="return confirm('ต้องการลบความคิดเห็นนี้ใช่หรือไม่?')">
-                                <button type="submit" class="c-act c-act-danger">ลบ</button>
-                            </form>
-                        </div>
-
-                        <form class="c-edit-form" th:id="'edit-'+${c.id}" method="post"
-                              th:if="${currentUser != null and c.user.id == currentUser.id and canComment}"
-                              th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/edit'}">
-                            <input name="text" th:value="${c.text}" required maxlength="1000">
-                            <button type="submit" class="btn btn-primary btn-sm">บันทึก</button>
-                            <button type="button" class="btn btn-ghost btn-sm"
-                                    onclick="cancelCommentEdit(this)">ยกเลิก</button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- comment form: เจ้าของ/ผู้เข้าร่วมที่อนุมัติแล้ว + กิจกรรมยังไม่จบ -->
-                <form th:if="${canComment}" class="comment-form" method="post"
-                      th:action="@{'/posts/' + ${post.id} + '/comment'}">
-                    <input name="text" placeholder="พิมพ์ความคิดเห็น..." required maxlength="1000">
-                    <button class="btn btn-primary btn-sm">ส่ง</button>
-                </form>
-
-                <div th:if="${canViewComments and !canComment}" class="locked-note"
-                     th:text="${post.status == 'cancelled'}
-                              ? 'กิจกรรมนี้ถูกยกเลิกแล้ว ไม่สามารถแสดงความคิดเห็นได้'
-                              : 'กิจกรรมนี้จบไปแล้ว ไม่สามารถแสดงความคิดเห็นเพิ่มได้'">
-                </div>
-
-                <div th:if="${!canViewComments and isPending}" class="locked-note">
-                    คำขอเข้าร่วมของคุณอยู่ระหว่างรอการอนุมัติ เมื่อได้รับอนุมัติแล้วจะเห็นความคิดเห็นทั้งหมด
-                </div>
-                <div th:if="${!canViewComments and !isPending}" class="locked-note">
-                    เข้าร่วมกิจกรรมก่อนจึงจะเห็นและแสดงความคิดเห็นได้
-                </div>
+            <h1 th:text="${post.postName}">ชื่อกิจกรรม</h1>
+            <div class="v2d-meta">
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+                    <span th:text="${#temporals.format(post.datePlay,'dd MMMM yyyy')}">-</span></span>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                    <span th:text="${#temporals.format(post.datePlay,'HH:mm')} + ' น.'">-</span></span>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+                    <span th:text="${post.location.name}">-</span></span>
             </div>
         </div>
+        <div class="v2d-count" th:if="${!post.expired and !cancelled}">
+            <span class="k">เริ่มในอีก</span>
+            <span class="v2d-count-row">
+                <span><b id="cdD">0</b><small>วัน</small></span>
+                <span><b id="cdH">0</b><small>ชม.</small></span>
+                <span><b id="cdM">0</b><small>นาที</small></span>
+            </span>
+        </div>
+        <div class="v2d-count ended" th:if="${post.expired or cancelled}">
+            <span class="k" th:text="${cancelled} ? 'สถานะ' : 'กิจกรรม'">สถานะ</span>
+            <b th:text="${cancelled} ? 'ยกเลิกแล้ว' : 'จบแล้ว'">จบแล้ว</b>
+        </div>
+    </section>
 
-        <!-- RIGHT: scoreboard + join + participants -->
-        <div>
-            <div class="panel" style="text-align:center">
-                <div class="score-label">ผู้เข้าร่วม</div>
-                <div class="score" style="font-size:2.4rem;justify-content:center"
-                     th:classappend="${joinCount >= post.maxPlayer}?'full'">
-                    <span class="cur" th:text="${joinCount}">0</span><span class="sep">/</span><span th:text="${post.maxPlayer}">10</span>
+    <div class="v2f-body v2d-body">
+        <!-- ================= ซ้าย ================= -->
+        <div class="v2f-main">
+
+            <!-- รายละเอียด -->
+            <section class="v2d-card">
+                <h2 class="v2f-h2">รายละเอียดกิจกรรม</h2>
+                <div class="v2d-facts">
+                    <div class="v2d-fact"><span class="ico o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></span>
+                        <span><small>วันเวลา</small><b th:text="${#temporals.format(post.datePlay,'dd MMMM yyyy, HH:mm')}">-</b></span></div>
+                    <div class="v2d-fact"><span class="ico o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>
+                        <span><small>สถานที่</small><b th:text="${post.location.name}">-</b></span></div>
+                    <div class="v2d-fact"><span class="ico b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></svg></span>
+                        <span><small>จำนวนผู้เล่น</small><b th:text="|ขั้นต่ำ ${post.minPlayer} · สูงสุด ${post.maxPlayer} คน|">-</b></span></div>
+                    <div class="v2d-fact"><span class="ico v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+                        <span><small>การเข้าร่วม</small><b th:text="${post.public}?'สาธารณะ (เข้าร่วมได้ทันที)':'ส่วนตัว (ต้องอนุมัติ)'">-</b></span></div>
                 </div>
-                <div style="color:var(--muted);font-size:.85rem;margin-bottom:16px"
-                     th:if="${joinCount < post.minPlayer}"
-                     th:text="|ต้องการอีก ${post.minPlayer - joinCount} คนให้ครบขั้นต่ำ|">-</div>
 
-                <!-- actions -->
-                <div th:if="${isOwner}">
-                    <div style="color:var(--muted);font-size:.85rem;margin-bottom:8px">คุณเป็นเจ้าของกิจกรรมนี้</div>
+                <div class="v2d-desc" th:if="${post.description != null and !#strings.isEmpty(post.description)}">
+                    <small>รายละเอียด</small>
+                    <p th:text="${post.description}">-</p>
+                </div>
 
-                    <div th:if="${post.status == 'cancelled'}" class="pill orange"
-                         style="display:block;padding:8px">✕ กิจกรรมนี้ถูกยกเลิกแล้ว</div>
+                <!-- ผู้จัด -->
+                <a class="v2d-host" th:href="@{'/users/' + ${post.owner.id}}">
+                    <img class="v2d-host-av" th:if="${post.owner.avatarUrl != null}" th:src="@{${post.owner.avatarUrl}}" alt="">
+                    <span class="v2d-host-av" th:if="${post.owner.avatarUrl == null}"
+                          th:text="${#strings.toUpperCase(#strings.substring(post.owner.userName,0,1))}">U</span>
+                    <span class="v2d-host-info">
+                        <small>ผู้จัดกิจกรรม</small>
+                        <b th:text="${post.owner.userName}">-</b>
+                        <span class="v2d-host-score" th:if="${post.owner.avgScore.doubleValue() > 0}">
+                            <span class="v2f-stars" aria-hidden="true"><span class="bg">★★★★★</span><span class="fg" th:style="'width:' + ${post.owner.avgScore * 20} + '%'">★★★★★</span></span>
+                            <span th:text="${#numbers.formatDecimal(post.owner.avgScore,1,2)}">0.00</span>
+                        </span>
+                        <span class="v2d-host-score muted" th:unless="${post.owner.avgScore.doubleValue() > 0}">ยังไม่มีคะแนน</span>
+                    </span>
+                    <span class="v2d-host-go">ดูโปรไฟล์ ›</span>
+                </a>
+            </section>
 
-                    <div th:if="${post.status != 'cancelled' and !post.expired}">
-                        <a th:if="${!post.editLocked}" class="btn btn-ghost"
-                           style="width:100%;display:block;text-align:center"
-                           th:href="@{'/posts/' + ${post.id} + '/edit'}">แก้ไขรายละเอียด</a>
-                        <div th:if="${!post.editLocked}" class="locked-note" style="margin-top:8px"
-                             th:text="|แก้ไขได้อีก ${post.editsLeft}/3 ครั้ง · เลื่อนเวลาได้ถึง ${#temporals.format(post.postponeDeadline,'dd/MM/yyyy HH:mm')}|">
-                        </div>
-                        <div th:if="${post.editLocked}" class="locked-note" style="margin-top:8px">
-                            ใช้สิทธิ์แก้ไขครบ 3 ครั้งแล้ว
-                        </div>
+            <!-- ความคิดเห็น -->
+            <section class="v2d-card">
+                <h2 class="v2f-h2">ความคิดเห็น<span class="v2-count-pill blue" th:if="${canViewComments}" th:text="${comments.size()}">0</span></h2>
 
-                        <form th:if="${!post.ownerCancelLocked}" method="post" style="margin-top:8px"
-                              th:action="@{'/posts/' + ${post.id} + '/cancel'}"
-                              onsubmit="return confirm('ยกเลิกกิจกรรมนี้? ผู้เข้าร่วมทุกคนจะได้รับการแจ้งเตือน และยกเลิกแล้วกู้คืนไม่ได้')">
-                            <button class="btn btn-ghost" style="width:100%;color:var(--flare);border-color:var(--flare)">
-                                ยกเลิกกิจกรรม
-                            </button>
-                        </form>
-                        <div th:if="${post.ownerCancelLocked}" class="locked-note" style="margin-top:8px"
-                             th:text="|ไม่สามารถยกเลิกกิจกรรมได้แล้ว (ยกเลิกได้ถึง ${#temporals.format(post.ownerCancelDeadline,'dd/MM/yyyy HH:mm')} — นับจากกำหนดเดิม ไม่ขยับตามการเลื่อนเวลา)|">
+                <div class="v2d-lock" th:unless="${canViewComments}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                    <span>
+                        <b>เฉพาะผู้เข้าร่วมที่ได้รับการอนุมัติแล้ว</b>
+                        <span th:if="${isPending}">คำขอเข้าร่วมของคุณอยู่ระหว่างรอการอนุมัติ เมื่อได้รับอนุมัติแล้วจะเห็นความคิดเห็นทั้งหมด</span>
+                        <span th:unless="${isPending}">เข้าร่วมกิจกรรมก่อนจึงจะเห็นและแสดงความคิดเห็นได้</span>
+                    </span>
+                </div>
+
+                <div class="v2f-none" th:if="${canViewComments and comments.isEmpty()}">ยังไม่มีความคิดเห็น เริ่มคุยกับเพื่อนร่วมทีมได้เลย</div>
+
+                <div class="v2d-comments">
+                    <div class="comment v2d-comment" th:each="c : ${comments}" th:id="'comment-'+${c.id}"
+                         th:classappend="${c.user.id == post.owner.id} ? 'is-host'">
+                        <img class="c-avatar" th:if="${c.user.avatarUrl != null}" th:src="@{${c.user.avatarUrl}}" alt="">
+                        <div class="c-avatar" th:if="${c.user.avatarUrl == null}"
+                             th:text="${#strings.substring(c.user.userName,0,1).toUpperCase()}">U</div>
+                        <div class="c-body">
+                            <div class="v2d-c-head">
+                                <a class="c-name user-link" th:href="@{'/users/' + ${c.user.id}}" th:text="${c.user.userName}">user</a>
+                                <span class="v2d-host-badge" th:if="${c.user.id == post.owner.id}">ผู้จัด</span>
+                                <span class="c-time" th:text="${#temporals.format(c.time,'dd/MM HH:mm')}">time</span>
+                            </div>
+                            <div class="c-text" th:text="${c.text}">ข้อความ</div>
+
+                            <div class="c-actions" th:if="${currentUser != null and (c.user.id == currentUser.id or isOwner)}">
+                                <button type="button" class="c-act" th:if="${c.user.id == currentUser.id and canComment}"
+                                        th:attr="data-target='edit-'+${c.id}" onclick="toggleCommentEdit(this)">แก้ไข</button>
+                                <form method="post" style="margin:0;display:inline"
+                                      th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/delete'}"
+                                      onsubmit="return confirm('ต้องการลบความคิดเห็นนี้ใช่หรือไม่?')">
+                                    <button type="submit" class="c-act c-act-danger">ลบ</button>
+                                </form>
+                            </div>
+
+                            <form class="c-edit-form" th:id="'edit-'+${c.id}" method="post"
+                                  th:if="${currentUser != null and c.user.id == currentUser.id and canComment}"
+                                  th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/edit'}">
+                                <input name="text" th:value="${c.text}" required maxlength="1000" aria-label="แก้ไขความคิดเห็น">
+                                <button type="submit" class="v2-btn pitch v2f-sm">บันทึก</button>
+                                <button type="button" class="v2-btn outline v2f-sm" onclick="cancelCommentEdit(this)">ยกเลิก</button>
+                            </form>
                         </div>
                     </div>
                 </div>
 
-                <div th:unless="${isOwner}">
-                    <!-- ยังไม่ได้กดเข้าร่วม / ไม่ได้รออนุมัติ -->
-                    <form th:if="${!hasJoined and !isPending and !post.expired and post.status!='cancelled'}" method="post"
+                <form th:if="${canComment}" class="v2d-send" method="post" th:action="@{'/posts/' + ${post.id} + '/comment'}">
+                    <input name="text" placeholder="พิมพ์ความคิดเห็น..." required maxlength="1000" aria-label="พิมพ์ความคิดเห็น">
+                    <button class="v2-btn pitch" type="submit">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>ส่ง</button>
+                </form>
+
+                <div class="v2d-note" th:if="${canViewComments and !canComment}"
+                     th:text="${cancelled} ? 'กิจกรรมนี้ถูกยกเลิกแล้ว ไม่สามารถแสดงความคิดเห็นได้' : 'กิจกรรมนี้จบไปแล้ว ไม่สามารถแสดงความคิดเห็นเพิ่มได้'"></div>
+            </section>
+        </div>
+
+        <!-- ================= ขวา ================= -->
+        <aside class="v2f-aside">
+            <!-- สกอร์บอร์ด + ปุ่ม -->
+            <section class="v2d-score-card">
+                <span class="score-label">ผู้เข้าร่วม</span>
+                <div class="v2d-score" th:classappend="${isFull} ? 'full'">
+                    <span class="cur" th:text="${joinCount}">0</span><span class="sep">/</span><span th:text="${post.maxPlayer}">10</span>
+                </div>
+                <div class="v2d-meter">
+                    <span class="fill" th:style="'width:' + ${pct} + '%'"></span>
+                    <span class="min" th:if="${post.minPlayer > 0 and post.minPlayer < post.maxPlayer}"
+                          th:style="'left:' + ${minPct} + '%'" th:title="|ขั้นต่ำ ${post.minPlayer} คน|"></span>
+                </div>
+                <div class="v2d-meter-legend">
+                    <span th:text="|ขั้นต่ำ ${post.minPlayer}|">ขั้นต่ำ</span>
+                    <span th:text="${isFull ? 'เต็มแล้ว' : 'เหลือ ' + (post.maxPlayer - joinCount) + ' ที่'}">เหลือ</span>
+                </div>
+                <div class="v2d-need" th:if="${joinCount < post.minPlayer}"
+                     th:text="|ต้องการอีก ${post.minPlayer - joinCount} คนให้ครบขั้นต่ำ|">-</div>
+                <div class="v2d-need ok" th:if="${joinCount >= post.minPlayer and post.minPlayer > 0}">ครบจำนวนขั้นต่ำแล้ว เล่นได้!</div>
+
+                <!-- เจ้าของ -->
+                <div class="v2d-actions" th:if="${isOwner}">
+                    <div class="v2d-owner">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V10l7-6 7 6v11"/></svg>คุณเป็นเจ้าของกิจกรรมนี้</div>
+
+                    <div class="v2d-state red" th:if="${cancelled}">กิจกรรมนี้ถูกยกเลิกแล้ว</div>
+
+                    <th:block th:if="${!cancelled and !post.expired}">
+                        <a th:if="${!post.editLocked}" class="v2-btn outline v2d-full" th:href="@{'/posts/' + ${post.id} + '/edit'}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>แก้ไขรายละเอียด</a>
+                        <div th:if="${!post.editLocked}" class="v2d-note"
+                             th:text="|แก้ไขได้อีก ${post.editsLeft}/3 ครั้ง · เลื่อนเวลาได้ถึง ${#temporals.format(post.postponeDeadline,'dd/MM/yyyy HH:mm')}|"></div>
+                        <div th:if="${post.editLocked}" class="v2d-note">ใช้สิทธิ์แก้ไขครบ 3 ครั้งแล้ว</div>
+
+                        <form th:if="${!post.ownerCancelLocked}" method="post" th:action="@{'/posts/' + ${post.id} + '/cancel'}"
+                              onsubmit="return confirm('ยกเลิกกิจกรรมนี้? ผู้เข้าร่วมทุกคนจะได้รับการแจ้งเตือน และยกเลิกแล้วกู้คืนไม่ได้')">
+                            <button class="v2-btn v2f-danger v2d-full" type="submit">ยกเลิกกิจกรรม</button>
+                        </form>
+                        <div th:if="${post.ownerCancelLocked}" class="v2d-note"
+                             th:text="|ไม่สามารถยกเลิกกิจกรรมได้แล้ว (ยกเลิกได้ถึง ${#temporals.format(post.ownerCancelDeadline,'dd/MM/yyyy HH:mm')} — นับจากกำหนดเดิม ไม่ขยับตามการเลื่อนเวลา)|"></div>
+                    </th:block>
+                </div>
+
+                <!-- ผู้ใช้ทั่วไป -->
+                <div class="v2d-actions" th:unless="${isOwner}">
+                    <form th:if="${!hasJoined and !isPending and !post.expired and !cancelled}" method="post"
                           th:action="@{'/posts/' + ${post.id} + '/join'}">
-                        <button class="btn btn-flare" style="width:100%"
+                        <button class="v2-btn flare v2d-full v2d-big" type="submit"
                                 th:text="${post.public} ? 'เข้าร่วมกิจกรรม' : 'ขอเข้าร่วมกิจกรรม'">เข้าร่วมกิจกรรม</button>
                     </form>
 
-                    <!-- ส่งคำขอแล้ว รอเจ้าของโพสต์อนุมัติ -->
-                    <div th:if="${isPending and !post.expired}">
-                        <div class="pill orange" style="display:block;margin-bottom:8px;padding:8px">⏳ รอการอนุมัติจากผู้จัด</div>
-                        <form th:if="${!post.cancelLocked}" method="post"
-                              th:action="@{'/posts/' + ${post.id} + '/cancel-join'}"
+                    <th:block th:if="${isPending and !post.expired}">
+                        <div class="v2d-state orange">รอการอนุมัติจากผู้จัด</div>
+                        <form th:if="${!post.cancelLocked}" method="post" th:action="@{'/posts/' + ${post.id} + '/cancel-join'}"
                               onsubmit="return confirm('ยกเลิกคำขอเข้าร่วม?')">
-                            <button class="btn btn-ghost" style="width:100%">ยกเลิกคำขอ</button>
+                            <button class="v2-btn outline v2d-full" type="submit">ยกเลิกคำขอ</button>
                         </form>
-                        <div th:if="${post.cancelLocked}" class="locked-note" style="margin-top:0">
-                            เลยกำหนดยกเลิกแล้ว (ต้องยกเลิกก่อนวันจัดกิจกรรมอย่างน้อย 1 วัน)
-                        </div>
-                    </div>
+                        <div th:if="${post.cancelLocked}" class="v2d-note">เลยกำหนดยกเลิกแล้ว (ต้องยกเลิกก่อนวันจัดกิจกรรมอย่างน้อย 1 วัน)</div>
+                    </th:block>
 
-                    <!-- ได้รับการอนุมัติ / เข้าร่วมแล้ว -->
-                    <div th:if="${hasJoined and !post.expired}">
-                        <div class="pill green" style="display:block;margin-bottom:8px;padding:8px">✓ คุณเข้าร่วมแล้ว</div>
-                        <form th:if="${!post.cancelLocked}" method="post"
-                              th:action="@{'/posts/' + ${post.id} + '/cancel-join'}"
+                    <th:block th:if="${hasJoined and !post.expired}">
+                        <div class="v2d-state green">✓ คุณเข้าร่วมแล้ว</div>
+                        <form th:if="${!post.cancelLocked}" method="post" th:action="@{'/posts/' + ${post.id} + '/cancel-join'}"
                               onsubmit="return confirm('ยกเลิกการเข้าร่วมกิจกรรมนี้?')">
-                            <button class="btn btn-ghost" style="width:100%">ยกเลิกการเข้าร่วม</button>
+                            <button class="v2-btn outline v2d-full" type="submit">ยกเลิกการเข้าร่วม</button>
                         </form>
-                        <div th:if="${post.cancelLocked}" class="locked-note" style="margin-top:0"
-                             th:text="|ไม่สามารถยกเลิกการเข้าร่วมได้แล้ว (ยกเลิกได้ถึง ${#temporals.format(post.cancelDeadline,'dd/MM/yyyy HH:mm')})|">
-                        </div>
-                    </div>
-                    <div th:if="${post.expired}" class="locked-note" style="margin-top:0">กิจกรรมนี้หมดเวลารับสมัครแล้ว</div>
-                </div>
-            </div>
+                        <div th:if="${post.cancelLocked}" class="v2d-note"
+                             th:text="|ไม่สามารถยกเลิกการเข้าร่วมได้แล้ว (ยกเลิกได้ถึง ${#temporals.format(post.cancelDeadline,'dd/MM/yyyy HH:mm')})|"></div>
+                    </th:block>
 
-            <div class="panel" style="margin-top:18px">
-                <h2 style="font-family:'Noto Sans Thai',sans-serif;text-transform:uppercase;font-size:1rem;margin-bottom:10px">รายชื่อผู้เข้าร่วม</h2>
-                <div th:if="${participants.isEmpty()}" style="color:var(--muted);font-size:.88rem">ยังไม่มีผู้เข้าร่วม</div>
-                <div class="comment" th:each="e : ${participants}" style="padding:10px 0;align-items:center;flex-wrap:wrap">
-                    <img class="c-avatar" th:if="${e.user.avatarUrl != null}"
-                         th:src="@{${e.user.avatarUrl}}" alt="">
-                    <div class="c-avatar" th:if="${e.user.avatarUrl == null}"
-                         th:text="${#strings.substring(e.user.userName,0,1).toUpperCase()}">U</div>
-                    <div class="c-body" style="flex:1">
-                        <div>
-                            <a class="c-name user-link" th:href="@{'/users/' + ${e.user.id}}"
-                               th:text="${e.user.userName}">user</a>
-                            <span class="pill orange" th:if="${e.status=='pending'}" style="margin-left:6px;font-size:.7rem">รออนุมัติ</span>
-                            <span class="pill green" th:if="${e.status=='approved'}" style="margin-left:6px;font-size:.7rem">เข้าร่วมแล้ว</span>
+                    <div th:if="${post.expired}" class="v2d-note">กิจกรรมนี้หมดเวลารับสมัครแล้ว</div>
+                </div>
+            </section>
+
+            <!-- รายชื่อผู้เข้าร่วม -->
+            <section class="v2f-card">
+                <b class="t">รายชื่อผู้เข้าร่วม <span class="v2-count-pill" th:text="${participants.size()}">0</span></b>
+                <div class="v2f-none" th:if="${participants.isEmpty()}">ยังไม่มีผู้เข้าร่วม เป็นคนแรกเลยไหม?</div>
+                <div class="v2d-people">
+                    <div class="v2d-person" th:each="e : ${participants}">
+                        <div class="v2d-person-row">
+                            <img class="v2d-p-av" th:if="${e.user.avatarUrl != null}" th:src="@{${e.user.avatarUrl}}" alt="">
+                            <span class="v2d-p-av" th:if="${e.user.avatarUrl == null}"
+                                  th:text="${#strings.substring(e.user.userName,0,1).toUpperCase()}">U</span>
+                            <a class="user-link v2d-p-name" th:href="@{'/users/' + ${e.user.id}}" th:text="${e.user.userName}">user</a>
+                            <span class="pill orange" th:if="${e.status=='pending'}">รออนุมัติ</span>
+                            <span class="pill green" th:if="${e.status=='approved'}">เข้าร่วมแล้ว</span>
+                        </div>
+
+                        <div class="v2d-p-actions" th:if="${isOwner and e.status=='pending'}">
+                            <form method="post" th:action="@{'/posts/' + ${post.id} + '/approve/' + ${e.user.id}}">
+                                <button class="v2-btn pitch v2f-sm" type="submit">อนุมัติ</button>
+                            </form>
+                            <form method="post" th:action="@{'/posts/' + ${post.id} + '/reject/' + ${e.user.id}}"
+                                  onsubmit="return confirm('ต้องการปฏิเสธคำขอนี้ใช่หรือไม่?')">
+                                <button class="v2-btn v2f-sm v2f-danger" type="submit">ปฏิเสธ</button>
+                            </form>
+                        </div>
+
+                        <div class="v2d-p-review" th:if="${isOwner and eventFinished and !cancelled and e.status=='approved'}">
+                            <span class="pill green" th:if="${participantReviewed[e.id]}">✓ รีวิวแล้ว</span>
+                            <form th:unless="${participantReviewed[e.id]}" class="v2a-form" method="post"
+                                  th:action="@{'/posts/' + ${post.id} + '/review-participant'}">
+                                <input type="hidden" name="eventId" th:value="${e.id}">
+                                <span class="v2d-mini">ให้คะแนนผู้เข้าร่วมคนนี้</span>
+                                <div class="v2a-stars" role="radiogroup" aria-label="ให้คะแนนผู้เข้าร่วม">
+                                    <th:block th:each="n : ${#numbers.sequence(5,1)}">
+                                        <input type="radio" name="score" th:id="'pr' + ${n} + '_' + ${e.id}" th:value="${n}" required>
+                                        <label th:for="'pr' + ${n} + '_' + ${e.id}" th:title="${n} + ' ดาว'">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>
+                                            <span class="v2-hidden" th:text="${n} + ' ดาว'">5 ดาว</span>
+                                        </label>
+                                    </th:block>
+                                </div>
+                                <div class="v2a-send">
+                                    <input name="comment" placeholder="ความคิดเห็น (ไม่บังคับ)" maxlength="500" aria-label="ความคิดเห็น">
+                                    <button class="v2-btn pitch" type="submit">ส่งรีวิว</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                    <!-- ปุ่มอนุมัติ / ปฏิเสธ สำหรับผู้สร้างโพสต์เท่านั้น -->
-                    <div th:if="${isOwner and e.status=='pending'}" style="display:flex;gap:6px">
-                        <form method="post" th:action="@{'/posts/' + ${post.id} + '/approve/' + ${e.user.id}}" style="margin:0">
-                            <button class="btn btn-primary btn-sm" style="padding:4px 10px;font-size:.78rem">อนุมัติ</button>
-                        </form>
-                        <form method="post" th:action="@{'/posts/' + ${post.id} + '/reject/' + ${e.user.id}}" style="margin:0"
-                              onsubmit="return confirm('ต้องการปฏิเสธคำขอนี้ใช่หรือไม่?')">
-                            <button class="btn btn-ghost btn-sm" style="padding:4px 10px;font-size:.78rem;color:#C4005E;border-color:#FFB8D5">ปฏิเสธ</button>
-                        </form>
-                    </div>
-                    <!-- ผู้จัดรีวิวผู้เข้าร่วม (หลังกิจกรรมจบแล้วเท่านั้น) -->
-                    <div th:if="${isOwner and eventFinished and post.status != 'cancelled' and e.status=='approved'}"
-                         style="flex-basis:100%;margin-top:8px">
-                        <div th:if="${participantReviewed[e.id]}" class="pill green">✓ รีวิวแล้ว</div>
-                        <form th:unless="${participantReviewed[e.id]}" method="post"
-                              th:action="@{'/posts/' + ${post.id} + '/review-participant'}"
-                              style="border-top:1px solid var(--line-light);padding-top:10px">
-                            <input type="hidden" name="eventId" th:value="${e.id}">
-                            <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px">ให้คะแนนผู้เข้าร่วมคนนี้</div>
-                            <div class="rate">
-                                <input type="radio" th:id="'pr5_'+${e.id}" name="score" value="5"><label th:for="'pr5_'+${e.id}">★</label>
-                                <input type="radio" th:id="'pr4_'+${e.id}" name="score" value="4"><label th:for="'pr4_'+${e.id}">★</label>
-                                <input type="radio" th:id="'pr3_'+${e.id}" name="score" value="3"><label th:for="'pr3_'+${e.id}">★</label>
-                                <input type="radio" th:id="'pr2_'+${e.id}" name="score" value="2"><label th:for="'pr2_'+${e.id}">★</label>
-                                <input type="radio" th:id="'pr1_'+${e.id}" name="score" value="1"><label th:for="'pr1_'+${e.id}">★</label>
-                            </div>
-                            <input name="comment" placeholder="ความคิดเห็น (ไม่บังคับ)" maxlength="500"
-                                   style="width:100%;padding:7px 10px;border:1.5px solid var(--line);border-radius:8px;margin:6px 0;font:inherit">
-                            <button class="btn btn-primary btn-sm">ส่งรีวิว</button>
-                        </form>
-                    </div>
                 </div>
-            </div>
-        </div>
+            </section>
+        </aside>
     </div>
 </div>
 <script>
@@ -258,11 +299,25 @@
         var body = btn.closest('.c-body');
         var form = btn.closest('.c-edit-form');
         form.style.display = 'none';
-        form.querySelector('input[name=text]').value =
-            body.querySelector('.c-text').textContent.trim();
+        form.querySelector('input[name=text]').value = body.querySelector('.c-text').textContent.trim();
         body.querySelector('.c-text').style.display = '';
         body.querySelector('.c-actions').style.display = '';
     }
+    /* นับถอยหลังถึงเวลาเล่น */
+    (function () {
+        var hero = document.querySelector('.v2d-hero');
+        var d = document.getElementById('cdD');
+        if (!hero || !d) return;
+        var play = new Date(hero.dataset.play);
+        function tick() {
+            var s = Math.max(0, Math.floor((play - new Date()) / 1000));
+            d.textContent = Math.floor(s / 86400);
+            document.getElementById('cdH').textContent = Math.floor(s % 86400 / 3600);
+            document.getElementById('cdM').textContent = Math.floor(s % 3600 / 60);
+        }
+        tick();
+        setInterval(tick, 30000);
+    })();
 </script>
 </body>
 </html>

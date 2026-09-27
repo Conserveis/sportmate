@@ -4,39 +4,175 @@
 <body>
 <nav th:replace="~{fragments :: nav('notifications')}"></nav>
 
-<div class="wrap" style="max-width:720px">
-    <div class="page-head">
+<div class="wrap v2 v2n-wrap">
+
+    <!-- ================= หัวหน้า ================= -->
+    <section class="v2n-head">
         <div>
             <div class="eyebrow">Notifications</div>
             <h1>การแจ้งเตือน</h1>
+            <p class="v2-lead" th:unless="${notifications.isEmpty()}">
+                ทั้งหมด <b th:text="${notifications.size()}">0</b> รายการ
+                <span class="v2n-new" id="newBadge"></span>
+            </p>
         </div>
-    </div>
+    </section>
 
-    <div th:if="${notifications.isEmpty()}" class="empty">
-        <div class="big">ยังไม่มีการแจ้งเตือน</div>
-        <div>เมื่อมีคนเข้าร่วมกิจกรรมของคุณ หรือมีกิจกรรมใหม่ในกีฬาที่คุณสนใจ จะแสดงที่นี่</div>
-    </div>
+    <!-- ================= ตัวกรอง ================= -->
+    <section class="v2n-filters" th:unless="${notifications.isEmpty()}" role="tablist">
+        <button type="button" class="v2-chip active" data-cat="all">ทั้งหมด <span id="c-all">0</span></button>
+        <button type="button" class="v2-chip" data-cat="unread">ยังไม่อ่าน <span id="c-unread">0</span></button>
+        <button type="button" class="v2-chip" data-cat="reminder">เตือนเวลา <span id="c-reminder">0</span></button>
+        <button type="button" class="v2-chip" data-cat="join">การเข้าร่วม <span id="c-join">0</span></button>
+        <button type="button" class="v2-chip" data-cat="update">อัปเดตกิจกรรม <span id="c-update">0</span></button>
+    </section>
 
-    <div style="margin-top:18px">
-        <a class="notif-item" th:each="n : ${notifications}"
-           th:classappend="${!n.read}?'unread'"
+    <!-- ================= รายการ (JS จัดกลุ่มตามวัน) ================= -->
+    <section class="v2n-list" id="notifList">
+        <a class="v2n-item" th:each="n : ${notifications}"
+           th:with="t=${n.type == null ? '' : n.type},
+                    cat=${t == 'reminder' ? 'reminder'
+                        : (t == 'join' or t == 'join_request' or t == 'join_approved' or t == 'join_rejected' or t == 'cancel_join') ? 'join'
+                        : 'update'}"
+           th:classappend="${(!n.read ? 'unread ' : '') + 'is-' + t}"
+           th:attr="data-cat=${cat}, data-unread=${!n.read}, data-time=${n.createdAt}"
            th:href="${n.link != null} ? @{${n.link}} : '#'">
-            <div class="notif-ico" th:classappend="${n.type}" th:switch="${n.type}">
-                <span th:case="'join'">➕</span>
-                <span th:case="'join_request'">📩</span>
-                <span th:case="'join_approved'">✅</span>
-                <span th:case="'join_rejected'">🚫</span>
-                <span th:case="'cancel_join'">➖</span>
-                <span th:case="'new_post'">🏅</span>
-                <span th:case="'post_cancelled'">❌</span>
-                <span th:case="*">🔔</span>
-            </div>
-            <div class="notif-body">
-                <div class="n-msg" th:text="${n.message}">ข้อความแจ้งเตือน</div>
-                <div class="n-time" th:text="${#temporals.format(n.createdAt,'dd/MM/yyyy HH:mm')}">เวลา</div>
-            </div>
+
+            <span class="v2n-ico" th:switch="${t}">
+                <!-- เข้าร่วม -->
+                <svg th:case="'join'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/></svg>
+                <!-- ขอเข้าร่วม -->
+                <svg th:case="'join_request'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                <!-- อนุมัติ -->
+                <svg th:case="'join_approved'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                <!-- ปฏิเสธ -->
+                <svg th:case="'join_rejected'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>
+                <!-- ออกจากกิจกรรม -->
+                <svg th:case="'cancel_join'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 11h6"/></svg>
+                <!-- โพสต์ใหม่ -->
+                <svg th:case="'new_post'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg>
+                <!-- ยกเลิกกิจกรรม -->
+                <svg th:case="'post_cancelled'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                <!-- เตือนเวลา -->
+                <svg th:case="'reminder'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M5 3 2 6M19 3l3 3"/></svg>
+                <!-- อื่นๆ (เช่น ผู้จัดแก้ไขกิจกรรม) -->
+                <svg th:case="*" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            </span>
+
+            <span class="v2n-body">
+                <span class="v2n-tag" th:text="${t == 'reminder' ? 'เตือนเวลา'
+                        : t == 'join' ? 'มีคนเข้าร่วม'
+                        : t == 'join_request' ? 'คำขอเข้าร่วม'
+                        : t == 'join_approved' ? 'อนุมัติแล้ว'
+                        : t == 'join_rejected' ? 'ถูกปฏิเสธ'
+                        : t == 'cancel_join' ? 'ออกจากกิจกรรม'
+                        : t == 'new_post' ? 'กิจกรรมใหม่'
+                        : t == 'post_cancelled' ? 'ยกเลิกกิจกรรม'
+                        : 'อัปเดตกิจกรรม'}">อัปเดต</span>
+                <span class="v2n-msg" th:text="${n.message}">ข้อความแจ้งเตือน</span>
+                <span class="v2n-time">
+                    <span class="rel"></span>
+                    <span class="abs" th:text="${#temporals.format(n.createdAt,'dd/MM/yyyy HH:mm')}">เวลา</span>
+                </span>
+            </span>
+
+            <span class="v2n-side">
+                <i class="v2n-dot" th:if="${!n.read}" aria-label="ยังไม่อ่าน"></i>
+                <svg th:if="${n.link != null}" class="v2n-go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+            </span>
         </a>
-    </div>
+    </section>
+
+    <!-- ================= ว่าง ================= -->
+    <section class="v2-empty v2n-empty" id="notifEmpty" th:classappend="${!notifications.isEmpty()} ? 'v2-hidden'">
+        <span class="v2-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
+        <div>
+            <b id="emptyTitle">ยังไม่มีการแจ้งเตือน</b>
+            <span id="emptySub">เมื่อมีคนเข้าร่วมกิจกรรมของคุณ หรือมีกิจกรรมใหม่ในกีฬาที่คุณสนใจ จะแสดงที่นี่</span>
+        </div>
+    </section>
 </div>
+
+<script>
+(function () {
+    var list = document.getElementById('notifList');
+    var items = Array.prototype.slice.call(list.querySelectorAll('.v2n-item'));
+    if (!items.length) return;
+
+    var MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    var DOW = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+    var now = new Date();
+    function dayKey(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+    var today = dayKey(now);
+    var yest = dayKey(new Date(now.getTime() - 86400000));
+
+    /* เวลาแบบ "x นาทีที่แล้ว" */
+    function rel(d) {
+        var s = Math.floor((now - d) / 1000);
+        if (s < 60) return 'เมื่อสักครู่';
+        if (s < 3600) return Math.floor(s / 60) + ' นาทีที่แล้ว';
+        if (s < 86400) return Math.floor(s / 3600) + ' ชั่วโมงที่แล้ว';
+        if (s < 86400 * 7) return Math.floor(s / 86400) + ' วันที่แล้ว';
+        return '';
+    }
+
+    /* จัดกลุ่มตามวัน */
+    var groups = {};
+    items.forEach(function (it) {
+        var d = new Date(it.dataset.time);
+        it.querySelector('.rel').textContent = rel(d);
+        var k = dayKey(d);
+        if (!groups[k]) {
+            var label = k === today ? 'วันนี้' : k === yest ? 'เมื่อวาน'
+                : 'วัน' + DOW[d.getDay()] + 'ที่ ' + d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear();
+            var g = document.createElement('div');
+            g.className = 'v2n-group';
+            g.innerHTML = '<div class="v2n-day"><b></b><span></span></div><div class="v2n-items"></div>';
+            g.querySelector('.v2n-day b').textContent = label;
+            list.appendChild(g);
+            groups[k] = g;
+        }
+        groups[k].querySelector('.v2n-items').appendChild(it);
+    });
+
+    /* ตัวนับ */
+    var counts = { all: items.length, unread: 0, reminder: 0, join: 0, update: 0 };
+    items.forEach(function (it) {
+        counts[it.dataset.cat]++;
+        if (it.dataset.unread === 'true') counts.unread++;
+    });
+    Object.keys(counts).forEach(function (k) { document.getElementById('c-' + k).textContent = counts[k]; });
+    if (counts.unread) document.getElementById('newBadge').textContent = '· ใหม่ ' + counts.unread + ' รายการ';
+
+    /* กรอง */
+    var cat = 'all';
+    function render() {
+        var shown = 0;
+        items.forEach(function (it) {
+            var ok = cat === 'all' || (cat === 'unread' ? it.dataset.unread === 'true' : it.dataset.cat === cat);
+            it.classList.toggle('v2-hidden', !ok);
+            if (ok) shown++;
+        });
+        Object.keys(groups).forEach(function (k) {
+            var n = groups[k].querySelectorAll('.v2n-item:not(.v2-hidden)').length;
+            groups[k].classList.toggle('v2-hidden', n === 0);
+            groups[k].querySelector('.v2n-day span').textContent = n + ' รายการ';
+        });
+        document.getElementById('notifEmpty').classList.toggle('v2-hidden', shown > 0);
+        if (!shown) {
+            document.getElementById('emptyTitle').textContent = cat === 'unread' ? 'อ่านครบทุกรายการแล้ว' : 'ไม่มีการแจ้งเตือนในหมวดนี้';
+            document.getElementById('emptySub').textContent = 'ลองเลือกหมวดอื่นดูนะ';
+        }
+    }
+    document.querySelectorAll('.v2n-filters .v2-chip').forEach(function (b) {
+        b.addEventListener('click', function () {
+            document.querySelectorAll('.v2n-filters .v2-chip').forEach(function (x) { x.classList.toggle('active', x === b); });
+            cat = b.dataset.cat;
+            render();
+        });
+    });
+    render();
+})();
+</script>
 </body>
 </html>

@@ -4,54 +4,268 @@
 <body>
 <nav th:replace="~{fragments :: nav('tournaments')}"></nav>
 
-<div class="wrap">
+<div class="wrap v2" th:with="mons=${ {'JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'} },
+                             featured=${tournaments.^[!expired]}">
     <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
     <div th:if="${error}" class="flash err" th:text="${error}"></div>
 
-    <div class="page-head">
+    <!-- ================= หัวหน้า ================= -->
+    <section class="v2p-head">
         <div>
-            <div class="eyebrow" style="color:var(--flare)">Members only</div>
+            <div class="eyebrow v2t-eyebrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3 6 6.5 1-4.7 4.6 1.1 6.4L12 17l-5.9 3 1.1-6.4L2.5 9 9 8z"/></svg>Members only</div>
             <h1>ทัวร์นาเมนต์</h1>
+            <p class="v2-lead">รวมทีม ลงแข่ง และเก็บผลงานของคุณ เปิดให้สมาชิกสร้างและเข้าร่วมได้</p>
         </div>
-        <span class="spacer" style="flex:1"></span>
-        <a th:if="${currentUser.member}" class="btn btn-flare" th:href="@{/posts/new(type='Tournament')}">+ สร้างทัวร์นาเมนต์</a>
-        <a th:unless="${currentUser.member}" class="btn btn-ghost" th:href="@{/profile}">🔒 สมัครสมาชิกเพื่อสร้าง</a>
-    </div>
+        <a th:if="${currentUser.member}" class="v2-btn flare" th:href="@{/posts/new(type='Tournament')}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>สร้างทัวร์นาเมนต์</a>
+        <a th:unless="${currentUser.member}" class="v2-btn outline" th:href="@{/profile}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>สมัครสมาชิกเพื่อสร้าง</a>
+    </section>
 
-    <!-- ตัวกรองค้นหา -->
-    <div th:replace="~{fragments :: filterBar('/tournaments')}"></div>
+    <!-- ================= ทัวร์นาเมนต์เด่น : รายการแรกที่ยังเปิดรับ ================= -->
+    <a class="v2t-feature" th:if="${featured != null}" th:href="@{'/posts/' + ${featured.id}}"
+       th:with="fcur=${joinCounts[featured.id] ?: 0}, fmax=${featured.maxPlayer}">
+        <span class="v2t-feature-main">
+            <span class="v2t-tags">
+                <span class="v2t-live"><i></i><span th:text="${fcur >= fmax} ? 'เต็มแล้ว' : 'เปิดรับสมัคร'">เปิดรับสมัคร</span></span>
+                <span class="v2t-ghost-tag" th:text="${featured.sport.name}">FOOTBALL</span>
+                <span class="v2t-blue-tag">ทัวร์นาเมนต์เด่น</span>
+            </span>
+            <span class="v2t-feature-title" th:text="${featured.postName}">ชื่อทัวร์นาเมนต์</span>
+            <span class="v2t-feature-meta">
+                <span th:text="${#temporals.format(featured.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</span>
+                <span th:text="${featured.location.name}">สถานที่</span>
+                <span>จัดโดย <b th:text="${featured.owner.userName}">ผู้จัด</b></span>
+            </span>
+            <span class="v2t-feature-foot">
+                <span class="v2t-feature-progress">
+                    <span class="v2t-feature-row"><span>ผู้สมัครแล้ว</span><b th:text="${fcur + ' / ' + fmax}">0 / 0</b></span>
+                    <span class="v2-bar"><i th:style="'width:' + ${fmax > 0 ? (fcur * 100 / fmax) : 0} + '%'"></i></span>
+                </span>
+                <span class="v2-btn pitch"><span th:text="${fcur >= fmax} ? 'ดูรายละเอียด' : 'สมัครเข้าแข่ง'">สมัครเข้าแข่ง</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            </span>
+        </span>
+        <span class="v2t-bracket" aria-hidden="true">
+            <svg viewBox="0 0 420 280" fill="none">
+                <g stroke="#2A3A57" stroke-width="2">
+                    <path d="M110 40h30v60h10"/><path d="M110 120h30v-20"/>
+                    <path d="M110 160h30v60h10"/><path d="M110 240h30v-20"/>
+                    <path d="M250 100h30v60h10"/><path d="M250 220h30v-60"/>
+                </g>
+                <g font-family="Inter, 'Noto Sans Thai', sans-serif" font-size="12" font-weight="700">
+                    <rect x="10" y="26" width="100" height="28" rx="8" fill="#1B2740"/><text x="22" y="45" fill="#AEB6C2">ทีม A</text>
+                    <rect x="10" y="106" width="100" height="28" rx="8" fill="#1B2740"/><text x="22" y="125" fill="#AEB6C2">ทีม B</text>
+                    <rect x="10" y="146" width="100" height="28" rx="8" fill="#1B2740"/><text x="22" y="165" fill="#AEB6C2">ทีม C</text>
+                    <rect x="10" y="226" width="100" height="28" rx="8" fill="#1B2740"/><text x="22" y="245" fill="#AEB6C2">ทีม D</text>
+                    <rect x="150" y="86" width="100" height="28" rx="8" fill="#1B2740" stroke="#0071FF" stroke-width="1.5"/><text x="162" y="105" fill="#fff">รอบรอง 1</text>
+                    <rect x="150" y="206" width="100" height="28" rx="8" fill="#1B2740" stroke="#0071FF" stroke-width="1.5"/><text x="162" y="225" fill="#fff">รอบรอง 2</text>
+                    <rect x="290" y="140" width="120" height="40" rx="12" fill="#C8FF40"/><text x="308" y="165" fill="#0B1220" font-size="13" font-weight="800">ชิงชนะเลิศ</text>
+                </g>
+            </svg>
+        </span>
+    </a>
 
-    <div th:if="${tournaments.isEmpty()}" class="empty">
-        <div class="big">ยังไม่มีทัวร์นาเมนต์</div>
-        <div>เฉพาะสมาชิกรายเดือนเท่านั้นที่สร้างทัวร์นาเมนต์ได้</div>
-    </div>
+    <!-- ================= แท็บสถานะ + กีฬา + ตัวกรองเพิ่มเติม ================= -->
+    <form class="v2t-controls" method="get" th:action="@{/tournaments}" id="tourFilter"
+          th:attr="data-server-sport=${fSportId}">
+        <input type="hidden" name="sport" id="sportKeep" value="">
+        <div class="v2t-bar">
+            <div class="v2t-tabs" role="tablist">
+                <button type="button" class="active" data-tab="all">ทั้งหมด <span id="c-all">0</span></button>
+                <button type="button" data-tab="open">เปิดรับสมัคร <span id="c-open">0</span></button>
+                <button type="button" data-tab="full">เต็มแล้ว <span id="c-full">0</span></button>
+                <button type="button" data-tab="ended">จบแล้ว <span id="c-ended">0</span></button>
+            </div>
+            <button type="button" class="v2p-toggle v2t-more-btn" id="moreBtn"
+                    th:classappend="${fLocationId != null or fDate != null or fTime != null} ? 'active'"
+                    aria-expanded="false" aria-controls="moreFilters">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>ตัวกรองเพิ่มเติม</button>
+        </div>
 
-    <div class="grid">
-        <a class="card tour" th:each="p : ${tournaments}" th:href="@{'/posts/' + ${p.id}}" style="text-decoration:none">
-            <div class="stripe"></div>
-            <div class="card-body">
-                <div style="display:flex;gap:6px;align-items:center">
+        <div class="v2p-sports v2t-sports">
+            <label class="v2-chip" th:classappend="${fSportId == null} ? 'active'">
+                <input type="radio" name="sportPick" value="" th:checked="${fSportId == null}">ทั้งหมด
+            </label>
+            <label class="v2-chip" th:each="s : ${sports}"
+                   th:classappend="${fSportId != null and fSportId == s.id} ? 'active'">
+                <input type="radio" name="sportPick" th:value="${s.id}"
+                       th:checked="${fSportId != null and fSportId == s.id}"><span th:text="${s.name}">Football</span>
+            </label>
+        </div>
+
+        <div class="v2p-filter v2t-more" id="moreFilters"
+             th:classappend="${fLocationId == null and fDate == null and fTime == null} ? 'v2-hidden'">
+            <div class="v2p-filter-row v2p-fields">
+                <div class="field v2p-field">
+                    <label for="tLoc">สถานที่</label>
+                    <select id="tLoc" name="locationId">
+                        <option value="">ทั้งหมด</option>
+                        <option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.name}"
+                                th:selected="${fLocationId != null and fLocationId == l.id}"></option>
+                    </select>
+                </div>
+                <div class="field v2p-field">
+                    <label for="tDate">วันที่</label>
+                    <input id="tDate" type="date" name="date" th:value="${fDate}">
+                </div>
+                <div class="field v2p-field">
+                    <label for="tTime">เวลา (ตั้งแต่)</label>
+                    <input id="tTime" type="time" name="time" th:value="${fTime}">
+                </div>
+                <div class="v2p-actions">
+                    <button class="v2-btn pitch" type="submit">ค้นหา</button>
+                    <a class="v2-btn outline" th:href="@{/tournaments}">ล้าง</a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- ================= การ์ดทัวร์นาเมนต์ ================= -->
+    <section class="v2t-grid" id="tourGrid" th:unless="${tournaments.isEmpty()}">
+        <a class="v2t-card" th:each="p : ${tournaments}"
+           th:with="cur=${joinCounts[p.id] ?: 0}, max=${p.maxPlayer}, isFull=${cur >= max},
+                    state=${p.expired ? 'ended' : (isFull ? 'full' : 'open')}"
+           th:classappend="${'is-' + state}"
+           th:attr="data-state=${state}, data-sport=${p.sport.id}"
+           th:href="@{'/posts/' + ${p.id}}">
+            <span class="v2t-card-head">
+                <span class="v2-card-top">
                     <span class="sport-tag" th:text="${p.sport.name}">Basketball</span>
-                    <span class="pill grey" th:if="${p.expired}">จบแล้ว</span>
-                </div>
+                    <span class="pill v2t-status" th:classappend="${state}"
+                          th:text="${state == 'ended'} ? 'จบแล้ว' : (${state == 'full'} ? 'เต็มแล้ว' : 'เปิดรับสมัคร')">เปิดรับสมัคร</span>
+                </span>
+                <span class="v2p-date v2t-date">
+                    <span class="m" th:text="${mons[p.datePlay.monthValue - 1]}">SEP</span>
+                    <span class="d" th:text="${#temporals.format(p.datePlay,'dd')}">04</span>
+                </span>
+            </span>
+            <span class="v2p-body">
                 <h3 th:text="${p.postName}">ชื่อทัวร์นาเมนต์</h3>
-                <div class="meta">
-                    <span>🗓 <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
-                    <span>📍 <span th:text="${p.location.name}">สถานที่</span></span>
-                    <span>👤 จัดโดย <span th:text="${p.owner.userName}">เจ้าของ</span></span>
-                </div>
-            </div>
-            <div class="card-foot">
-                <div>
-                    <div class="score-label">ผู้เข้าร่วม</div>
-                    <div class="score" th:classappend="${joinCounts[p.id] >= p.maxPlayer}?'full'">
-                        <span class="cur" th:text="${joinCounts[p.id]}">0</span><span class="sep">/</span><span th:text="${p.maxPlayer}">40</span>
-                    </div>
-                </div>
-                <span class="pill orange" style="background:#FDECE6;color:#B4340F">🏆 Tournament</span>
-            </div>
+                <span class="v2-meta v2t-meta">
+                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                        <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
+                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+                        <span th:text="${p.location.name}">สถานที่</span></span>
+                    <span><span class="v2p-avatar v2t-avatar"
+                                th:text="${#strings.isEmpty(p.owner.userName)} ? '?' : ${#strings.toUpperCase(#strings.substring(p.owner.userName,0,1))}">U</span>
+                        จัดโดย <b th:text="${p.owner.userName}">ผู้จัด</b></span>
+                </span>
+            </span>
+            <span class="v2p-foot">
+                <span class="v2p-foot-row">
+                    <span>
+                        <span class="score-label">ผู้เข้าร่วม</span>
+                        <span class="v2-score"><span class="cur" th:text="${cur}">0</span><span class="sep">/</span><span th:text="${max}">10</span></span>
+                    </span>
+                    <span class="v2t-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/></svg>Tournament</span>
+                </span>
+                <span class="v2-bar"><i th:style="'width:' + ${max > 0 ? (cur * 100 / max) : 0} + '%'"></i></span>
+                <span class="v2p-foot-row">
+                    <span class="v2-left"
+                          th:text="${state == 'ended'} ? 'การแข่งขันสิ้นสุดแล้ว' : (${isFull} ? 'ครบจำนวนแล้ว' : ${'เหลืออีก ' + (max - cur) + ' ที่'})">เหลืออีก 2 ที่</span>
+                    <span class="v2p-cta"
+                          th:text="${state == 'ended'} ? 'ดูผลการแข่ง ›' : (${isFull} ? 'ดูรายละเอียด ›' : 'สมัครเข้าแข่ง ›')">สมัครเข้าแข่ง ›</span>
+                </span>
+            </span>
         </a>
-    </div>
+    </section>
+
+    <!-- ================= ว่าง ================= -->
+    <section class="v2-empty v2p-empty" id="tourEmpty" th:classappend="${!tournaments.isEmpty()} ? 'v2-hidden'">
+        <span class="v2-empty-ico" style="background:var(--flare-light)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--flare)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span>
+        <div><b>ยังไม่มีทัวร์นาเมนต์ในหมวดนี้</b><span>เฉพาะสมาชิกรายเดือนเท่านั้นที่สร้างทัวร์นาเมนต์ได้</span></div>
+        <a class="v2-btn outline" th:href="@{/tournaments}">ดูทั้งหมด</a>
+    </section>
+
+    <!-- ================= จัดทัวร์นาเมนต์ของคุณเอง ================= -->
+    <section class="v2t-host">
+        <div class="v2t-host-intro">
+            <span class="v2t-host-kicker">For members</span>
+            <b>จัดทัวร์นาเมนต์ของคุณเอง</b>
+            <span>สมาชิกสร้างทัวร์นาเมนต์ รับสมัคร และจัดการผู้เข้าร่วมได้ในที่เดียว</span>
+        </div>
+        <div class="v2t-steps">
+            <div class="v2t-step"><i>1</i><b>ตั้งค่าการแข่ง</b><span>เลือกกีฬา สนาม วันเวลา และจำนวนผู้เข้าร่วม</span></div>
+            <div class="v2t-step"><i>2</i><b>เปิดรับสมัคร</b><span>สมาชิกคนอื่นเห็นในหน้านี้และกดสมัครได้ทันที</span></div>
+            <div class="v2t-step blue"><i>3</i><b>ลงสนาม!</b><span>รับแจ้งเตือนก่อนแข่ง แล้วเจอกันที่สนาม</span></div>
+        </div>
+    </section>
 </div>
+
+<script>
+(function () {
+    /* ตัวกรองเพิ่มเติม: แสดง/ซ่อน */
+    var more = document.getElementById('moreFilters');
+    var moreBtn = document.getElementById('moreBtn');
+    moreBtn.setAttribute('aria-expanded', !more.classList.contains('v2-hidden'));
+    moreBtn.addEventListener('click', function () {
+        var open = more.classList.toggle('v2-hidden') === false;
+        moreBtn.setAttribute('aria-expanded', open);
+    });
+
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.v2t-card'));
+    var grid  = document.getElementById('tourGrid');
+    var empty = document.getElementById('tourEmpty');
+    var radios = document.querySelectorAll('.v2t-sports input[type=radio]');
+    var tab = 'all';
+    var form = document.getElementById('tourFilter');
+    var keep = document.getElementById('sportKeep');
+    var serverFiltered = !!form.dataset.serverSport;   /* เข้ามาด้วย ?sportId=… (รายการถูกกรองจาก server แล้ว) */
+    var sport = new URL(window.location.href).searchParams.get('sport')
+             || (document.querySelector('.v2t-sports input:checked') || {}).value || '';
+
+    function syncChips() {
+        radios.forEach(function (x) {
+            x.checked = x.value === sport;
+            x.closest('.v2-chip').classList.toggle('active', x.checked);
+        });
+        keep.value = sport;
+    }
+
+    /* กรองการ์ดตาม "กีฬา" + "แท็บสถานะ" โดยไม่โหลดหน้าใหม่ */
+    function render() {
+        var counts = { all: 0, open: 0, full: 0, ended: 0 }, shown = 0;
+        cards.forEach(function (c) {
+            var sportOk = !sport || c.dataset.sport === sport;
+            if (sportOk) { counts.all++; counts[c.dataset.state]++; }
+            var show = sportOk && (tab === 'all' || c.dataset.state === tab);
+            c.classList.toggle('v2-hidden', !show);
+            if (show) shown++;
+        });
+        Object.keys(counts).forEach(function (k) { document.getElementById('c-' + k).textContent = counts[k]; });
+        if (grid) grid.classList.toggle('v2-hidden', shown === 0);
+        empty.classList.toggle('v2-hidden', shown > 0);
+    }
+
+    /* ปุ่มกีฬา */
+    radios.forEach(function (r) {
+        r.addEventListener('change', function () {
+            sport = r.value;
+            var url = new URL(window.location.href);
+            url.searchParams.delete('sportId');
+            if (sport) url.searchParams.set('sport', sport); else url.searchParams.delete('sport');
+            if (serverFiltered) { window.location.href = url; return; }   /* กรณีพิเศษ: โหลดใหม่ครั้งเดียว */
+            history.replaceState(null, '', url);   /* รีเฟรชหน้าแล้วยังจำกีฬาที่เลือกไว้ */
+            syncChips();
+            render();
+        });
+    });
+
+    /* แท็บสถานะ */
+    document.querySelectorAll('.v2t-tabs button').forEach(function (b) {
+        b.addEventListener('click', function () {
+            document.querySelectorAll('.v2t-tabs button').forEach(function (x) { x.classList.toggle('active', x === b); });
+            tab = b.dataset.tab;
+            render();
+        });
+    });
+
+    syncChips();
+    render();
+})();
+</script>
 </body>
 </html>

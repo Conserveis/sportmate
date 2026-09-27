@@ -4,253 +4,351 @@
 <body>
 <nav th:replace="~{fragments :: nav('profile')}"></nav>
 
-<div class="wrap">
+<div class="wrap v2"
+     th:with="initial=${#strings.isEmpty(user.userName) ? '?' : #strings.toUpperCase(#strings.substring(user.userName,0,1))},
+              doneOrg=${stats.organizedFinishedCount}, cancelOrg=${stats.organizedCancelledCount}">
     <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
     <div th:if="${error}" class="flash err" th:text="${error}"></div>
 
-    <!-- header -->
-    <div class="profile-head">
-        <img class="avatar" th:if="${user.avatarUrl != null}" th:src="@{${user.avatarUrl}}" alt="รูปโปรไฟล์">
-        <div class="avatar" th:if="${user.avatarUrl == null}"
-             th:text="${#strings.substring(user.userName,0,1).toUpperCase()}">U</div>
-        <div style="flex:1">
-            <div class="uname">
-                <span th:text="${user.userName}">username</span>
-                <span class="badge-member" th:if="${user.member}">Member</span>
+    <!-- ================= HERO ================= -->
+    <section class="v2f-hero">
+        <div class="v2f-hero-top">
+            <div class="v2f-avatar-wrap">
+                <img class="v2f-avatar" th:if="${user.avatarUrl != null}" th:src="@{${user.avatarUrl}}" alt="รูปโปรไฟล์">
+                <span class="v2f-avatar" th:if="${user.avatarUrl == null}" th:text="${initial}">U</span>
+                <a class="v2f-cam" th:href="@{/profile/edit}" aria-label="เปลี่ยนรูปโปรไฟล์" title="เปลี่ยนรูปโปรไฟล์">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></a>
             </div>
-            <div class="ustat" th:text="${user.gmail}">email</div>
-            <div class="ustat">
-                คะแนนผู้จัดเฉลี่ย:
-                <span class="stars" th:text="${#numbers.formatDecimal(user.avgScore,1,2)}">0.00</span> / 5.00
-            </div>
-        </div>
-        <!-- subscribe / member status -->
-        <div style="text-align:right">
-            <div th:unless="${user.member}">
-                <a class="btn btn-flare" th:href="@{/subscribe}">อัปเกรดเป็นสมาชิก · 99฿/เดือน</a>
-                <div class="ustat" style="margin-top:6px">ปลดล็อกโพสต์ไม่จำกัด + ทัวร์นาเมนต์</div>
-            </div>
-            <div th:if="${user.member}" class="ustat">
-                สมาชิกถึง
-                <b th:text="${#temporals.format(user.membershipExpireAt,'dd/MM/yyyy')}">-</b>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
-                <a class="btn btn-ghost btn-sm"
-                   th:href="@{/profile/edit}">✏️ แก้ไขโปรไฟล์</a>
-                <a class="btn btn-ghost btn-sm"
-                   th:href="@{'/users/' + ${user.id}(preview=true)}">ดูโปรไฟล์แบบที่คนอื่นเห็น</a>
-            </div>
-        </div>
-    </div>
 
-    <!-- ===== แดชบอร์ดสรุป (รวมมาไว้ในหน้าโปรไฟล์) ===== -->
-    <div class="stat-grid">
-        <div class="stat">
-            <div class="stat-num" th:text="${stats.organizedCount}">0</div>
-            <div class="stat-label">ครั้งที่จัดกิจกรรม</div>
-        </div>
-        <div class="stat">
-            <div class="stat-num" th:text="${stats.joinCount}">0</div>
-            <div class="stat-label">ครั้งที่เข้าร่วม</div>
-        </div>
-        <div class="stat">
-            <div class="stat-num" th:text="${#numbers.formatDecimal(stats.avgScore,1,2)}">0.00</div>
-            <div class="stat-label">คะแนนผู้จัดเฉลี่ย</div>
-        </div>
-        <div class="stat">
-            <div class="stat-num" style="font-size:1.35rem"
-                 th:text="${stats.topSport != null} ? ${stats.topSport.sportName} : '—'">—</div>
-            <div class="stat-label">กีฬาที่เข้าร่วมมากที่สุด</div>
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>ภาพรวมของฉัน</h2>
-        <div class="dash-grid">
-            <!-- ฝั่งผู้จัด -->
-            <div class="panel">
-                <h3 class="dash-h">ในฐานะผู้จัด</h3>
-                <div class="kv">
-                    <span class="k">จัดจนจบแล้ว</span>
-                    <span><b th:text="${stats.organizedFinishedCount}">0</b> ครั้ง</span>
-                    <span class="k">ยกเลิกไป</span>
-                    <span><b th:text="${stats.organizedCancelledCount}">0</b> ครั้ง</span>
-                    <span class="k">รีวิวที่ได้รับ</span>
-                    <span><b th:text="${stats.reviewCount}">0</b> รีวิว</span>
-                    <span class="k">โควตาโพสต์สัปดาห์นี้</span>
-                    <span th:if="${quotaLeft < 0}" class="pill green">ไม่จำกัด (Member)</span>
-                    <span th:unless="${quotaLeft < 0}">
-                        เหลือ <b th:text="${quotaLeft}">0</b> / 3 โพสต์
+            <div class="v2f-id">
+                <div class="v2f-name">
+                    <span th:text="${user.userName}">username</span>
+                    <span class="badge-member" th:if="${user.member}">Member</span>
+                    <span class="v2f-plain" th:unless="${user.member}">ผู้ใช้ทั่วไป</span>
+                </div>
+                <div class="v2f-mail" th:text="${user.gmail}">email</div>
+                <div class="v2f-rating">
+                    <span class="v2f-stars" aria-hidden="true">
+                        <span class="bg">★★★★★</span>
+                        <span class="fg" th:style="'width:' + ${user.avgScore * 20} + '%'">★★★★★</span>
                     </span>
+                    <b th:text="${#numbers.formatDecimal(user.avgScore,1,2)}">0.00</b>
+                    <span>/ 5.00 · คะแนนผู้จัดเฉลี่ยจาก <span th:text="${stats.reviewCount}">0</span> รีวิว</span>
                 </div>
             </div>
 
-            <!-- ฝั่งผู้เข้าร่วม -->
-            <div class="panel">
-                <h3 class="dash-h">ในฐานะผู้เข้าร่วม</h3>
-                <div class="kv">
-                    <span class="k">เข้าร่วมจนจบแล้ว</span>
-                    <span><b th:text="${stats.attendedCount}">0</b> ครั้ง</span>
-                    <span class="k">กำลังจะถึง</span>
-                    <span><b th:text="${stats.upcomingCount}">0</b> กิจกรรม</span>
-                    <span class="k">คะแนนเฉลี่ย</span>
-                    <span th:if="${stats.ratedParticipant}">
-                        <b th:text="${#numbers.formatDecimal(stats.participantAvgScore,1,2)}">0.00</b> / 5.00
-                        (<span th:text="${stats.participantReviewCount}">0</span> รีวิว)
-                    </span>
-                    <span th:unless="${stats.ratedParticipant}" style="color:var(--muted)">ยังไม่มีผู้จัดรีวิว</span>
+            <div class="v2f-hero-side">
+                <span class="v2f-until" th:if="${user.member}">สมาชิกถึง
+                    <b th:text="${#temporals.format(user.membershipExpireAt,'dd/MM/yyyy')}">-</b></span>
+                <div class="v2f-hero-btns">
+                    <a class="v2-btn v2f-white" th:href="@{/profile/edit}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>แก้ไขโปรไฟล์</a>
+                    <a class="v2-btn v2f-ghost" th:href="@{'/users/' + ${user.id}(preview=true)}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>ดูแบบที่คนอื่นเห็น</a>
                 </div>
-                <div th:if="${stats.sportCounts.isEmpty()}" style="color:var(--muted);font-size:.88rem;margin-top:10px">
-                    ยังไม่เคยเข้าร่วมกิจกรรม
+            </div>
+        </div>
+
+        <!-- แถบสถิติ -->
+        <div class="v2f-strip">
+            <div class="v2f-stat"><span class="ico o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V10l7-6 7 6v11"/><path d="M10 21v-5h4v5"/></svg></span>
+                <span><b th:text="${stats.organizedCount}">0</b><small>ครั้งที่จัดกิจกรรม</small></span></div>
+            <div class="v2f-stat"><span class="ico b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></svg></span>
+                <span><b th:text="${stats.joinCount}">0</b><small>ครั้งที่เข้าร่วม</small></span></div>
+            <div class="v2f-stat"><span class="ico v"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg></span>
+                <span><b th:text="${#numbers.formatDecimal(stats.avgScore,1,2)}">0.00</b><small>คะแนนผู้จัดเฉลี่ย</small></span></div>
+            <div class="v2f-stat"><span class="ico p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/></svg></span>
+                <span><b class="sm" th:text="${stats.topSport != null} ? ${stats.topSport.sportName} : '—'">—</b><small>กีฬาที่เข้าร่วมมากที่สุด</small></span></div>
+        </div>
+    </section>
+
+    <div class="v2f-body">
+        <!-- ================= ซ้าย ================= -->
+        <div class="v2f-main">
+
+            <!-- ภาพรวม -->
+            <section>
+                <h2 class="v2f-h2">ภาพรวมของฉัน</h2>
+                <div class="v2f-two">
+                    <div class="v2f-panel">
+                        <div class="v2f-panel-head"><span class="o">ในฐานะผู้จัด</span><span class="v2f-tag o">HOST</span></div>
+                        <div class="v2f-nums">
+                            <div><b th:text="${doneOrg}">0</b><span>จัดจนจบแล้ว</span></div>
+                            <div><b th:text="${cancelOrg}">0</b><span>ยกเลิกไป</span></div>
+                            <div><b th:text="${stats.reviewCount}">0</b><span>รีวิวที่ได้รับ</span></div>
+                        </div>
+                        <div class="v2f-rate" th:if="${doneOrg + cancelOrg > 0}"
+                             th:with="rate=${doneOrg * 100 / (doneOrg + cancelOrg)}">
+                            <div class="v2f-rate-row"><span>อัตราจัดสำเร็จ</span><b th:text="${rate} + '%'">100%</b></div>
+                            <div class="v2-bar"><i th:style="'width:' + ${rate} + '%'"></i></div>
+                        </div>
+                        <div class="v2f-panel-foot">
+                            <span>โควตาโพสต์สัปดาห์นี้</span>
+                            <span th:if="${quotaLeft < 0}" class="pill green">ไม่จำกัด (Member)</span>
+                            <span th:unless="${quotaLeft < 0}">เหลือ <b class="o" th:text="${quotaLeft}">0</b> / 3 โพสต์</span>
+                        </div>
+                    </div>
+
+                    <div class="v2f-panel">
+                        <div class="v2f-panel-head"><span class="b">ในฐานะผู้เข้าร่วม</span><span class="v2f-tag b">PLAYER</span></div>
+                        <div class="v2f-nums">
+                            <div><b th:text="${stats.attendedCount}">0</b><span>เข้าร่วมจนจบ</span></div>
+                            <div><b th:text="${stats.upcomingCount}">0</b><span>กำลังจะถึง</span></div>
+                            <div th:if="${stats.ratedParticipant}"><b th:text="${#numbers.formatDecimal(stats.participantAvgScore,1,2)}">0.00</b><span>คะแนนเฉลี่ย</span></div>
+                            <div th:unless="${stats.ratedParticipant}"><b class="muted">—</b><span>คะแนนเฉลี่ย</span></div>
+                        </div>
+                        <div class="v2f-bars" th:unless="${stats.sportCounts.isEmpty()}">
+                            <span class="v2f-mini">กีฬาที่เข้าร่วม</span>
+                            <div class="v2f-bar-row" th:each="sc : ${stats.sportCounts}">
+                                <span class="n" th:text="${sc.sportName}">กีฬา</span>
+                                <span class="v2-bar"><i th:style="'width:' + ${sc.count * 100 / stats.topSport.count} + '%'"></i></span>
+                                <span class="c" th:text="${sc.count}">0</span>
+                            </div>
+                        </div>
+                        <div class="v2f-panel-foot">
+                            <span th:if="${stats.sportCounts.isEmpty()}">ยังไม่เคยเข้าร่วมกิจกรรม</span>
+                            <span th:unless="${stats.ratedParticipant}">ยังไม่มีผู้จัดรีวิวคุณในฐานะผู้เข้าร่วม</span>
+                            <span th:if="${stats.ratedParticipant}">จาก <b th:text="${stats.participantReviewCount}">0</b> รีวิวของผู้จัด</span>
+                        </div>
+                    </div>
                 </div>
-                <div th:unless="${stats.sportCounts.isEmpty()}" style="margin-top:12px">
-                    <div class="bar-row" th:each="sc : ${stats.sportCounts}">
-                        <span class="bar-name" th:text="${sc.sportName}">กีฬา</span>
-                        <span class="bar-track">
-                            <span class="bar-fill"
-                                  th:style="'width:' + ${sc.count * 100 / stats.topSport.count} + '%'"></span>
+            </section>
+
+            <!-- รีวิวที่ได้รับ (ผู้จัด) -->
+            <section th:if="${stats.organizer}">
+                <div class="v2f-sec-head">
+                    <h2 class="v2f-h2">รีวิวที่ฉันได้รับ <span class="v2-count-pill blue" th:text="${stats.reviewCount}">0</span></h2>
+                    <div class="v2f-rfilter" th:unless="${stats.reviews.isEmpty()}">
+                        <button type="button" class="v2-chip active" data-f="all">ทั้งหมด</button>
+                        <button type="button" class="v2-chip" data-f="5">5 ดาว</button>
+                        <button type="button" class="v2-chip" data-f="4">4 ดาว</button>
+                        <button type="button" class="v2-chip" data-f="c">มีความคิดเห็น</button>
+                    </div>
+                </div>
+                <div th:if="${stats.reviews.isEmpty()}" class="v2f-none">ยังไม่มีผู้เข้าร่วมรีวิวกิจกรรมของคุณ</div>
+                <div class="v2f-reviews" id="orgReviews">
+                    <article class="v2f-review" th:each="r, it : ${stats.reviews}"
+                             th:with="hasC=${r.comment != null and !r.comment.isBlank()}"
+                             th:classappend="${it.index >= 5} ? 'is-extra'"
+                             th:attr="data-score=${r.reviewScore}, data-c=${hasC}">
+                        <img class="v2f-r-av" th:if="${r.event.user.avatarUrl != null}" th:src="@{${r.event.user.avatarUrl}}" alt="">
+                        <span class="v2f-r-av" th:if="${r.event.user.avatarUrl == null}"
+                              th:text="${#strings.toUpperCase(#strings.substring(r.event.user.userName,0,1))}">U</span>
+                        <div class="v2f-r-body">
+                            <div class="v2f-r-top">
+                                <span>
+                                    <a class="user-link v2f-r-name" th:href="@{'/users/' + ${r.event.user.id}}" th:text="${r.event.user.userName}">ผู้รีวิว</a>
+                                    <span class="v2f-r-stars" th:text="${'★★★★★'.substring(0, r.reviewScore)}">★★★★</span><span class="v2f-r-off" th:text="${'★★★★★'.substring(0, 5 - r.reviewScore)}">★</span>
+                                </span>
+                                <span class="v2f-r-date" th:text="${#temporals.format(r.reviewDate,'dd/MM/yyyy')}">วันที่</span>
+                            </div>
+                            <span class="v2f-r-event">กิจกรรม: <b th:text="${r.event.post.postName}">ชื่อกิจกรรม</b></span>
+                            <p class="v2f-r-text" th:if="${hasC}" th:text="${r.comment}">ความคิดเห็น</p>
+                        </div>
+                    </article>
+                </div>
+                <div class="v2f-more" th:if="${stats.reviews.size() > 5}">
+                    <button type="button" class="v2-btn outline" id="moreReviews"
+                            th:attr="data-more=${stats.reviews.size() - 5}"
+                            th:text="|แสดงเพิ่มเติม (${stats.reviews.size() - 5})|">แสดงเพิ่มเติม</button>
+                </div>
+            </section>
+
+            <!-- รีวิวจากผู้จัด (ผู้เข้าร่วม) -->
+            <section th:if="${stats.ratedParticipant}">
+                <h2 class="v2f-h2">รีวิวจากผู้จัด <span class="v2-count-pill" th:text="${stats.participantReviewCount}">0</span></h2>
+                <div class="v2f-reviews">
+                    <article class="v2f-review" th:each="r : ${stats.participantReviews}">
+                        <img class="v2f-r-av" th:if="${r.event.post.owner.avatarUrl != null}" th:src="@{${r.event.post.owner.avatarUrl}}" alt="">
+                        <span class="v2f-r-av o" th:if="${r.event.post.owner.avatarUrl == null}"
+                              th:text="${#strings.toUpperCase(#strings.substring(r.event.post.owner.userName,0,1))}">U</span>
+                        <div class="v2f-r-body">
+                            <div class="v2f-r-top">
+                                <span>
+                                    <a class="user-link v2f-r-name" th:href="@{'/users/' + ${r.event.post.owner.id}}" th:text="${r.event.post.owner.userName}">ผู้จัด</a>
+                                    <span class="v2f-r-stars" th:text="${'★★★★★'.substring(0, r.reviewScore)}">★★★★</span><span class="v2f-r-off" th:text="${'★★★★★'.substring(0, 5 - r.reviewScore)}">★</span>
+                                </span>
+                                <span class="v2f-r-date" th:text="${#temporals.format(r.reviewDate,'dd/MM/yyyy')}">วันที่</span>
+                            </div>
+                            <span class="v2f-r-event">กิจกรรม: <b th:text="${r.event.post.postName}">ชื่อกิจกรรม</b></span>
+                            <p class="v2f-r-text" th:if="${r.comment != null and !r.comment.isBlank()}" th:text="${r.comment}">ความคิดเห็น</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- กิจกรรมของฉัน (แท็บ) -->
+            <section>
+                <div class="v2f-sec-head">
+                    <h2 class="v2f-h2">กิจกรรมของฉัน</h2>
+                    <div class="v2t-tabs" role="tablist" id="actTabs">
+                        <button type="button" class="active" data-t="upcoming">กำลังจะมาถึง <span th:text="${upcoming.size()}">0</span></button>
+                        <button type="button" data-t="history">ประวัติการเข้าร่วม <span th:text="${history.size()}">0</span></button>
+                        <button type="button" data-t="organized">ที่ฉันจัด <span th:text="${organized.size()}">0</span></button>
+                    </div>
+                </div>
+
+                <!-- กำลังจะมาถึง -->
+                <div class="v2f-list" data-panel="upcoming">
+                    <div th:if="${upcoming.isEmpty()}" class="v2f-none">ยังไม่มีกิจกรรมที่กำลังจะมาถึง</div>
+                    <a class="v2f-row" th:each="e : ${upcoming}" th:href="@{'/posts/' + ${e.post.id}}">
+                        <span class="v2f-row-date">
+                            <b th:text="${#temporals.format(e.post.datePlay,'dd')}">01</b>
+                            <span th:text="${#temporals.format(e.post.datePlay,'MM/yy')}">09/26</span>
                         </span>
-                        <span class="bar-num" th:text="${sc.count}">0</span>
+                        <span class="v2f-row-main">
+                            <b th:text="${e.post.postName}">ชื่อ</b>
+                            <span><span th:text="${e.post.sport.name}">กีฬา</span> · <span th:text="${#temporals.format(e.post.datePlay,'HH:mm')}">เวลา</span> · <span th:text="${e.post.location.name}">สถานที่</span></span>
+                        </span>
+                        <span class="pill" th:classappend="${e.status=='pending'}?'orange':'green'"
+                              th:text="${e.status=='pending'?'รออนุมัติ':'เข้าร่วมแล้ว'}">สถานะ</span>
+                    </a>
+                </div>
+
+                <!-- ประวัติการเข้าร่วม -->
+                <div class="v2f-list v2-hidden" data-panel="history">
+                    <div th:if="${history.isEmpty()}" class="v2f-none">ยังไม่มีประวัติการเข้าร่วม</div>
+                    <a class="v2f-row" th:each="e : ${history}" th:href="@{'/posts/' + ${e.post.id}}">
+                        <span class="v2f-row-date">
+                            <b th:text="${#temporals.format(e.post.datePlay,'dd')}">01</b>
+                            <span th:text="${#temporals.format(e.post.datePlay,'MM/yy')}">09/26</span>
+                        </span>
+                        <span class="v2f-row-main">
+                            <b th:text="${e.post.postName}">ชื่อ</b>
+                            <span><span th:text="${e.post.sport.name}">กีฬา</span> · <span th:text="${#temporals.format(e.post.datePlay,'HH:mm')}">เวลา</span></span>
+                        </span>
+                        <span class="pill orange" th:if="${e.status=='pending'}">รออนุมัติ</span>
+                        <span class="pill grey" th:if="${e.status=='approved' and e.post.expired}">จบแล้ว</span>
+                        <span class="pill green" th:if="${e.status=='approved' and !e.post.expired}">เข้าร่วมแล้ว</span>
+                    </a>
+                </div>
+
+                <!-- ที่ฉันจัด (แก้ไข / ยกเลิก เหมือนเดิม) -->
+                <div class="v2f-list v2-hidden" data-panel="organized">
+                    <div th:if="${organized.isEmpty()}" class="v2f-none">คุณยังไม่เคยจัดกิจกรรม</div>
+                    <div class="v2f-row" th:each="p : ${organized}">
+                        <span class="v2f-row-date" th:classappend="${p.postType.name=='Tournament'} ? 'blue'">
+                            <b th:text="${#temporals.format(p.datePlay,'dd')}">01</b>
+                            <span th:text="${#temporals.format(p.datePlay,'MM/yy')}">09/26</span>
+                        </span>
+                        <a class="v2f-row-main" th:href="@{'/posts/' + ${p.id}}">
+                            <b th:text="${p.postName}">ชื่อ</b>
+                            <span><span th:text="${p.postType.name=='Tournament'?'Tournament':'Post'}">Post</span> · <span th:text="${p.sport.name}">กีฬา</span> · <span th:text="${#temporals.format(p.datePlay,'HH:mm')}">เวลา</span></span>
+                        </a>
+                        <span class="v2f-row-actions">
+                            <span class="pill orange" th:if="${p.status=='cancelled'}">ยกเลิกแล้ว</span>
+                            <span class="pill grey" th:if="${p.status!='cancelled' and p.expired}">จบแล้ว</span>
+                            <a th:if="${p.status!='cancelled' and !p.expired and !p.editLocked}" class="v2-btn outline v2f-sm"
+                               th:href="@{'/posts/' + ${p.id} + '/edit'}" th:text="|แก้ไข (${p.editsLeft}/3)|">แก้ไข</a>
+                            <span class="pill" th:if="${p.status!='cancelled' and !p.expired and p.editLocked}">แก้ไขครบ 3 ครั้งแล้ว</span>
+                            <form th:if="${p.status!='cancelled' and !p.expired and !p.ownerCancelLocked}" method="post"
+                                  th:action="@{'/posts/' + ${p.id} + '/cancel'}" onsubmit="return confirm('ยกเลิกกิจกรรมนี้?')">
+                                <button class="v2-btn v2f-sm v2f-danger">ยกเลิก</button>
+                            </form>
+                            <span class="pill" th:if="${p.status!='cancelled' and !p.expired and p.ownerCancelLocked}">ยกเลิกไม่ได้ (เลยกำหนดเดิมแล้ว)</span>
+                        </span>
                     </div>
                 </div>
-            </div>
+            </section>
         </div>
-    </div>
 
-    <!-- รีวิวที่ได้รับ -->
-    <div class="section" th:if="${stats.organizer}">
-        <h2>รีวิวที่ฉันได้รับ (<span th:text="${stats.reviewCount}">0</span>)</h2>
-        <div th:if="${stats.reviews.isEmpty()}" style="color:var(--muted);font-size:.9rem">
-            ยังไม่มีผู้เข้าร่วมรีวิวกิจกรรมของคุณ
-        </div>
-        <div class="panel review-item" th:each="r, it : ${stats.reviews}"
-            th:classappend="${it.index >= 5} ? ' review-hidden' : ''">
-            <div class="review-top">
-                <img class="c-avatar" th:if="${r.event.user.avatarUrl != null}"
-                     th:src="@{${r.event.user.avatarUrl}}" alt="">
-                <div class="c-avatar" th:if="${r.event.user.avatarUrl == null}"
-                     th:text="${#strings.substring(r.event.user.userName,0,1).toUpperCase()}">U</div>
-                <div style="flex:1">
-                    <a class="c-name user-link" th:href="@{'/users/' + ${r.event.user.id}}"
-                       th:text="${r.event.user.userName}">ผู้รีวิว</a>
-                    <span class="stars" style="margin-left:8px"
-                          th:text="${'★★★★★'.substring(0, r.reviewScore) + '☆☆☆☆☆'.substring(0, 5 - r.reviewScore)}">★★★★☆</span>
-                    <div class="l-meta">
-                        <span th:text="${r.event.post.postName}">ชื่อกิจกรรม</span> ·
-                        <span th:text="${#temporals.format(r.reviewDate,'dd/MM/yyyy')}">วันที่</span>
-                    </div>
-                </div>
+        <!-- ================= ขวา ================= -->
+        <aside class="v2f-aside">
+            <!-- สมาชิก -->
+            <div class="v2f-member" th:if="${user.member}"
+                 th:attr="data-expire=${user.membershipExpireAt}">
+                <span class="k">SportMate Member</span>
+                <b class="big" id="daysLeft">สมาชิกอยู่</b>
+                <div class="v2-bar"><i id="daysBar" style="width:100%"></i></div>
+                <span class="s">หมดอายุ <span th:text="${#temporals.format(user.membershipExpireAt,'dd/MM/yyyy')}">-</span></span>
+                <ul>
+                    <li>โพสต์ได้ไม่จำกัด</li>
+                    <li>สร้างทัวร์นาเมนต์ได้</li>
+                </ul>
+                <a class="v2-btn" th:href="@{/subscribe}">ต่ออายุสมาชิก</a>
             </div>
-            <div class="c-text" th:if="${r.comment != null and !r.comment.isBlank()}"
-                 th:text="${r.comment}" style="margin-top:8px">ความคิดเห็น</div>
-        </div>
-        <div th:if="${stats.reviews.size() > 5}" style="text-align:center;margin-top:4px">
-            <button type="button" class="btn btn-sm" id="reviewToggleBtn"
-                    th:attr="data-more=${stats.reviews.size() - 5}"
-                    onclick="toggleReviews(this)">
-                แสดงเพิ่มเติม (<span th:text="${stats.reviews.size() - 5}">0</span>)
-            </button>
-        </div>
-        <script>
-            function toggleReviews(btn) {
-                var hidden = document.querySelectorAll('.review-item.review-hidden');
-                var open = btn.dataset.open === '1';
-                hidden.forEach(function (el) { el.style.display = open ? '' : 'block'; });
-                btn.dataset.open = open ? '0' : '1';
-                btn.textContent = open ? 'แสดงเพิ่มเติม (' + btn.dataset.more + ')' : 'ย่อรีวิว';
-            }
-        </script>
-    </div>
-
-        <!-- รีวิวที่ได้รับในฐานะผู้เข้าร่วม -->
-    <div class="section" th:if="${stats.ratedParticipant}">
-        <h2>รีวิวจากผู้จัด (<span th:text="${stats.participantReviewCount}">0</span>)</h2>
-        <div class="panel review-item" th:each="r : ${stats.participantReviews}">
-            <div class="review-top">
-                <img class="c-avatar" th:if="${r.event.post.owner.avatarUrl != null}"
-                     th:src="@{${r.event.post.owner.avatarUrl}}" alt="">
-                <div class="c-avatar" th:if="${r.event.post.owner.avatarUrl == null}"
-                     th:text="${#strings.substring(r.event.post.owner.userName,0,1).toUpperCase()}">U</div>
-                <div style="flex:1">
-                    <a class="c-name user-link" th:href="@{'/users/' + ${r.event.post.owner.id}}"
-                       th:text="${r.event.post.owner.userName}">ผู้จัด</a>
-                    <span class="stars" style="margin-left:8px"
-                          th:text="${'★★★★★'.substring(0, r.reviewScore) + '☆☆☆☆☆'.substring(0, 5 - r.reviewScore)}">★★★★☆</span>
-                    <div class="l-meta">
-                        <span th:text="${r.event.post.postName}">ชื่อกิจกรรม</span> ·
-                        <span th:text="${#temporals.format(r.reviewDate,'dd/MM/yyyy')}">วันที่</span>
-                    </div>
-                </div>
+            <div class="v2f-upgrade" th:unless="${user.member}">
+                <span class="k">อัปเกรด</span>
+                <b class="big">เป็นสมาชิก SportMate</b>
+                <ul>
+                    <li>โพสต์ได้ไม่จำกัด (ปกติ 3 โพสต์/สัปดาห์)</li>
+                    <li>สร้างทัวร์นาเมนต์ได้</li>
+                </ul>
+                <a class="v2-btn" th:href="@{/subscribe}">อัปเกรด · 99฿/เดือน</a>
             </div>
-            <div class="c-text" th:if="${r.comment != null and !r.comment.isBlank()}"
-                 th:text="${r.comment}" style="margin-top:8px">ความคิดเห็น</div>
-        </div>
-    </div>
 
-    <!-- upcoming -->
-    <div class="section">
-        <h2>กิจกรรมที่กำลังจะมาถึง</h2>
-        <div th:if="${upcoming.isEmpty()}" style="color:var(--muted);font-size:.9rem">ยังไม่มีกิจกรรมที่กำลังจะมาถึง</div>
-        <a class="list-row" th:each="e : ${upcoming}" th:href="@{'/posts/' + ${e.post.id}}" style="text-decoration:none">
-            <div>
-                <div class="l-title" th:text="${e.post.postName}">ชื่อ</div>
-                <div class="l-meta">
-                    <span th:text="${e.post.sport.name}">กีฬา</span> ·
-                    <span th:text="${#temporals.format(e.post.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</span> ·
-                    <span th:text="${e.post.location.name}">สถานที่</span>
+            <!-- คะแนนผู้จัด -->
+            <div class="v2f-card">
+                <b class="t">คะแนนผู้จัด</b>
+                <div class="v2f-score">
+                    <span class="n" th:text="${#numbers.formatDecimal(user.avgScore,1,2)}">0.00</span>
+                    <span class="s">จากเต็ม 5.00<br>จาก <b th:text="${stats.reviewCount}">0</b> รีวิว</span>
                 </div>
+                <div class="v2-bar"><i th:style="'width:' + ${user.avgScore * 20} + '%'"></i></div>
             </div>
-            <span class="pill" th:classappend="${e.status=='pending'}?'orange':'green'"
-                  th:text="${e.status=='pending'?'รออนุมัติ':'เข้าร่วมแล้ว'}">สถานะ</span>
-        </a>
-    </div>
 
-    <!-- participation history -->
-    <div class="section">
-        <h2>ประวัติการเข้าร่วมทั้งหมด</h2>
-        <div th:if="${history.isEmpty()}" style="color:var(--muted);font-size:.9rem">ยังไม่มีประวัติการเข้าร่วม</div>
-        <a class="list-row" th:each="e : ${history}" th:href="@{'/posts/' + ${e.post.id}}" style="text-decoration:none">
-            <div>
-                <div class="l-title" th:text="${e.post.postName}">ชื่อ</div>
-                <div class="l-meta">
-                    <span th:text="${e.post.sport.name}">กีฬา</span> ·
-                    <span th:text="${#temporals.format(e.post.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</span>
-                </div>
-            </div>
-            <span class="pill orange" th:if="${e.status=='pending'}">รออนุมัติ</span>
-            <span class="pill grey" th:if="${e.status=='approved' and e.post.expired}">จบแล้ว</span>
-            <span class="pill green" th:if="${e.status=='approved' and !e.post.expired}">เข้าร่วมแล้ว</span>
-        </a>
-    </div>
-
-    <!-- organized -->
-    <div class="section">
-        <h2>ประวัติการจัดกิจกรรมของฉัน</h2>
-        <div th:if="${organized.isEmpty()}" style="color:var(--muted);font-size:.9rem">คุณยังไม่เคยจัดกิจกรรม</div>
-        <div class="list-row" th:each="p : ${organized}">
-            <a th:href="@{'/posts/' + ${p.id}}" style="text-decoration:none;flex:1">
-                <div class="l-title" th:text="${p.postName}">ชื่อ</div>
-                <div class="l-meta">
-                    <span th:text="${p.postType.name=='Tournament'?'🏆 Tournament':'Post'}">Post</span> ·
-                    <span th:text="${p.sport.name}">กีฬา</span> ·
-                    <span th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</span>
-                </div>
-            </a>
-            <span class="pill orange" th:if="${p.status=='cancelled'}">ยกเลิกแล้ว</span>
-            <a th:if="${p.status!='cancelled' and !p.expired and !p.editLocked}" class="btn btn-ghost btn-sm"
-               th:href="@{'/posts/' + ${p.id} + '/edit'}"
-               th:text="|แก้ไข (${p.editsLeft}/3)|">แก้ไข</a>
-            <span class="pill" th:if="${p.status!='cancelled' and !p.expired and p.editLocked}"
-                  style="font-size:.75rem">แก้ไขครบ 3 ครั้งแล้ว</span>
-            <form th:if="${p.status!='cancelled' and !p.expired and !p.ownerCancelLocked}" method="post"
-                  th:action="@{'/posts/' + ${p.id} + '/cancel'}"
-                  onsubmit="return confirm('ยกเลิกกิจกรรมนี้?')">
-                <button class="btn btn-ghost btn-sm">ยกเลิก</button>
-            </form>
-            <span class="pill" th:if="${p.status!='cancelled' and !p.expired and p.ownerCancelLocked}"
-                  style="font-size:.75rem">ยกเลิกไม่ได้ (เลยกำหนดเดิมแล้ว)</span>
-        </div>
+            <!-- เมนูลัด -->
+            <nav class="v2f-links" aria-label="เมนูโปรไฟล์">
+                <a th:href="@{/profile/edit}">แก้ไขข้อมูลส่วนตัว<span>›</span></a>
+                <a th:href="@{/archive}">จัดเก็บกิจกรรม<span>›</span></a>
+                <a th:href="@{/notifications}">การแจ้งเตือน<span>›</span></a>
+                <a class="danger" th:href="@{/logout}">ออกจากระบบ</a>
+            </nav>
+        </aside>
     </div>
 </div>
+
+<script>
+(function () {
+    /* จำนวนวันสมาชิกที่เหลือ (คิดจากรอบ 30 วัน) */
+    var m = document.querySelector('.v2f-member');
+    if (m && m.dataset.expire) {
+        var left = Math.ceil((new Date(m.dataset.expire) - new Date()) / 86400000);
+        if (left >= 0) {
+            document.getElementById('daysLeft').textContent = 'เหลืออีก ' + left + ' วัน';
+            document.getElementById('daysBar').style.width = Math.min(100, Math.round(left / 30 * 100)) + '%';
+        }
+    }
+
+    /* แท็บกิจกรรมของฉัน */
+    var tabs = document.querySelectorAll('#actTabs button');
+    tabs.forEach(function (b) {
+        b.addEventListener('click', function () {
+            tabs.forEach(function (x) { x.classList.toggle('active', x === b); });
+            document.querySelectorAll('[data-panel]').forEach(function (p) {
+                p.classList.toggle('v2-hidden', p.dataset.panel !== b.dataset.t);
+            });
+        });
+    });
+
+    /* รีวิว: กรอง + แสดงเพิ่มเติม */
+    var box = document.getElementById('orgReviews');
+    if (!box) return;
+    var reviews = Array.prototype.slice.call(box.querySelectorAll('.v2f-review'));
+    var f = 'all', expanded = false;
+    var moreBtn = document.getElementById('moreReviews');
+    function render() {
+        reviews.forEach(function (r) {
+            var ok = f === 'all' || (f === 'c' ? r.dataset.c === 'true' : r.dataset.score === f);
+            var extra = f === 'all' && !expanded && r.classList.contains('is-extra');
+            r.classList.toggle('v2-hidden', !ok || extra);
+        });
+        if (moreBtn) moreBtn.parentElement.classList.toggle('v2-hidden', f !== 'all');
+    }
+    document.querySelectorAll('.v2f-rfilter .v2-chip').forEach(function (b) {
+        b.addEventListener('click', function () {
+            document.querySelectorAll('.v2f-rfilter .v2-chip').forEach(function (x) { x.classList.toggle('active', x === b); });
+            f = b.dataset.f;
+            render();
+        });
+    });
+    if (moreBtn) moreBtn.addEventListener('click', function () {
+        expanded = !expanded;
+        moreBtn.textContent = expanded ? 'ย่อรีวิว' : 'แสดงเพิ่มเติม (' + moreBtn.dataset.more + ')';
+        render();
+    });
+    render();
+})();
+</script>
 </body>
 </html>
