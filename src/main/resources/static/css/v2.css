@@ -1,0 +1,200 @@
+/* ===== SportMate UI v2 — วางทับ style.css (ใช้ตัวแปรสีเดิมจาก :root) ===== */
+
+/* ---------- layout ---------- */
+.wrap.v2{max-width:1200px}
+.v2-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:32px;align-items:start}
+.v2-stack{display:flex;flex-direction:column;gap:32px}
+@media (max-width:980px){.v2-grid{grid-template-columns:1fr}}
+
+/* ---------- greeting / hero ---------- */
+.v2-hero{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:32px;align-items:stretch;margin-bottom:32px}
+@media (max-width:980px){.v2-hero{grid-template-columns:1fr}}
+.v2-hero-text{display:flex;flex-direction:column;justify-content:center;gap:28px}
+.v2-hero h1{font-size:clamp(36px,5vw,60px);font-weight:900;line-height:1.05;letter-spacing:.5px}
+.v2-lead{font-size:17px;line-height:1.6;color:var(--muted);margin-top:10px}
+.v2-actions{display:flex;flex-wrap:wrap;gap:12px}
+.v2-btn{height:50px;padding:0 22px;border-radius:14px;display:inline-flex;align-items:center;gap:8px;
+  font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid transparent;cursor:pointer;
+  transition:transform var(--duration) var(--ease),box-shadow var(--duration) var(--ease)}
+.v2-btn:hover{transform:translateY(-1px)}
+.v2-btn svg{width:18px;height:18px}
+.v2-btn.flare{background:var(--flare);color:#fff;box-shadow:0 10px 24px -10px rgba(0,113,255,.6)}
+.v2-btn.outline{background:#fff;color:var(--ink);border-color:var(--ink)}
+.v2-btn.text{color:var(--ink);padding:0 12px}
+.v2-btn.pitch{background:var(--pitch);color:#fff}
+
+/* ---------- next-up card ---------- */
+.v2-next{position:relative;overflow:hidden;border-radius:22px;background:var(--ink);color:#fff;
+  padding:22px 24px 22px 28px;display:flex;flex-direction:column;justify-content:space-between;gap:16px;
+  text-decoration:none;box-shadow:var(--shadow-lg);min-height:200px}
+.v2-next::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--pitch)}
+.v2-next:hover{color:#fff}
+.v2-next-top{display:flex;justify-content:space-between;align-items:center}
+.v2-live{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:1.8px;color:var(--volt)}
+.v2-live i{width:7px;height:7px;border-radius:50%;background:var(--volt);animation:v2pulse 1.6s ease-in-out infinite}
+@keyframes v2pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.v2-next-tag{padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.1);font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase}
+.v2-next-title{font-size:21px;font-weight:800;line-height:1.25}
+.v2-next-meta{font-size:14px;color:#AEB6C2;margin-top:4px}
+.v2-next-bottom{display:flex;align-items:center;gap:12px}
+.v2-count{display:flex;align-items:baseline;gap:4px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.08)}
+.v2-count b{font-size:22px;font-weight:900;line-height:1}
+.v2-count b:first-child{color:var(--pitch)}
+.v2-count span{font-size:12px;color:#AEB6C2;margin-right:6px}
+.v2-next-role{flex:1;font-size:13px;color:#AEB6C2}
+.v2-arrow{width:44px;height:44px;flex-shrink:0;border-radius:12px;background:var(--pitch);display:flex;align-items:center;justify-content:center}
+.v2-next-empty{color:#AEB6C2;font-size:15px;line-height:1.6}
+
+/* ---------- section head ---------- */
+.v2-sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.v2-sec-head h2{font-size:24px;font-weight:800;display:flex;align-items:center;gap:10px}
+.v2-count-pill{padding:2px 10px;border-radius:999px;font-size:13px;font-weight:700;background:var(--pitch-light);color:var(--pitch-dark)}
+.v2-count-pill.blue{background:var(--flare-light);color:var(--flare)}
+
+/* ---------- sport chips ---------- */
+.v2-chips{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:28px}
+.v2-chips-label{font-size:13px;font-weight:800;letter-spacing:1.6px;color:var(--muted);margin-right:4px}
+.v2-chip{height:42px;padding:0 18px;border-radius:999px;border:1.5px solid var(--line);background:#fff;
+  color:var(--ink);font:inherit;font-size:14px;font-weight:700;letter-spacing:.8px;cursor:pointer;text-transform:uppercase}
+.v2-chip.active{background:var(--ink);border-color:var(--ink);color:var(--volt)}
+
+/* ---------- post card (2 columns) ---------- */
+.v2-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:640px){.v2-cards{grid-template-columns:1fr}}
+.v2-card{position:relative;overflow:hidden;border-radius:18px;background:#fff;border:1px solid var(--line-light);
+  box-shadow:var(--shadow);padding:22px 22px 20px 26px;display:flex;flex-direction:column;gap:14px;
+  text-decoration:none;color:var(--ink);transition:transform var(--duration) var(--ease),box-shadow var(--duration) var(--ease)}
+.v2-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);color:var(--ink)}
+.v2-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--pitch)}
+.v2-card.full::before{background:var(--flare)}
+.v2-card-top{display:flex;gap:8px;flex-wrap:wrap}
+.v2-card h3{font-size:19px;font-weight:800;line-height:1.3}
+.v2-meta{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
+.v2-meta span{display:flex;align-items:center;gap:8px}
+.v2-meta b{color:var(--ink);font-weight:600}
+.v2-meta svg{width:16px;height:16px;flex-shrink:0;color:var(--pitch)}
+.v2-card-foot{display:flex;align-items:center;gap:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.v2-progress{flex:1;display:flex;flex-direction:column;gap:6px}
+.v2-bar{height:7px;border-radius:999px;background:var(--line-light);overflow:hidden}
+.v2-bar i{display:block;height:100%;border-radius:999px;background:var(--pitch)}
+.v2-card.full .v2-bar i{background:var(--flare)}
+.v2-left{font-size:12px;font-weight:600;color:var(--muted)}
+.v2-score{font-size:26px;font-weight:900;line-height:1}
+.v2-score .cur{color:var(--pitch)}
+.v2-card.full .v2-score .cur{color:var(--flare)}
+.v2-score .sep{color:var(--line)}
+
+/* ---------- tournament row ---------- */
+.v2-rows{display:flex;flex-direction:column;gap:14px}
+.v2-row{display:flex;align-items:stretch;overflow:hidden;border-radius:18px;background:#fff;border:1px solid var(--line-light);
+  box-shadow:var(--shadow);text-decoration:none;color:var(--ink);transition:transform var(--duration) var(--ease)}
+.v2-row:hover{transform:translateY(-2px);color:var(--ink)}
+.v2-row-stripe{width:5px;flex-shrink:0;background:var(--flare)}
+.v2-date{width:92px;flex-shrink:0;background:var(--ink);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.v2-date .m{font-size:11px;font-weight:800;letter-spacing:1.4px;color:var(--volt);text-transform:uppercase}
+.v2-date .d{font-size:32px;font-weight:900;line-height:1}
+.v2-date .t{font-size:12px;color:#AEB6C2}
+.v2-row-body{flex:1;padding:16px 22px;display:flex;flex-direction:column;gap:8px}
+.v2-row-body h3{font-size:19px;font-weight:800}
+.v2-row-side{width:140px;flex-shrink:0;background:var(--surface-elevated);border-left:1px solid var(--line-light);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.v2-row-side .lbl{font-size:12px;font-weight:600;color:var(--muted)}
+.v2-row-side .v2-bar{width:88px;height:5px}
+.v2-row-side .v2-bar i{background:var(--flare)}
+@media (max-width:640px){.v2-row-side{width:96px}.v2-date{width:72px}}
+
+/* ---------- empty ---------- */
+.v2-empty{border-radius:20px;border:2px dashed var(--line);background:var(--surface-elevated);padding:36px;
+  display:flex;align-items:center;gap:24px}
+.v2-empty-ico{width:72px;height:72px;flex-shrink:0;border-radius:20px;background:var(--pitch-light);display:flex;align-items:center;justify-content:center}
+.v2-empty-ico svg{width:34px;height:34px;color:var(--pitch)}
+.v2-empty b{display:block;font-size:20px;font-weight:800;margin-bottom:4px}
+.v2-empty span{color:var(--muted)}
+.v2-empty .v2-btn{margin-left:auto}
+@media (max-width:640px){.v2-empty{flex-direction:column;text-align:center}.v2-empty .v2-btn{margin:0}}
+
+/* ---------- aside cards ---------- */
+.v2-aside{display:flex;flex-direction:column;gap:20px}
+.v2-volt{margin-bottom:18px;position:relative;overflow:hidden;border-radius:22px;background:var(--volt);padding:24px;display:flex;flex-direction:column;gap:12px}
+.v2-volt small{font-size:13px;font-weight:800;letter-spacing:1.6px}
+.v2-volt strong{font-size:21px;font-weight:800;line-height:1.3}
+.v2-volt a{align-self:flex-start;height:44px;padding:0 18px;border-radius:12px;background:var(--ink);color:#fff;
+  font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center}
+
+.v2-hidden{display:none !important}
+
+/* =====================================================================
+   COMPACT — ปรับขนาดให้ใกล้เคียง UI เดิม (style.css)
+   ลบบล็อกนี้ทิ้งได้ถ้าอยากกลับไปขนาดใหญ่
+   ===================================================================== */
+.wrap.v2{max-width:1120px}
+.v2-hero,.v2-grid{grid-template-columns:minmax(0,1fr) 360px;gap:22px}
+.v2-hero{margin-bottom:24px}
+.v2-stack{gap:24px}
+
+/* ทักทาย */
+.v2-hero-text{gap:18px}
+.v2-lead{font-size:.9rem;margin-top:6px}
+.v2-actions{gap:8px}
+.v2-btn{height:40px;padding:0 16px;border-radius:var(--radius-sm);font-size:.84rem;font-weight:600;gap:7px}
+.v2-btn svg{width:15px;height:15px}
+.v2-btn.flare{box-shadow:0 6px 16px -8px rgba(0,113,255,.55)}
+.v2-btn.text{padding:0 8px}
+
+/* การ์ดกิจกรรมถัดไป */
+.v2-next{min-height:0;border-radius:var(--radius);padding:16px 18px 16px 22px;gap:12px}
+.v2-live{font-size:.68rem}
+.v2-next-tag{font-size:.65rem;padding:3px 8px}
+.v2-next-title{font-size:1.05rem}
+.v2-next-meta{font-size:.8rem}
+.v2-count{padding:6px 10px;border-radius:10px}
+.v2-count b{font-size:1.1rem}
+.v2-count span{font-size:.7rem}
+.v2-next-role{font-size:.75rem}
+.v2-arrow{width:36px;height:36px;border-radius:10px}
+.v2-arrow svg{width:15px;height:15px}
+
+/* ปุ่มกรองกีฬา */
+.v2-chips{gap:8px}
+.v2-chip{height:34px;padding:0 14px;font-size:.74rem;font-weight:600}
+
+/* หัวข้อ section */
+.v2-sec-head{margin-bottom:12px}
+.v2-sec-head h2{font-size:1.05rem}
+.v2-count-pill{font-size:.72rem;padding:1px 8px}
+
+/* การ์ด "ว่างเย็นนี้?" */
+.v2-volt{border-radius:var(--radius);padding:16px 20px;gap:8px;margin-bottom:12px}
+.v2-volt small{font-size:.68rem}
+.v2-volt strong{font-size:1rem}
+.v2-volt a{height:34px;padding:0 14px;font-size:.78rem;border-radius:10px}
+
+/* การ์ดโพสต์ */
+.v2-cards{gap:12px}
+.v2-card{border-radius:var(--radius);padding:14px 16px 14px 20px;gap:10px}
+.v2-card h3{font-size:1.1rem;font-weight:600}
+.v2-meta{font-size:.84rem;gap:4px}
+.v2-meta svg{width:14px;height:14px}
+.v2-card-foot{padding-top:10px;gap:10px}
+.v2-left{font-size:.7rem}
+.v2-score{font-size:1.35rem;font-weight:700}
+
+/* แถวทัวร์นาเมนต์ */
+.v2-rows{gap:12px}
+.v2-row{border-radius:var(--radius)}
+.v2-date{width:72px}
+.v2-date .m{font-size:.62rem}
+.v2-date .d{font-size:1.5rem}
+.v2-date .t{font-size:.7rem}
+.v2-row-body{padding:14px 16px;gap:6px}
+.v2-row-body h3{font-size:1.1rem;font-weight:600}
+.v2-row-side{width:120px}
+.v2-row-side .lbl{font-size:.65rem}
+
+/* empty state */
+.v2-empty{padding:24px;gap:18px;border-radius:var(--radius)}
+.v2-empty-ico{width:52px;height:52px;border-radius:14px}
+.v2-empty-ico svg{width:24px;height:24px}
+.v2-empty b{font-size:1rem}
+
+@media (max-width:980px){.v2-hero,.v2-grid{grid-template-columns:1fr}}

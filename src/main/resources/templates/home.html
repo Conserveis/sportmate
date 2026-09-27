@@ -4,104 +4,140 @@
 <body>
 <nav th:replace="~{fragments :: nav('home')}"></nav>
 
-<div class="wrap">
+<div class="wrap v2">
     <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
     <div th:if="${error}" class="flash err" th:text="${error}"></div>
 
-    <div class="home-shell">
+    <!-- ================= ทักทาย + กิจกรรมถัดไป ================= -->
+    <section class="v2-hero">
+        <div class="v2-hero-text">
+            <div>
+                <h1>สวัสดี <span th:text="${currentUser != null} ? ${#strings.toUpperCase(currentUser.userName)} : 'SPORTMATE'">ผู้ใช้</span></h1>
+                <p class="v2-lead">หาเพื่อนเล่นกีฬา เข้าร่วมทัวร์นาเมนต์ หรือเปิดกิจกรรมของคุณเองได้ที่นี่</p>
+            </div>
+            <div class="v2-actions">
+                <a class="v2-btn flare" th:href="@{/posts/new(type='Post')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>สร้างโพสต์</a>
+                <a class="v2-btn outline" th:if="${currentUser != null and currentUser.member}"
+                   th:href="@{/posts/new(type='Tournament')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>สร้างทัวร์นาเมนต์</a>
+                <a class="v2-btn text" th:href="@{/archive}">ดูกิจกรรมของฉัน ›</a>
+            </div>
+        </div>
 
-        <!-- ================= ซ้าย : โพสต์ + ทัวร์นาเมนต์ล่าสุด ================= -->
-        <section class="home-main">
+        <!-- เติมข้อมูลด้วย JS จาก agendaJson (ไม่ต้องแก้ Controller) -->
+        <a class="v2-next" id="nextCard" th:href="@{/posts}">
+            <div class="v2-next-top">
+                <span class="v2-live"><i></i>กิจกรรมถัดไป</span>
+                <span class="v2-next-tag" id="nextSport">—</span>
+            </div>
+            <div>
+                <div class="v2-next-title" id="nextName">ยังไม่มีกิจกรรมที่กำลังจะถึง</div>
+                <div class="v2-next-meta" id="nextMeta">ลองหากิจกรรมที่น่าสนใจในหน้า Post</div>
+            </div>
+            <div class="v2-next-bottom">
+                <span class="v2-count" id="nextCount"><b id="nextDays">0</b><span>วัน</span><b id="nextHours">0</b><span>ชม.</span></span>
+                <span class="v2-next-role" id="nextRole"></span>
+                <span class="v2-arrow" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            </div>
+        </a>
+    </section>
 
-            <div class="page-head">
-                <div>
-                    <div class="eyebrow">Main Dashboard</div>
-                    <h1>สวัสดี <span th:text="${currentUser != null} ? ${currentUser.userName} : 'SportMate'">ผู้ใช้</span></h1>
-                </div>
-                <span class="spacer" style="flex:1"></span>
-                <a class="btn btn-flare btn-sm" th:href="@{/posts/new(type='Post')}">+ สร้างโพสต์</a>
+    <div class="v2-grid">
+        <!-- ================= ซ้าย ================= -->
+        <section class="v2-stack">
+
+            <!-- ตัวกรองกีฬา (สร้างปุ่มอัตโนมัติจาก data-sport ของการ์ด) -->
+            <div class="v2-chips" id="sportChips" style="margin-bottom:0">
+                <button type="button" class="v2-chip active" data-sport="">ทั้งหมด</button>
             </div>
 
             <!-- ---- โพสต์ล่าสุด ---- -->
-            <div class="home-sec">
-                <div class="sec-head">
-                    <h2>โพสต์ล่าสุด</h2>
+            <div>
+                <div class="v2-sec-head">
+                    <h2>โพสต์ล่าสุด <span class="v2-count-pill" th:text="${latestPosts.size()}">0</span></h2>
                     <a class="sec-more" th:href="@{/posts}">ดูทั้งหมด ›</a>
                 </div>
 
-                <div th:if="${latestPosts.isEmpty()}" class="empty">
-                    <div class="big">ยังไม่มีโพสต์</div>
-                    <div>เป็นคนแรกที่ชวนเพื่อนมาเล่นกีฬาสิ!</div>
+                <div th:if="${latestPosts.isEmpty()}" class="v2-empty">
+                    <span class="v2-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></span>
+                    <div><b>ยังไม่มีโพสต์</b><span>เป็นคนแรกที่ชวนเพื่อนมาเล่นกีฬาสิ!</span></div>
+                    <a class="v2-btn flare" th:href="@{/posts/new(type='Post')}">+ สร้างโพสต์แรก</a>
                 </div>
 
-                <div class="home-list">
-                    <a class="h-card" th:each="p : ${latestPosts}" th:href="@{'/posts/' + ${p.id}}">
-                        <div class="h-stripe"></div>
-                        <div class="h-body">
-                            <div class="h-top">
-                                <span class="sport-tag" th:text="${p.sport.name}">Football</span>
-                                <span class="pill" th:classappend="${p.public}?'green':'orange'"
-                                      th:text="${p.public}?'สาธารณะ':'ต้องอนุมัติ'">สาธารณะ</span>
-                            </div>
-                            <h3 th:text="${p.postName}">ชื่อกิจกรรม</h3>
-                            <div class="meta">
-                                <span><span class="line-icon calendar" aria-hidden="true"></span>
-                                    <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
-                                <span><span class="line-icon pin" aria-hidden="true"></span>
-                                    <span th:text="${p.location.name}">สถานที่</span></span>
-                            </div>
+                <div class="v2-volt" th:unless="${latestPosts.isEmpty()}">
+                    <small>ว่างเย็นนี้?</small>
+                    <strong>มีกิจกรรมที่ยังขาดคน<br>รอคุณอยู่</strong>
+                    <a th:href="@{/posts}">ดูโพสต์ที่เปิดรับ ›</a>
+                </div>
+                <div class="v2-cards" th:unless="${latestPosts.isEmpty()}">
+                    <a class="v2-card" th:each="p : ${latestPosts}"
+                       th:with="cur=${joinCounts[p.id] ?: 0}, max=${p.maxPlayer}"
+                       th:classappend="${cur >= max} ? 'full'"
+                       th:attr="data-sport=${p.sport.name}"
+                       th:href="@{'/posts/' + ${p.id}}">
+                        <div class="v2-card-top">
+                            <span class="sport-tag" th:text="${p.sport.name}">Football</span>
+                            <span class="pill" th:classappend="${p.public}?'green':'orange'"
+                                  th:text="${p.public}?'สาธารณะ':'ต้องอนุมัติ'">สาธารณะ</span>
                         </div>
-                        <div class="h-side">
-                            <div class="score-label">ผู้เข้าร่วม</div>
-                            <div class="score" th:classappend="${joinCounts[p.id] >= p.maxPlayer}?'full'">
-                                <span class="cur" th:text="${joinCounts[p.id]}">0</span><span class="sep">/</span><span th:text="${p.maxPlayer}">10</span>
+                        <h3 th:text="${p.postName}">ชื่อกิจกรรม</h3>
+                        <div class="v2-meta">
+                            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
+                            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span th:text="${p.location.name}">สถานที่</span></span>
+                        </div>
+                        <div class="v2-card-foot">
+                            <div class="v2-progress">
+                                <div class="v2-bar"><i th:style="'width:' + ${max > 0 ? (cur * 100 / max) : 0} + '%'"></i></div>
+                                <span class="v2-left" th:text="${cur >= max} ? 'เต็มแล้ว' : ${'ขาดอีก ' + (max - cur) + ' คน'}">ขาดอีก 2 คน</span>
                             </div>
+                            <span class="v2-score"><span class="cur" th:text="${cur}">0</span><span class="sep">/</span><span th:text="${max}">10</span></span>
                         </div>
                     </a>
                 </div>
             </div>
 
             <!-- ---- ทัวร์นาเมนต์ล่าสุด ---- -->
-            <div class="home-sec">
-                <div class="sec-head">
-                    <h2>ทัวร์นาเมนต์ล่าสุด</h2>
+            <div>
+                <div class="v2-sec-head">
+                    <h2>ทัวร์นาเมนต์ล่าสุด <span class="v2-count-pill blue" th:text="${latestTournaments.size()}">0</span></h2>
                     <a class="sec-more" th:href="@{/tournaments}">ดูทั้งหมด ›</a>
                 </div>
 
-                <div th:if="${latestTournaments.isEmpty()}" class="empty">
-                    <div class="big">ยังไม่มีทัวร์นาเมนต์</div>
-                    <div>ทัวร์นาเมนต์ใหม่ ๆ จะแสดงที่นี่</div>
+                <div th:if="${latestTournaments.isEmpty()}" class="v2-empty">
+                    <span class="v2-empty-ico" style="background:var(--flare-light)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--flare)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/></svg></span>
+                    <div><b>ยังไม่มีทัวร์นาเมนต์</b><span>ทัวร์นาเมนต์ใหม่ ๆ จะแสดงที่นี่</span></div>
                 </div>
 
-                <div class="home-list">
-                    <a class="h-card tour" th:each="p : ${latestTournaments}" th:href="@{'/posts/' + ${p.id}}">
-                        <div class="h-stripe"></div>
-                        <div class="h-body">
-                            <div class="h-top">
+                <div class="v2-rows">
+                    <a class="v2-row" th:each="p : ${latestTournaments}"
+                       th:with="cur=${joinCounts[p.id] ?: 0}, max=${p.maxPlayer}"
+                       th:attr="data-sport=${p.sport.name}"
+                       th:href="@{'/posts/' + ${p.id}}">
+                        <span class="v2-row-stripe"></span>
+                        <span class="v2-date">
+                            <span class="m" th:text="${#temporals.format(p.datePlay,'MMM')}">SEP</span>
+                            <span class="d" th:text="${#temporals.format(p.datePlay,'dd')}">04</span>
+                            <span class="t" th:text="${#temporals.format(p.datePlay,'HH:mm')}">01:05</span>
+                        </span>
+                        <span class="v2-row-body">
+                            <span class="v2-card-top">
                                 <span class="sport-tag" th:text="${p.sport.name}">Football</span>
                                 <span class="pill grey" th:if="${p.expired}">จบแล้ว</span>
-                            </div>
+                            </span>
                             <h3 th:text="${p.postName}">ชื่อทัวร์นาเมนต์</h3>
-                            <div class="meta">
-                                <span><span class="line-icon calendar" aria-hidden="true"></span>
-                                    <b th:text="${#temporals.format(p.datePlay,'dd/MM/yyyy HH:mm')}">วันเวลา</b></span>
-                                <span><span class="line-icon pin" aria-hidden="true"></span>
-                                    <span th:text="${p.location.name}">สถานที่</span></span>
-                            </div>
-                        </div>
-                        <div class="h-side">
-                            <div class="score-label">ผู้เข้าร่วม</div>
-                            <div class="score" th:classappend="${joinCounts[p.id] >= p.maxPlayer}?'full'">
-                                <span class="cur" th:text="${joinCounts[p.id]}">0</span><span class="sep">/</span><span th:text="${p.maxPlayer}">16</span>
-                            </div>
-                        </div>
+                            <span class="v2-meta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span th:text="${p.location.name}">สถานที่</span></span></span>
+                        </span>
+                        <span class="v2-row-side">
+                            <span class="lbl">ผู้เข้าร่วม</span>
+                            <span class="v2-score"><span class="cur" th:text="${cur}">0</span><span class="sep">/</span><span th:text="${max}">16</span></span>
+                            <span class="v2-bar"><i th:style="'width:' + ${max > 0 ? (cur * 100 / max) : 0} + '%'"></i></span>
+                        </span>
                     </a>
                 </div>
             </div>
         </section>
 
-                <!-- ================= ขวา : ปฏิทินกิจกรรมของฉัน (client-side) ================= -->
-        <aside class="home-aside">
+        <!-- ================= ขวา : ปฏิทินกิจกรรมของฉัน (client-side) ================= -->
+        <aside class="home-aside v2-aside">
             <div class="cal-card">
 
                 <div class="cal-head">
@@ -131,7 +167,6 @@
                 </div>
             </div>
         </aside>
-
     </div>
 </div>
 <script type="application/json" id="calData" th:utext="${agendaJson}">{}</script>
@@ -258,4 +293,63 @@
     renderCalendar();
 })();
 </script>
+<script th:inline="javascript">
+/* ===== v2: การ์ดกิจกรรมถัดไป + ตัวกรองกีฬา ===== */
+(function () {
+    var DATA = {};
+    try { DATA = JSON.parse(document.getElementById('calData').textContent || '{}'); } catch (e) {}
+    var POSTS_BASE = /*[[@{/posts/}]]*/ '/posts/';
+    var DOW = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
+    var MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    var now = new Date(), next = null;
+
+    Object.keys(DATA).sort().some(function (day) {
+        return (DATA[day] || []).some(function (a) {
+            var when = new Date(day + 'T' + (a.time || '00:00') + ':00');
+            if (when >= now) { next = { a: a, when: when }; return true; }
+            return false;
+        });
+    });
+
+    var card = document.getElementById('nextCard');
+    if (!next) { document.getElementById('nextCount').classList.add('v2-hidden'); return initChips(); }
+
+    var diff = next.when - now;
+    var d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000);
+    var w = next.when;
+    card.href = POSTS_BASE + next.a.id;
+    document.getElementById('nextSport').textContent = next.a.sport || '';
+    document.getElementById('nextName').textContent = next.a.name || '';
+    document.getElementById('nextMeta').textContent =
+        DOW[w.getDay()] + ' ' + w.getDate() + ' ' + MON[w.getMonth()] + ' ' + next.a.time + ' · ' + (next.a.place || '');
+    document.getElementById('nextDays').textContent = d;
+    document.getElementById('nextHours').textContent = h;
+    document.getElementById('nextRole').textContent = next.a.pending ? 'รออนุมัติ' : ('คุณเป็น' + next.a.role);
+    initChips();
+
+    function initChips() {
+        var box = document.getElementById('sportChips');
+        var items = document.querySelectorAll('.v2-card[data-sport], .v2-row[data-sport]');
+        var seen = {};
+        items.forEach(function (el) {
+            var s = el.getAttribute('data-sport');
+            if (s && !seen[s]) {
+                seen[s] = true;
+                var b = document.createElement('button');
+                b.type = 'button'; b.className = 'v2-chip';
+                b.setAttribute('data-sport', s); b.textContent = s;
+                box.appendChild(b);
+            }
+        });
+        if (Object.keys(seen).length < 2) { box.classList.add('v2-hidden'); return; }
+        box.addEventListener('click', function (e) {
+            var b = e.target.closest('.v2-chip'); if (!b) return;
+            box.querySelectorAll('.v2-chip').forEach(function (x) { x.classList.toggle('active', x === b); });
+            var s = b.getAttribute('data-sport');
+            items.forEach(function (el) { el.classList.toggle('v2-hidden', !!s && el.getAttribute('data-sport') !== s); });
+        });
+    }
+})();
+</script>
+</body>
 </html>
