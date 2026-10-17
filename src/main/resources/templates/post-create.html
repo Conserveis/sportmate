@@ -109,7 +109,9 @@
             </section>
 
             <div class="v2c-submit">
-                <a class="v2-btn outline" th:href="@{${isTour?'/tournaments':'/posts'}}">ยกเลิก</a>
+                <a class="v2-btn v2c-cancel" th:href="@{${isTour?'/tournaments':'/posts'}}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    <span>ยกเลิก</span></a>
                 <button class="v2-btn pitch v2c-go" type="submit">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
                     <span th:text="${isTour} ? 'สร้างทัวร์นาเมนต์' : 'สร้างกิจกรรม'">สร้างกิจกรรม</span></button>

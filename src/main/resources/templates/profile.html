@@ -85,7 +85,7 @@
                         <div class="v2f-panel-foot">
                             <span>โควตาโพสต์สัปดาห์นี้</span>
                             <span th:if="${quotaLeft < 0}" class="pill green">ไม่จำกัด (Member)</span>
-                            <span th:unless="${quotaLeft < 0}">เหลือ <b class="o" th:text="${quotaLeft}">0</b> / 3 โพสต์</span>
+                            <span th:unless="${quotaLeft < 0}" title="รีเซ็ตทุกวันจันทร์ 00:00 น. (เวลาไทย)">เหลือ <b class="o" th:text="${quotaLeft}">0</b> / 3 โพสต์ · รีเซ็ตทุกวันจันทร์</span>
                         </div>
                     </div>
 
@@ -281,8 +281,8 @@
             <div class="v2f-card">
                 <b class="t">คะแนนผู้จัด</b>
                 <div class="v2f-score">
-                    <span class="n" th:text="${#numbers.formatDecimal(user.avgScore,1,2)}">0.00</span>
-                    <span class="s">จากเต็ม 5.00<br>จาก <b th:text="${stats.reviewCount}">0</b> รีวิว</span>
+                    <span class="n"><span th:text="${#numbers.formatDecimal(user.avgScore,1,2)}">0.00</span><small>/ 5</small></span>
+                    <span class="s">จาก <b th:text="${stats.reviewCount}">0</b> รีวิว</span>
                 </div>
                 <div class="v2-bar"><i th:style="'width:' + ${user.avgScore * 20} + '%'"></i></div>
             </div>

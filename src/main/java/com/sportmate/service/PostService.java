@@ -1,6 +1,10 @@
 package com.sportmate.service;
 
 import java.time.LocalDateTime;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -28,6 +32,18 @@ public class PostService {
     public static final LocalDateTime ALLOWED_FROM = LocalDateTime.of(2026, 1, 1, 0, 0);
     public static final LocalDateTime ALLOWED_TO   = LocalDateTime.of(2028, 12, 31, 23, 59, 59);
     private static final String RANGE_TEXT = "01/01/2026 ถึง 31/12/2028";
+
+    /** โควตาโพสต์ของผู้ใช้ทั่วไปต่อสัปดาห์ */
+    public static final int WEEKLY_POST_QUOTA = 3;
+    /** สัปดาห์นับตามเวลาประเทศไทย */
+    private static final ZoneId THAI_ZONE = ZoneId.of("Asia/Bangkok");
+
+    /** เวลาเริ่มสัปดาห์ปัจจุบัน: วันจันทร์ 00:00 น. (เวลาประเทศไทย) */
+    public static LocalDateTime currentWeekStart() {
+        return LocalDate.now(THAI_ZONE)
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .atStartOfDay();
+    }
 
     private final PostRepository postRepo;
     private final PostTypeRepository postTypeRepo;
@@ -100,8 +116,8 @@ public class PostService {
     /** โควตาโพสต์คงเหลือในสัปดาห์นี้ — Member ไม่จำกัด (คืน -1) */
     public int remainingWeeklyQuota(User owner) {
         if (owner.isMember()) return -1;
-        long used = postRepo.countByOwnerSince(owner, LocalDateTime.now().minusWeeks(1));
-        return (int) Math.max(0, 3 - used);
+        long used = postRepo.countByOwnerSince(owner, currentWeekStart());
+        return (int) Math.max(0, WEEKLY_POST_QUOTA - used);
     }
 
         /** ตรวจว่าวันเวลานัด/เวลาเผยแพร่ อยู่ในช่วงปี 2026–2028 และไม่ใช่อดีต */
@@ -139,8 +155,8 @@ public class PostService {
             throw new IllegalStateException("การสร้างทัวร์นาเมนต์จำกัดเฉพาะสมาชิกรายเดือนเท่านั้น");
         }
         if (!tournament && !owner.isMember()) {
-            long since = postRepo.countByOwnerSince(owner, LocalDateTime.now().minusWeeks(1));
-            if (since >= 3) {
+            long used = postRepo.countByOwnerSince(owner, currentWeekStart());
+            if (used >= WEEKLY_POST_QUOTA) {
                 throw new IllegalStateException("ผู้ใช้ทั่วไปสร้างโพสต์ได้สูงสุด 3 ครั้งต่อสัปดาห์ (สมัครสมาชิกเพื่อโพสต์ไม่จำกัด)");
             }
         }
@@ -168,7 +184,7 @@ public class PostService {
         p.setDatePlay(datePlay);
         p.setOriginalDatePlay(datePlay);   // ฐานคำนวณเพดานเลื่อน 72 ชม.
         p.setEditCount(0);
-        p.setDateCreate(LocalDateTime.now());
+        p.setDateCreate(LocalDateTime.now(THAI_ZONE));
         p.setPublishAt(publishAt);   // null = เผยแพร่ทันที
         p.setMaxPlayer(maxPlayer);
         p.setMinPlayer(minPlayer);

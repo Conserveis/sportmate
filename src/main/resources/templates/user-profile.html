@@ -246,8 +246,8 @@
             <div class="v2f-card" th:if="${profile.ratedParticipant}">
                 <b class="t">คะแนนในฐานะผู้เล่น</b>
                 <div class="v2f-score">
-                    <span class="n v2u-blue" th:text="${#numbers.formatDecimal(profile.participantAvgScore,1,2)}">0.00</span>
-                    <span class="s">จากเต็ม 5.00<br>จาก <b th:text="${profile.participantReviewCount}">0</b> รีวิว</span>
+                    <span class="n v2u-blue"><span th:text="${#numbers.formatDecimal(profile.participantAvgScore,1,2)}">0.00</span><small>/ 5</small></span>
+                    <span class="s">จาก <b th:text="${profile.participantReviewCount}">0</b> รีวิว</span>
                 </div>
                 <div class="v2-bar v2u-bar-blue"><i th:style="'width:' + ${profile.participantAvgScore * 20} + '%'"></i></div>
             </div>

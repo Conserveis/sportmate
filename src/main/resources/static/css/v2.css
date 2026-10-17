@@ -568,8 +568,9 @@ a.v2f-row:hover{border-color:var(--line);box-shadow:var(--shadow);color:var(--in
 .v2f-card .t{font-size:.9rem;font-weight:800}
 .v2f-card .s{font-size:.74rem;color:var(--muted);line-height:1.5}
 .v2f-card .s b{color:var(--ink)}
-.v2f-score{display:flex;align-items:center;gap:14px}
+.v2f-score{display:flex;align-items:baseline;gap:14px}
 .v2f-score .n{font-size:2.4rem;font-weight:800;line-height:1;color:var(--pitch)}
+.v2f-score .n small{font-size:1rem;font-weight:700;color:var(--muted);margin-left:6px}
 .v2f-card .v2-bar{height:8px}
 .v2f-links{background:#fff;border:1px solid var(--line-light);border-radius:var(--radius);padding:6px;display:flex;flex-direction:column}
 .v2f-links a{min-height:42px;padding:0 12px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;text-decoration:none;color:var(--ink);font-size:.84rem;font-weight:600}
@@ -825,14 +826,15 @@ a.v2f-row:hover{border-color:var(--line);box-shadow:var(--shadow);color:var(--in
 .v2c-submit{display:flex;justify-content:flex-end;gap:10px;padding:4px 0}
 .v2c-go{height:48px;font-size:.95rem;padding:0 24px}
 .v2c-layout.is-tour .v2c-go{background:var(--flare)}
+/* ปุ่มยกเลิก: ขนาด/ฟอนต์/ไอคอนเท่าปุ่มสร้าง แต่เป็นสีรอง */
+.v2c-cancel{height:48px;font-size:.95rem;padding:0 24px;background:#fff;color:var(--ink);
+  border:1.5px solid var(--line-light);box-shadow:var(--shadow)}
+.v2c-cancel:hover{color:var(--ink);border-color:var(--muted)}
 
 .v2c-aside{position:sticky;top:20px;display:flex;flex-direction:column;gap:12px}
 .v2c-aside-k{font-size:.68rem;font-weight:800;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
 .v2c-preview{pointer-events:none}
 .v2c-preview h3{overflow-wrap:anywhere}
-.v2c-tips{border-radius:var(--radius);border:1.5px dashed var(--line);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
-.v2c-tips b{font-size:.84rem;font-weight:800}
-.v2c-tips ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:var(--muted);line-height:1.5}
 /* สร้างทัวร์นาเมนต์: โทนฟ้า */
 .v2c-layout.is-tour .v2c-field input:focus,.v2c-layout.is-tour .v2c-field textarea:focus,.v2c-layout.is-tour .v2c-field select:focus{border-color:var(--flare);box-shadow:0 0 0 3px rgba(0,113,255,.15)}
 .v2c-layout.is-tour .v2c-stepper:focus-within{border-color:var(--flare)}
