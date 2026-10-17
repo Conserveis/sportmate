@@ -1,5 +1,7 @@
 package com.sportmate.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -173,6 +175,67 @@ public class AdminService {
             out.add(m);
         }
         return out;
+    }
+
+    // ---------- รายได้จากการสมัครสมาชิก ----------
+    public Map<String, Object> revenue() {
+        BigDecimal thisMonth = nzb(repo.sumRevenueThisMonth());
+        BigDecimal lastMonth = nzb(repo.sumRevenueLastMonth());
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("total", nzb(repo.sumRevenue()));
+        m.put("thisMonth", thisMonth);
+        m.put("lastMonth", lastMonth);
+        m.put("payments", repo.countPayments());
+        m.put("activeMembers", repo.countActiveMembers());
+        // % เปลี่ยนแปลงเทียบเดือนก่อน (null = เดือนก่อนไม่มีรายได้ เทียบไม่ได้)
+        m.put("growthPct", lastMonth.signum() == 0 ? null
+                : thisMonth.subtract(lastMonth).multiply(BigDecimal.valueOf(100))
+                           .divide(lastMonth, 0, RoundingMode.HALF_UP).intValue());
+        return m;
+    }
+
+    public List<Map<String, Object>> revenueTrend() {
+        Map<String, BigDecimal> totals = new HashMap<>();
+        Map<String, Long> counts = new HashMap<>();
+        for (Object[] r : repo.revenuePerMonth()) {
+            totals.put(String.valueOf(r[0]), new BigDecimal(r[1].toString()));
+            counts.put(String.valueOf(r[0]), num(r[2]));
+        }
+        YearMonth start = YearMonth.from(LocalDate.now()).minusMonths(5);
+        long max = 1;
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            YearMonth ym = start.plusMonths(i);
+            String key = String.format("%04d-%02d", ym.getYear(), ym.getMonthValue());
+            BigDecimal amt = totals.getOrDefault(key, BigDecimal.ZERO);
+            max = Math.max(max, amt.longValue());
+            Map<String, Object> row = new HashMap<>();
+            row.put("label", TH_MONTH_SHORT[ym.getMonthValue() - 1]);
+            row.put("amount", amt);
+            row.put("count", counts.getOrDefault(key, 0L));
+            rows.add(row);
+        }
+        for (Map<String, Object> row : rows) {
+            row.put("pct", pct(((BigDecimal) row.get("amount")).longValue(), max));
+        }
+        return rows;
+    }
+
+    public List<Map<String, Object>> recentPayments() {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Object[] r : repo.recentPayments()) {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", num(r[0]));
+            m.put("user", String.valueOf(r[1]));
+            m.put("amount", new BigDecimal(r[2].toString()));
+            m.put("date", r[3] == null ? "-" : r[3].toString().substring(0, 16).replace('T', ' '));
+            out.add(m);
+        }
+        return out;
+    }
+
+    private static BigDecimal nzb(BigDecimal b) {
+        return b == null ? BigDecimal.ZERO : b;
     }
 
     // ---------- helper ----------

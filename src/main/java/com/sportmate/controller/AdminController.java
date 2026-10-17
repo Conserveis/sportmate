@@ -37,6 +37,9 @@ public class AdminController {
         model.addAttribute("recentPosts", adminService.recentPosts());
         model.addAttribute("topOrganizers", adminService.topOrganizers());
         model.addAttribute("recentUsers", adminService.recentUsers());
+        model.addAttribute("rev", adminService.revenue());
+        model.addAttribute("revTrend", adminService.revenueTrend());
+        model.addAttribute("recentPayments", adminService.recentPayments());
         return "admin";
     }
 }

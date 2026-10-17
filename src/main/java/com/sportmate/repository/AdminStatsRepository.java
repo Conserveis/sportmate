@@ -1,5 +1,6 @@
 package com.sportmate.repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.Query;
@@ -126,4 +127,44 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
         LIMIT 6
         """, nativeQuery = true)
     List<Object[]> recentUsers();
+
+    // ---------- รายได้จากการสมัครสมาชิก (ตาราง Receipt) ----------
+    @Query(value = "SELECT COALESCE(SUM(PlaymentAmount),0) FROM Receipt", nativeQuery = true)
+    BigDecimal sumRevenue();
+
+    @Query(value = """
+        SELECT COALESCE(SUM(PlaymentAmount),0) FROM Receipt
+        WHERE DatePlayment >= DATE_FORMAT(CURDATE(),'%Y-%m-01')
+        """, nativeQuery = true)
+    BigDecimal sumRevenueThisMonth();
+
+    @Query(value = """
+        SELECT COALESCE(SUM(PlaymentAmount),0) FROM Receipt
+        WHERE DatePlayment >= DATE_SUB(DATE_FORMAT(CURDATE(),'%Y-%m-01'), INTERVAL 1 MONTH)
+          AND DatePlayment <  DATE_FORMAT(CURDATE(),'%Y-%m-01')
+        """, nativeQuery = true)
+    BigDecimal sumRevenueLastMonth();
+
+    @Query(value = "SELECT COUNT(*) FROM Receipt", nativeQuery = true)
+    long countPayments();
+
+    @Query(value = "SELECT COUNT(*) FROM `User` WHERE MembershipExpireAt > NOW()", nativeQuery = true)
+    long countActiveMembers();
+
+    @Query(value = """
+        SELECT DATE_FORMAT(DatePlayment,'%Y-%m') AS ym, SUM(PlaymentAmount) AS total, COUNT(*) AS c
+        FROM Receipt
+        WHERE DatePlayment >= DATE_SUB(DATE_FORMAT(CURDATE(),'%Y-%m-01'), INTERVAL 5 MONTH)
+        GROUP BY ym ORDER BY ym
+        """, nativeQuery = true)
+    List<Object[]> revenuePerMonth();
+
+    @Query(value = """
+        SELECT r.PlaymentID, u.UserName, r.PlaymentAmount, r.DatePlayment
+        FROM Receipt r
+        JOIN `User` u ON u.UserID = r.UserID
+        ORDER BY r.DatePlayment DESC
+        LIMIT 6
+        """, nativeQuery = true)
+    List<Object[]> recentPayments();
 }

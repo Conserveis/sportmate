@@ -61,6 +61,65 @@
         </div>
     </div>
 
+    <!-- ===== รายได้จากการสมัครสมาชิก ===== -->
+    <div class="adm-grid adm-rev">
+
+        <div class="adm-card span2">
+            <div class="adm-head">
+                <h2>รายได้จากการสมัครสมาชิก</h2>
+                <div class="adm-legend"><span><i style="background:var(--pitch)"></i> รายได้ต่อเดือน (บาท)</span></div>
+            </div>
+            <div class="rev-stats">
+                <div>
+                    <div class="kpi-label">รายได้รวมทั้งหมด</div>
+                    <div class="rev-big" th:text="'฿' + ${#numbers.formatDecimal(rev.total,1,'COMMA',2,'POINT')}">฿0.00</div>
+                    <div class="kpi-sub" th:text="${rev.payments} + ' รายการชำระเงิน'">0</div>
+                </div>
+                <div>
+                    <div class="kpi-label">เดือนนี้</div>
+                    <div class="rev-mid" th:text="'฿' + ${#numbers.formatDecimal(rev.thisMonth,1,'COMMA',2,'POINT')}">฿0.00</div>
+                    <div class="kpi-sub" th:if="${rev.growthPct != null}"
+                         th:classappend="${rev.growthPct >= 0} ? 'up' : 'down'"
+                         th:text="(${rev.growthPct >= 0} ? '+' : '') + ${rev.growthPct} + '% จากเดือนก่อน'">+0%</div>
+                    <div class="kpi-sub" th:if="${rev.growthPct == null}">เดือนก่อนยังไม่มีรายได้</div>
+                </div>
+                <div>
+                    <div class="kpi-label">สมาชิกที่ยังไม่หมดอายุ</div>
+                    <div class="rev-mid" th:text="${rev.activeMembers} + ' คน'">0 คน</div>
+                </div>
+            </div>
+            <div class="bars">
+                <div class="bar-col" th:each="m : ${revTrend}">
+                    <div class="bar-stack">
+                        <div class="bar b-post" th:style="'height:' + ${m.pct} + '%'"
+                             th:title="${m.count} + ' รายการ'">
+                            <span class="bar-num" th:text="${#numbers.formatDecimal(m.amount,1,'COMMA',0,'POINT')}">0</span>
+                        </div>
+                    </div>
+                    <div class="bar-label" th:text="${m.label}">ม.ค.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="adm-card">
+            <div class="adm-head"><h2>การชำระเงินล่าสุด</h2></div>
+            <div th:if="${recentPayments.isEmpty()}" class="kpi-sub">ยังไม่มีการชำระเงิน</div>
+            <div class="adm-table-wrap" th:unless="${recentPayments.isEmpty()}">
+                <table class="adm-table">
+                    <thead><tr><th>ผู้ใช้</th><th>วันที่</th><th style="text-align:right">จำนวน</th></tr></thead>
+                    <tbody>
+                    <tr th:each="p : ${recentPayments}">
+                        <td th:text="${p.user}">user</td>
+                        <td th:text="${p.date}">-</td>
+                        <td style="text-align:right;font-weight:700"
+                            th:text="'฿' + ${#numbers.formatDecimal(p.amount,1,'COMMA',2,'POINT')}">฿0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== แถวกราฟ ===== -->
     <div class="adm-grid">
 
