@@ -227,6 +227,7 @@ public class AdminService {
             Map<String, Object> m = new HashMap<>();
             m.put("id", num(r[0]));
             m.put("user", String.valueOf(r[1]));
+            m.put("userId", num(r[4]));
             m.put("amount", new BigDecimal(r[2].toString()));
             m.put("date", r[3] == null ? "-" : r[3].toString().substring(0, 16).replace('T', ' '));
             out.add(m);

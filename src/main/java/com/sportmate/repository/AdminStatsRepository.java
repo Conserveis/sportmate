@@ -160,7 +160,7 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
     List<Object[]> revenuePerMonth();
 
     @Query(value = """
-        SELECT r.PlaymentID, u.UserName, r.PlaymentAmount, r.DatePlayment
+        SELECT r.PlaymentID, u.UserName, r.PlaymentAmount, r.DatePlayment, u.UserID
         FROM Receipt r
         JOIN `User` u ON u.UserID = r.UserID
         ORDER BY r.DatePlayment DESC

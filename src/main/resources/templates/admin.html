@@ -109,7 +109,7 @@
                     <thead><tr><th>ผู้ใช้</th><th>วันที่</th><th style="text-align:right">จำนวน</th></tr></thead>
                     <tbody>
                     <tr th:each="p : ${recentPayments}">
-                        <td th:text="${p.user}">user</td>
+                        <td><a class="user-link" th:href="@{/users/{id}(id=${p.userId})}" th:text="${p.user}">user</a></td>
                         <td th:text="${p.date}">-</td>
                         <td style="text-align:right;font-weight:700"
                             th:text="'฿' + ${#numbers.formatDecimal(p.amount,1,'COMMA',2,'POINT')}">฿0</td>
