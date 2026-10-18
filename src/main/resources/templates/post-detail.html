@@ -98,9 +98,15 @@
                 </a>
             </section>
 
-            <!-- ความคิดเห็น -->
-            <section class="v2d-card">
-                <h2 class="v2f-h2">ความคิดเห็น<span class="v2-count-pill blue" th:if="${canViewComments}" th:text="${comments.size()}">0</span></h2>
+            <!-- ทัวร์นาเมนต์: ทีม + จับสาย -->
+            <th:block th:if="${post.tournament}">
+                <th:block th:insert="~{tournament :: section}"></th:block>
+            </th:block>
+
+            <!-- ความคิดเห็น (แชทรวม) -->
+            <section class="v2d-card" id="chat" th:unless="${post.tournament and chatTab == 'team'}">
+                <h2 class="v2f-h2"><span th:text="${post.tournament} ? 'แชทรวม' : 'ความคิดเห็น'">ความคิดเห็น</span><span class="v2-count-pill blue" th:if="${canViewComments}" th:text="${comments.size()}">0</span></h2>
+                <nav th:replace="~{tournament :: chatTabs('all')}"></nav>
 
                 <div class="v2d-lock" th:unless="${canViewComments}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
@@ -157,6 +163,11 @@
                 <div class="v2d-note" th:if="${canViewComments and !canComment}"
                      th:text="${cancelled} ? 'กิจกรรมนี้ถูกยกเลิกแล้ว ไม่สามารถแสดงความคิดเห็นได้' : 'กิจกรรมนี้จบไปแล้ว ไม่สามารถแสดงความคิดเห็นเพิ่มได้'"></div>
             </section>
+
+            <!-- แชททีม -->
+            <th:block th:if="${post.tournament and chatTab == 'team'}">
+                <th:block th:insert="~{tournament :: teamChat}"></th:block>
+            </th:block>
         </div>
 
         <!-- ================= ขวา ================= -->
@@ -203,9 +214,28 @@
                     </th:block>
                 </div>
 
+                <!-- ทัวร์นาเมนต์แบบทีม: เข้าร่วมผ่านทีมเท่านั้น -->
+                <div class="v2d-actions" th:if="${!isOwner and post.teamTournament}">
+                    <div class="v2d-note" th:text="|จำนวนนี้นับผู้เล่นทุกคนในทีมที่อนุมัติแล้ว · ${approvedTeams}/${post.maxTeams} ${post.teamSize == 2 ? 'คู่' : 'ทีม'}|"></div>
+                    <th:block th:if="${myMembership == null}">
+                        <a class="v2-btn flare v2d-full v2d-big" href="#teams"
+                           th:text="${regOpen} ? 'ขอสร้างทีม / ขอเข้าร่วมทีม' : 'ดูทีมที่เข้าร่วม'">ขอสร้างทีม / ขอเข้าร่วมทีม</a>
+                    </th:block>
+                    <th:block th:if="${myMembership != null}">
+                        <div class="v2d-state green" th:if="${myMembership.status == 'approved' and myMembership.team.approved}"
+                             th:text="|✓ คุณอยู่ทีม ${myMembership.team.name}|">✓ คุณอยู่ในทีม</div>
+                        <div class="v2d-state orange" th:if="${myMembership.status == 'pending'}"
+                             th:text="|รอหัวหน้าทีม ${myMembership.team.name} อนุมัติ|">รออนุมัติ</div>
+                        <div class="v2d-state orange" th:if="${myMembership.status == 'approved' and myMembership.team.pending}"
+                             th:text="|ทีม ${myMembership.team.name} รอเจ้าของทัวร์นาเมนต์อนุมัติ|">รออนุมัติ</div>
+                        <a class="v2-btn outline v2d-full" href="#teams">จัดการที่ส่วนทีม</a>
+                    </th:block>
+                    <a class="v2-btn outline v2d-full" th:if="${drawn}" th:href="@{'/posts/' + ${post.id} + '/bracket'}">ดูสายการแข่งขัน</a>
+                </div>
+
                 <!-- ผู้ใช้ทั่วไป -->
-                <div class="v2d-actions" th:unless="${isOwner}">
-                    <form th:if="${!hasJoined and !isPending and !post.expired and !cancelled}" method="post"
+                <div class="v2d-actions" th:if="${!isOwner and !post.teamTournament}">
+                    <form th:if="${!hasJoined and !isPending and !post.expired and !cancelled and drawn != true}" method="post"
                           th:action="@{'/posts/' + ${post.id} + '/join'}">
                         <button class="v2-btn flare v2d-full v2d-big" type="submit"
                                 th:text="${post.public} ? 'เข้าร่วมกิจกรรม' : 'ขอเข้าร่วมกิจกรรม'">เข้าร่วมกิจกรรม</button>
@@ -222,7 +252,7 @@
 
                     <th:block th:if="${hasJoined and !post.expired}">
                         <div class="v2d-state green">✓ คุณเข้าร่วมแล้ว</div>
-                        <form th:if="${!post.cancelLocked}" method="post" th:action="@{'/posts/' + ${post.id} + '/cancel-join'}"
+                        <form th:if="${!post.cancelLocked and drawn != true}" method="post" th:action="@{'/posts/' + ${post.id} + '/cancel-join'}"
                               onsubmit="return confirm('ยกเลิกการเข้าร่วมกิจกรรมนี้?')">
                             <button class="v2-btn outline v2d-full" type="submit">ยกเลิกการเข้าร่วม</button>
                         </form>

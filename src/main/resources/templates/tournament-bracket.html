@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('สายการแข่งขัน · ' + ${post.postName})}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('tournaments')}"></nav>
+
+<div class="wrap v2">
+    <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
+    <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+    <a class="v2u-back" th:href="@{'/posts/' + ${post.id} + '#teams'}" th:text="|‹ ${post.postName}|">‹ กลับ</a>
+
+    <div class="tm-head-row tm-page-head">
+        <div>
+            <h1 class="tm-h1">สายการแข่งขัน</h1>
+            <p class="tm-sub" th:if="${drawn}"
+               th:text="|${summary.entrants} ${post.teamTournament ? 'ทีม' : 'คน'} · สาย ${summary.size} ช่อง · ได้บาย ${summary.byes} · แข่งแล้ว ${summary.done}/${summary.total} คู่|"></p>
+        </div>
+        <div class="tm-legend" th:if="${drawn}">
+            <span><i class="done"></i>จบแล้ว</span>
+            <span><i class="ready"></i>รอกรอกผล</span>
+            <span><i class="wait"></i>รอคู่แข่ง</span>
+        </div>
+    </div>
+
+    <!-- ยังไม่จับสาย -->
+    <section class="v2d-card tm-card" th:unless="${drawn}">
+        <h2 class="v2f-h2">ยังไม่ได้จับสาย</h2>
+        <p class="tm-sub" th:if="${isOwner}">ไปที่หน้าทัวร์นาเมนต์ ส่วน "จับสายการแข่งขัน" เพื่อจับสาย</p>
+        <p class="tm-sub" th:unless="${isOwner}">เจ้าของทัวร์นาเมนต์จะจับสายหลังปิดรับสมัคร ระบบจะแจ้งเตือนเมื่อจับสายแล้ว</p>
+        <a class="v2-btn outline" th:href="@{'/posts/' + ${post.id} + '#teams'}">กลับไปหน้าทัวร์นาเมนต์</a>
+    </section>
+
+    <th:block th:if="${drawn}">
+        <!-- แชมป์ -->
+        <section class="tm-champion" th:if="${champion != null}">
+            <span class="k">แชมป์</span>
+            <b th:text="${champion.name}">ทีม</b>
+        </section>
+
+        <!-- แผนผังสาย -->
+        <section class="v2d-card tm-bracket-wrap" aria-label="แผนผังสาย">
+            <div class="tm-bracket" th:style="'grid-template-columns: repeat(' + ${rounds.size()} + ', minmax(220px, 1fr))'">
+                <div class="tm-round" th:each="r : ${rounds}">
+                    <div class="tm-round-head">
+                        <b th:text="${r.title}">รอบ</b>
+                        <span th:text="${r.sub}">-</span>
+                    </div>
+                    <div class="tm-round-body">
+                        <div class="tm-match" th:each="m : ${r.matches}" th:id="'m' + ${m.id}"
+                             th:classappend="${m.done} ? 'is-done' : (${m.ready} ? 'is-ready' : (${m.bye} ? 'is-bye' : 'is-wait'))">
+                            <div class="tm-match-tag">
+                                <span th:text="|คู่ ${m.round}-${m.slot + 1}|">คู่</span>
+                                <span th:text="${m.done} ? 'จบแล้ว' : (${m.ready} ? 'รอกรอกผล' : (${m.bye} ? 'บาย · เข้ารอบอัตโนมัติ' : 'รอคู่แข่ง'))">-</span>
+                            </div>
+                            <div class="tm-side" th:classappend="${m.winnerA} ? 'win' : (${m.winner != null} ? 'lose' : '')">
+                                <span th:text="${m.teamA != null} ? ${m.teamA.name} : 'รอผู้ชนะรอบก่อน'"
+                                      th:classappend="${m.teamA == null} ? 'muted'">ทีม A</span>
+                                <b th:text="${m.scoreA}"></b>
+                            </div>
+                            <div class="tm-side" th:classappend="${m.winnerB} ? 'win' : (${m.winner != null and !m.bye} ? 'lose' : '')">
+                                <span th:if="${m.bye}" class="muted">บาย</span>
+                                <span th:unless="${m.bye}" th:text="${m.teamB != null} ? ${m.teamB.name} : 'รอผู้ชนะรอบก่อน'"
+                                      th:classappend="${m.teamB == null} ? 'muted'">ทีม B</span>
+                                <b th:text="${m.scoreB}"></b>
+                            </div>
+
+                            <!-- เจ้าของ: กรอก / แก้ผล -->
+                            <details class="tm-result" th:if="${isOwner and !m.bye and m.teamA != null and m.teamB != null}"
+                                     th:attr="open=${m.ready} ? 'open' : null">
+                                <summary th:text="${m.done} ? 'แก้ผล' : 'กรอกผล'">กรอกผล</summary>
+                                <form method="post" th:action="@{'/matches/' + ${m.id} + '/result'}" class="tm-result-form">
+                                    <div class="tm-score-row">
+                                        <label th:for="'a' + ${m.id}" th:text="${m.teamA.name}">A</label>
+                                        <input th:id="'a' + ${m.id}" type="number" name="scoreA" min="0" required th:value="${m.scoreA}">
+                                    </div>
+                                    <div class="tm-score-row">
+                                        <label th:for="'b' + ${m.id}" th:text="${m.teamB.name}">B</label>
+                                        <input th:id="'b' + ${m.id}" type="number" name="scoreB" min="0" required th:value="${m.scoreB}">
+                                    </div>
+                                    <label class="tm-tie" th:for="'w' + ${m.id}">ถ้าเสมอ ผู้ชนะคือ</label>
+                                    <select th:id="'w' + ${m.id}" name="winnerTeamId">
+                                        <option value="">— ไม่เสมอ —</option>
+                                        <option th:value="${m.teamA.id}" th:text="${m.teamA.name}" th:selected="${m.winnerA and m.scoreA == m.scoreB}">A</option>
+                                        <option th:value="${m.teamB.id}" th:text="${m.teamB.name}" th:selected="${m.winnerB and m.scoreA == m.scoreB}">B</option>
+                                    </select>
+                                    <button class="v2-btn pitch v2f-sm" type="submit">บันทึกผล</button>
+                                </form>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="v2d-card tm-card">
+            <h2 class="v2f-h2">กติกาการจับสาย</h2>
+            <ul class="tm-list">
+                <li>ปัดจำนวนผู้เข้าแข่งขึ้นเป็น 2, 4, 8, 16 … ช่องที่เหลือคือ "บาย"</li>
+                <li>ผู้ที่ได้บายเข้ารอบถัดไปทันที บายมีแค่รอบแรก จึงไม่มีใครได้บาย 2 รอบติดกัน</li>
+                <li>ผู้ชนะแต่ละคู่ขึ้นรอบถัดไปอัตโนมัติ · ผลเสมอให้เลือกผู้ชนะ (เช่น ยิงจุดโทษ)</li>
+                <li>แก้ผลได้จนกว่าคู่ในรอบถัดไปจะบันทึกผล</li>
+            </ul>
+        </section>
+    </th:block>
+</div>
+</body>
+</html>

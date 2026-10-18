@@ -19,6 +19,11 @@ public class Chat {
     @JoinColumn(name = "UserID", nullable = false)
     private User user;
 
+    /** null = แชทรวมของโพสต์, มีค่า = แชทเฉพาะทีมนั้น (ทัวร์นาเมนต์แบบทีม) */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "TeamID")
+    private Team team;
+
     @Column(name = "State", nullable = false)
     private String state = "active";   // active / ended
 
@@ -35,6 +40,8 @@ public class Chat {
     public void setPost(Post post) { this.post = post; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
+    public Team getTeam() { return team; }
+    public void setTeam(Team team) { this.team = team; }
     public String getState() { return state; }
     public void setState(String state) { this.state = state; }
     public String getText() { return text; }

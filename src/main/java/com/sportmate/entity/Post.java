@@ -76,6 +76,10 @@ public class Post {
     @Column(name = "MinPlayer", nullable = false)
     private Integer minPlayer;
 
+    /** ขนาดทีมของทัวร์นาเมนต์: 1 = แข่งเดี่ยว, 2 = แบดคู่, 5 = บาส, 11 = ฟุตบอล (โพสต์ปกติ = 1) */
+    @Column(name = "TeamSize", nullable = false)
+    private Integer teamSize = 1;
+
     @Column(name = "IsPublic", nullable = false)
     private boolean isPublic = true;
 
@@ -142,6 +146,19 @@ public class Post {
         return postType != null && PostType.TOURNAMENT.equals(postType.getName());
     }
 
+    /** ทัวร์นาเมนต์แบบทีม/คู่ — ต้องสร้างทีมก่อนเข้าร่วม */
+    @Transient
+    public boolean isTeamTournament() {
+        return isTournament() && teamSize != null && teamSize > 1;
+    }
+
+    /** จำนวนทีมสูงสุด = จำนวนคนสูงสุด / ขนาดทีม */
+    @Transient
+    public int getMaxTeams() {
+        int size = (teamSize == null || teamSize < 1) ? 1 : teamSize;
+        return maxPlayer == null ? 0 : maxPlayer / size;
+    }
+
     // ---- getters / setters ----
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -176,5 +193,7 @@ public class Post {
     public LocalDateTime getOriginalDatePlay() { return originalDatePlay; }
     public void setOriginalDatePlay(LocalDateTime originalDatePlay) { this.originalDatePlay = originalDatePlay; }
     public Integer getEditCount() { return editCount; }
+    public Integer getTeamSize() { return teamSize; }
+    public void setTeamSize(Integer teamSize) { this.teamSize = teamSize; }
     public void setEditCount(Integer editCount) { this.editCount = editCount; }
 }

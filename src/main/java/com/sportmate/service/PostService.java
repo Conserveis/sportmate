@@ -18,6 +18,7 @@ import com.sportmate.entity.Post;
 import com.sportmate.entity.PostType;
 import com.sportmate.entity.Sport;
 import com.sportmate.entity.User;
+import com.sportmate.util.SportRule;
 import com.sportmate.repository.EventRepository;
 import com.sportmate.repository.LocationRepository;
 import com.sportmate.repository.PostRepository;
@@ -146,7 +147,7 @@ public class PostService {
     public Post create(User owner, String type, Integer sportId, Integer locationId,
                        String postName, String description, LocalDateTime datePlay,
                        Integer maxPlayer, Integer minPlayer, boolean isPublic,
-                       LocalDateTime publishAt) {
+                       LocalDateTime publishAt, Integer teamSize) {
 
         validateSchedule(datePlay, publishAt);
         boolean tournament = PostType.TOURNAMENT.equals(type);
@@ -160,17 +161,26 @@ public class PostService {
                 throw new IllegalStateException("ผู้ใช้ทั่วไปสร้างโพสต์ได้สูงสุด 3 ครั้งต่อสัปดาห์ (สมัครสมาชิกเพื่อโพสต์ไม่จำกัด)");
             }
         }
-        if (minPlayer == null || minPlayer < 3) {
-            throw new IllegalArgumentException("จำนวนคนขั้นต่ำต้องตั้งแต่ 3 คนขึ้นไป");
-        }
-        if (maxPlayer == null || maxPlayer < minPlayer) {
-            throw new IllegalArgumentException("จำนวนคนสูงสุดต้องไม่น้อยกว่าจำนวนขั้นต่ำ");
-        }
-
         PostType pt = postTypeRepo.findByName(tournament ? PostType.TOURNAMENT : PostType.POST)
                 .orElseThrow(() -> new IllegalStateException("ไม่พบ PostType"));
         Sport sport = sportRepo.findById(sportId)
                 .orElseThrow(() -> new IllegalArgumentException("ไม่พบกีฬา"));
+
+        int finalTeamSize = 1;
+        if (tournament) {
+            // ทัวร์นาเมนต์: ขั้นต่ำล็อกตามกีฬา, จำนวนสูงสุดเพิ่มได้ทีละขนาดทีม, ไม่เกิน 500
+            SportRule.Rule rule = SportRule.of(sport.getName(), teamSize);
+            SportRule.validateMax(rule, maxPlayer);
+            minPlayer = rule.min();
+            finalTeamSize = rule.teamSize();
+        } else {
+            if (minPlayer == null || minPlayer < 3) {
+                throw new IllegalArgumentException("จำนวนคนขั้นต่ำต้องตั้งแต่ 3 คนขึ้นไป");
+            }
+            if (maxPlayer == null || maxPlayer < minPlayer) {
+                throw new IllegalArgumentException("จำนวนคนสูงสุดต้องไม่น้อยกว่าจำนวนขั้นต่ำ");
+            }
+        }
         Location location = locationRepo.findById(locationId)
                 .orElseThrow(() -> new IllegalArgumentException("ไม่พบสถานที่"));
 
@@ -188,6 +198,7 @@ public class PostService {
         p.setPublishAt(publishAt);   // null = เผยแพร่ทันที
         p.setMaxPlayer(maxPlayer);
         p.setMinPlayer(minPlayer);
+        p.setTeamSize(finalTeamSize);
         p.setPublic(isPublic);
         p.setStatus("open");
         Post saved = postRepo.save(p);
@@ -262,18 +273,27 @@ public class PostService {
                     "เลื่อนวันและเวลานัดออกไปได้ไม่เกิน " + Post.MAX_POSTPONE_HOURS
                     + " ชั่วโมงจากกำหนดเดิม (เลื่อนได้ช้าสุดถึง " + fmt(limit) + ")");
 
-        if (minPlayer == null || minPlayer < 3)
-            throw new IllegalArgumentException("จำนวนคนขั้นต่ำต้องตั้งแต่ 3 คนขึ้นไป");
-        if (maxPlayer == null || maxPlayer < minPlayer)
-            throw new IllegalArgumentException("จำนวนคนสูงสุดต้องไม่น้อยกว่าจำนวนขั้นต่ำ");
+        Sport sport = sportRepo.findById(sportId)
+                .orElseThrow(() -> new IllegalArgumentException("ไม่พบกีฬา"));
+
+        if (p.isTournament()) {
+            // ขนาดทีมต้องเท่าเดิม (มีทีมสมัครไว้แล้ว) — เปลี่ยนได้แค่กีฬาที่ขนาดทีมเท่ากัน เช่น วิ่ง <-> ว่ายน้ำ
+            SportRule.Rule rule = SportRule.of(sport.getName(), p.getTeamSize());
+            if (rule.teamSize() != (p.getTeamSize() == null ? 1 : p.getTeamSize()))
+                throw new IllegalArgumentException("เปลี่ยนเป็นกีฬาที่ขนาดทีมต่างจากเดิมไม่ได้");
+            SportRule.validateMax(rule, maxPlayer);
+            minPlayer = rule.min();
+        } else {
+            if (minPlayer == null || minPlayer < 3)
+                throw new IllegalArgumentException("จำนวนคนขั้นต่ำต้องตั้งแต่ 3 คนขึ้นไป");
+            if (maxPlayer == null || maxPlayer < minPlayer)
+                throw new IllegalArgumentException("จำนวนคนสูงสุดต้องไม่น้อยกว่าจำนวนขั้นต่ำ");
+        }
 
         long joined = eventRepo.countApprovedJoins(p);
         if (maxPlayer < joined)
             throw new IllegalStateException(
                     "ลดจำนวนสูงสุดเหลือ " + maxPlayer + " ไม่ได้ เพราะมีผู้เข้าร่วมแล้ว " + joined + " คน");
-
-        Sport sport = sportRepo.findById(sportId)
-                .orElseThrow(() -> new IllegalArgumentException("ไม่พบกีฬา"));
         Location location = locationRepo.findById(locationId)
                 .orElseThrow(() -> new IllegalArgumentException("ไม่พบสถานที่"));
 

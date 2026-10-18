@@ -8,18 +8,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.sportmate.entity.Chat;
 import com.sportmate.entity.Post;
+import com.sportmate.entity.Team;
 import com.sportmate.entity.User;
 import com.sportmate.repository.ChatRepository;
+import com.sportmate.repository.TeamMemberRepository;
 
 @Service
 public class ChatService {
 
     private final ChatRepository chatRepo;
     private final EventService eventService;
+    private final TeamMemberRepository memberRepo;
 
-    public ChatService(ChatRepository chatRepo, EventService eventService) {
+    public ChatService(ChatRepository chatRepo, EventService eventService,
+                       TeamMemberRepository memberRepo) {
         this.chatRepo = chatRepo;
         this.eventService = eventService;
+        this.memberRepo = memberRepo;
     }
 
         /** ดูความคิดเห็นได้เฉพาะเจ้าของโพสต์ และผู้เข้าร่วมที่ได้รับอนุมัติแล้วเท่านั้น */
@@ -38,7 +43,43 @@ public class ChatService {
 
     public List<Chat> comments(User user, Post post) {
         if (!canAccess(user, post)) return List.of();
-        return chatRepo.findByPostOrderByTimeAsc(post);
+        return chatRepo.findByPostAndTeamIsNullOrderByTimeAsc(post);   // แชทรวม (ไม่รวมแชททีม)
+    }
+
+    // ---------- แชททีม (ทัวร์นาเมนต์แบบทีม) ----------
+
+    /** เห็นแชททีมได้เฉพาะสมาชิกที่หัวหน้าทีมอนุมัติแล้ว */
+    public boolean canAccessTeam(User user, Team team) {
+        if (user == null || team == null || !team.isApproved()) return false;
+        return memberRepo.findByTeamAndUser(team, user)
+                .map(m -> "approved".equals(m.getStatus()))
+                .orElse(false);
+    }
+
+    public List<Chat> teamComments(User user, Team team) {
+        if (!canAccessTeam(user, team)) return List.of();
+        return chatRepo.findByTeamOrderByTimeAsc(team);
+    }
+
+    @Transactional
+    public Chat addTeamComment(User user, Team team, String text) {
+        if (!canAccessTeam(user, team)) {
+            throw new IllegalStateException("แชททีมใช้ได้เฉพาะสมาชิกในทีมเท่านั้น");
+        }
+        Post post = team.getPost();
+        if ("cancelled".equals(post.getStatus()) || post.isExpired()) {
+            throw new IllegalStateException("ทัวร์นาเมนต์นี้จบหรือถูกยกเลิกแล้ว ส่งข้อความไม่ได้");
+        }
+        if (text == null || text.isBlank()) throw new IllegalArgumentException("ข้อความว่างเปล่า");
+        if (text.trim().length() > 1000) throw new IllegalArgumentException("ข้อความยาวเกิน 1000 ตัวอักษร");
+        Chat c = new Chat();
+        c.setPost(post);
+        c.setUser(user);
+        c.setTeam(team);
+        c.setText(text.trim());
+        c.setState("active");
+        c.setTime(LocalDateTime.now());
+        return chatRepo.save(c);
     }
 
 

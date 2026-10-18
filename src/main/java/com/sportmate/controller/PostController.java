@@ -58,6 +58,7 @@ public class PostController {
         model.addAttribute("type", type);
         model.addAttribute("sports", userService.allSports());
         model.addAttribute("locations", postLocations());
+        model.addAttribute("sportRules", com.sportmate.util.SportRule.clientRules());
         return "post-create";
     }
 
@@ -72,12 +73,13 @@ public class PostController {
                          @RequestParam Integer minPlayer,
                          @RequestParam(defaultValue = "true") boolean isPublic,
                          @RequestParam(required = false) String publishAt,
+                         @RequestParam(required = false) Integer teamSize,
                          HttpSession session, RedirectAttributes ra, Model model) {
         try {
             LocalDateTime publishAtParsed = (publishAt == null || publishAt.isBlank())
                     ? null : LocalDateTime.parse(publishAt);
             postService.create(me(session), type, sportId, locationId, postName,
-                    description, datePlay, maxPlayer, minPlayer, isPublic, publishAtParsed);
+                    description, datePlay, maxPlayer, minPlayer, isPublic, publishAtParsed, teamSize);
             ra.addFlashAttribute("msg", "สร้าง" + ("Tournament".equals(type) ? "ทัวร์นาเมนต์" : "โพสต์") + "สำเร็จ");
             return "redirect:/" + ("Tournament".equals(type) ? "tournaments" : "posts");
         } catch (Exception e) {
@@ -85,13 +87,16 @@ public class PostController {
             model.addAttribute("type", type);
             model.addAttribute("sports", userService.allSports());
             model.addAttribute("locations", postLocations());
+            model.addAttribute("sportRules", com.sportmate.util.SportRule.clientRules());
             return "post-create";
         }
     }
 
         // ---- รายละเอียดโพสต์ + คอมเมนต์ ----
     @GetMapping("/posts/{id}")
-    public String detail(@PathVariable Integer id, HttpSession session, Model model) {
+    public String detail(@PathVariable Integer id,
+                         @RequestParam(required = false) String chat,
+                         HttpSession session, Model model) {
         Post p = postService.getById(id);
         User me = me(session);
 
@@ -112,7 +117,47 @@ public class PostController {
         model.addAttribute("canComment", chatService.canComment(me, p));
         model.addAttribute("participantReviewed", participantReviewed);
         model.addAttribute("eventFinished", p.getDatePlay().isBefore(LocalDateTime.now()));
+        if (p.isTournament()) addTournamentModel(p, me, chat, model);
         return "post-detail";
+    }
+
+    /** ข้อมูลส่วนทีม / จับสาย / แชททีม ของหน้าทัวร์นาเมนต์ */
+    private void addTournamentModel(Post p, User me, String chat, Model model) {
+        boolean drawn = bracketService.isDrawn(p);
+        boolean isOwner = p.getOwner().getId().equals(me.getId());
+        var membership = teamService.activeMembership(me, p).orElse(null);
+        var captainTeam = teamService.captainTeam(me, p).orElse(null);
+        long approvedTeams = teamService.countApprovedTeams(p);
+
+        model.addAttribute("drawn", drawn);
+        model.addAttribute("teamCards", teamService.approvedTeamCards(p, me));
+        model.addAttribute("approvedTeams", approvedTeams);
+        model.addAttribute("myMembership", membership);
+        model.addAttribute("captainTeam", captainTeam);
+        // เปิดรับสมัครอยู่ไหม (ปุ่มขอสร้างทีม / ขอเข้าร่วม)
+        boolean regOpen = !"cancelled".equals(p.getStatus()) && !p.isExpired() && !drawn;
+        model.addAttribute("regOpen", regOpen);
+        model.addAttribute("canRequestTeam", regOpen && p.isTeamTournament() && !isOwner
+                && membership == null && approvedTeams < p.getMaxTeams());
+
+        if (captainTeam != null) {
+            model.addAttribute("captainMembers", teamService.members(captainTeam));
+            model.addAttribute("captainPending", teamService.pendingMembers(captainTeam));
+            model.addAttribute("captainCount", teamService.memberCount(captainTeam));
+        }
+        if (isOwner) {
+            model.addAttribute("pendingTeams", teamService.pendingTeams(p));
+            int entrants = (int) (p.isTeamTournament() ? approvedTeams : eventService.countJoins(p));
+            model.addAttribute("drawPreview", com.sportmate.service.BracketService.preview(entrants));
+            model.addAttribute("teamCountMap", teamService.countMap(p));
+        }
+
+        // แชททีม: เฉพาะสมาชิกที่อนุมัติแล้วของทีมที่อนุมัติแล้ว
+        var myTeam = (membership != null && "approved".equals(membership.getStatus())
+                && membership.getTeam().isApproved()) ? membership.getTeam() : null;
+        model.addAttribute("myTeam", myTeam);
+        model.addAttribute("teamComments", myTeam == null ? java.util.List.of() : chatService.teamComments(me, myTeam));
+        model.addAttribute("chatTab", (myTeam != null && "team".equals(chat)) ? "team" : "all");
     }
 
     @PostMapping("/posts/{id}/join")
@@ -233,6 +278,7 @@ public class PostController {
         model.addAttribute("post", p);
         model.addAttribute("sports", userService.allSports());
         model.addAttribute("locations", postLocations());
+        model.addAttribute("sportRules", com.sportmate.util.SportRule.clientRules());
         return "post-edit";
     }
 
@@ -260,6 +306,7 @@ public class PostController {
             model.addAttribute("post", postService.getById(id));
             model.addAttribute("sports", userService.allSports());
             model.addAttribute("locations", postLocations());
+            model.addAttribute("sportRules", com.sportmate.util.SportRule.clientRules());
             return "post-edit";
         }
     }
@@ -300,4 +347,10 @@ public class PostController {
 
     @org.springframework.beans.factory.annotation.Autowired
     private com.sportmate.repository.LocationRepository locationRepo;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private TeamService teamService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private BracketService bracketService;
 }

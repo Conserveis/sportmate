@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- =====================================================================
+     ส่วนทีม + จับสาย ของหน้าทัวร์นาเมนต์ (ใช้ใน post-detail.html)
+     ต้องมี model: post, isOwner, drawn, regOpen, teamCards, approvedTeams,
+                   myMembership, captainTeam, canRequestTeam, pendingTeams, drawPreview
+     ===================================================================== -->
+<th:block th:fragment="section">
+
+    <section class="v2d-card tm-card" id="teams">
+        <div class="tm-head-row">
+            <div>
+                <h2 class="v2f-h2" th:text="${post.teamTournament} ? 'ทีมที่เข้าร่วม' : 'การแข่งขัน'">ทีมที่เข้าร่วม</h2>
+                <p class="tm-sub" th:if="${post.teamTournament}"
+                   th:text="|${post.teamSize == 2 ? 'แข่งแบบคู่ · คู่ละ 2 คน' : 'แข่งแบบทีม · ทีมละ ' + post.teamSize + ' คน'} · อนุมัติแล้ว ${approvedTeams}/${post.maxTeams} ${post.teamSize == 2 ? 'คู่' : 'ทีม'} · จำนวนสมาชิกนับรวมหัวหน้าทีมแล้ว|"></p>
+                <p class="tm-sub" th:unless="${post.teamTournament}">แข่งแบบเดี่ยว · กดเข้าร่วมที่แถบด้านขวา · ระบบจับสายให้ผู้เข้าร่วมแต่ละคน</p>
+            </div>
+            <a class="v2-btn outline" th:href="@{'/posts/' + ${post.id} + '/bracket'}">สายการแข่งขัน ›</a>
+        </div>
+        <div class="tm-banner" th:if="${drawn}">จับสายแล้ว · ปิดรับสมัครทีมและสมาชิก</div>
+    </section>
+
+    <!-- ---------- เจ้าของ: คำขอสร้างทีม ---------- -->
+    <section class="v2d-card tm-card" th:if="${isOwner and post.teamTournament and !pendingTeams.isEmpty()}">
+        <h2 class="v2f-h2">คำขอสร้างทีม <span class="v2-count-pill" th:text="${pendingTeams.size()}">0</span></h2>
+        <div class="tm-row" th:each="t : ${pendingTeams}">
+            <span class="tm-logo grey" th:text="${t.shortName}">T</span>
+            <div class="tm-row-body">
+                <b th:text="${t.name}">ทีม</b>
+                <span class="tm-meta">หัวหน้าทีม <a class="user-link" th:href="@{'/users/' + ${t.captain.id}}" th:text="${t.captain.userName}">user</a>
+                    · ส่งเมื่อ <span th:text="${#temporals.format(t.createdAt,'dd/MM HH:mm')}">-</span></span>
+                <span class="tm-msg" th:if="${t.note != null}" th:text="|“${t.note}”|">ข้อความ</span>
+            </div>
+            <div class="tm-actions">
+                <form method="post" th:action="@{'/teams/' + ${t.id} + '/reject'}" onsubmit="return confirm('ปฏิเสธคำขอสร้างทีมนี้?')">
+                    <button class="v2-btn outline v2f-sm tm-danger-text" type="submit">ปฏิเสธ</button>
+                </form>
+                <form method="post" th:action="@{'/teams/' + ${t.id} + '/approve'}">
+                    <button class="v2-btn pitch v2f-sm" type="submit">อนุมัติทีม</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- ---------- เจ้าของ: จับสาย ---------- -->
+    <section class="v2d-card tm-card tm-dark" th:if="${isOwner and !drawn and post.status != 'cancelled'}">
+        <h2 class="v2f-h2">จับสายการแข่งขัน</h2>
+        <div class="tm-stats">
+            <div><span>ผู้เข้าแข่ง</span><b th:text="|${drawPreview.entrants} ${post.teamTournament ? 'ทีม' : 'คน'}|">0</b></div>
+            <div><span>ขนาดสาย</span><b th:text="|${drawPreview.size} ช่อง (${drawPreview.rounds} รอบ)|">-</b></div>
+            <div><span>ได้บาย</span><b class="tm-volt" th:text="${drawPreview.byes}">0</b></div>
+            <div><span>คู่ในรอบแรก</span><b th:text="${drawPreview.firstMatches}">0</b></div>
+        </div>
+        <p class="tm-sub light">ผู้ที่ไม่มีคู่ (บาย) เข้ารอบถัดไปอัตโนมัติ · จับสายแล้วจะปิดรับสมัครทันที และแก้สายไม่ได้</p>
+        <p class="tm-warn" th:each="c : ${teamCards}" th:if="${post.teamTournament and !c.full}"
+           th:text="|${c.team.name} มีสมาชิก ${c.memberCount}/${c.teamSize} คน (ยังไม่ครบ)|"></p>
+        <form method="post" th:action="@{'/posts/' + ${post.id} + '/bracket/draw'}"
+              onsubmit="return confirm('จับสายตอนนี้? หลังจับสายจะปิดรับสมัคร และแก้ไขสายไม่ได้')">
+            <fieldset class="tm-radios">
+                <legend>วิธีจับสาย</legend>
+                <label><input type="radio" name="method" value="random" checked> สุ่ม</label>
+                <label><input type="radio" name="method" value="order"> ตามลำดับที่สมัคร (สมัครก่อนได้บายก่อน)</label>
+            </fieldset>
+            <button class="v2-btn tm-volt-btn v2d-full" type="submit" th:disabled="${drawPreview.entrants < 2}">จับสาย</button>
+            <div class="v2d-note light" th:if="${drawPreview.entrants < 2}">ต้องมีผู้เข้าแข่งอย่างน้อย 2 ราย</div>
+        </form>
+    </section>
+
+    <th:block th:if="${post.teamTournament}">
+
+        <!-- ---------- หัวหน้าทีม: จัดการทีมของฉัน ---------- -->
+        <section class="v2d-card tm-card tm-mine" th:if="${captainTeam != null}">
+            <div class="tm-head-row">
+                <div class="tm-title-row">
+                    <span class="tm-logo" th:text="${captainTeam.shortName}">T</span>
+                    <div>
+                        <h2 class="v2f-h2" th:text="|ทีมของฉัน · ${captainTeam.name}|">ทีมของฉัน</h2>
+                        <span class="pill orange" th:if="${captainTeam.pending}">รอเจ้าของทัวร์นาเมนต์อนุมัติ</span>
+                        <span class="pill green" th:if="${captainTeam.approved}">อนุมัติแล้ว</span>
+                    </div>
+                </div>
+                <div class="tm-count"><b th:text="${captainCount}">1</b><span th:text="|/ ${post.teamSize} คน|">/ 11</span></div>
+            </div>
+
+            <th:block th:if="${captainTeam.approved}">
+                <h3 class="tm-h3">คำขอเข้าทีม <span class="v2-count-pill" th:text="${captainPending.size()}">0</span></h3>
+                <div class="v2f-none" th:if="${captainPending.isEmpty()}">ยังไม่มีคำขอใหม่</div>
+                <div class="tm-row" th:each="m : ${captainPending}">
+                    <span class="tm-av" th:text="${#strings.substring(m.user.userName,0,1).toUpperCase()}">U</span>
+                    <div class="tm-row-body">
+                        <a class="user-link" th:href="@{'/users/' + ${m.user.id}}"><b th:text="${m.user.userName}">user</b></a>
+                        <span class="tm-meta" th:text="|ขอเมื่อ ${#temporals.format(m.joinDate,'dd/MM HH:mm')}|">-</span>
+                        <span class="tm-msg" th:if="${m.message != null}" th:text="|“${m.message}”|">ข้อความ</span>
+                    </div>
+                    <div class="tm-actions">
+                        <form method="post" th:action="@{'/team-members/' + ${m.id} + '/reject'}">
+                            <button class="v2-btn outline v2f-sm tm-danger-text" type="submit">ปฏิเสธ</button>
+                        </form>
+                        <form method="post" th:action="@{'/team-members/' + ${m.id} + '/approve'}">
+                            <button class="v2-btn pitch v2f-sm" type="submit">อนุมัติ</button>
+                        </form>
+                    </div>
+                </div>
+            </th:block>
+
+            <h3 class="tm-h3">สมาชิกในทีม</h3>
+            <div class="tm-row tm-row-sm" th:each="m : ${captainMembers}">
+                <span class="tm-av" th:classappend="${m.captain} ? 'lead'" th:text="${#strings.substring(m.user.userName,0,1).toUpperCase()}">U</span>
+                <div class="tm-row-body"><span th:text="${m.user.userName}">user</span></div>
+                <span class="pill orange" th:if="${m.captain}">หัวหน้าทีม</span>
+                <form th:if="${!m.captain and !drawn and !post.cancelLocked}" method="post"
+                      th:action="@{'/team-members/' + ${m.id} + '/remove'}"
+                      onsubmit="return confirm('นำสมาชิกคนนี้ออกจากทีม?')">
+                    <button class="c-act c-act-danger" type="submit">นำออก</button>
+                </form>
+            </div>
+
+            <form th:if="${!drawn and (captainTeam.pending or !post.cancelLocked)}" method="post"
+                  th:action="@{'/teams/' + ${captainTeam.id} + '/cancel'}"
+                  onsubmit="return confirm('ยกเลิกทีมนี้? สมาชิกทุกคนจะออกจากทัวร์นาเมนต์และได้รับแจ้งเตือน')">
+                <button class="v2-btn v2f-danger v2d-full" type="submit"
+                        th:text="${captainTeam.pending} ? 'ยกเลิกคำขอสร้างทีม' : 'ยกเลิกทีม'">ยกเลิกทีม</button>
+            </form>
+            <div class="v2d-note" th:if="${captainTeam.approved and !drawn}"
+                 th:text="${post.cancelLocked} ? 'เลยกำหนดยกเลิกแล้ว (ต้องยกเลิกก่อนเวลาแข่ง 24 ชม.)'
+                          : 'ยกเลิกทีม / นำสมาชิกออกได้ถึง ' + ${#temporals.format(post.cancelDeadline,'dd/MM/yyyy HH:mm')}"></div>
+        </section>
+
+        <!-- ---------- ขอสร้างทีม ---------- -->
+        <details class="v2d-card tm-card tm-create" th:if="${canRequestTeam}">
+            <summary class="v2-btn pitch">+ ขอสร้างทีม</summary>
+            <form method="post" th:action="@{'/posts/' + ${post.id} + '/teams'}" class="tm-form">
+                <label for="teamName">ชื่อทีม</label>
+                <input id="teamName" name="teamName" required maxlength="40" placeholder="เช่น ISE United">
+                <label for="teamNote">ข้อความถึงเจ้าของทัวร์นาเมนต์ <small>(ไม่บังคับ)</small></label>
+                <textarea id="teamNote" name="note" rows="2" maxlength="300"></textarea>
+                <ul class="tm-list">
+                    <li th:text="|คุณจะเป็นหัวหน้าทีม และนับเป็นสมาชิกคนที่ 1 จาก ${post.teamSize} คน|">-</li>
+                    <li>เจ้าของทัวร์นาเมนต์ต้องอนุมัติก่อน ทีมจึงจะแสดงให้คนอื่นขอเข้าร่วม</li>
+                    <li>คุณเป็นคนอนุมัติสมาชิกที่ขอเข้าทีม</li>
+                </ul>
+                <button class="v2-btn pitch" type="submit">ส่งคำขอสร้างทีม</button>
+            </form>
+        </details>
+
+        <!-- ---------- รายการทีม ---------- -->
+        <div class="v2f-none" th:if="${teamCards.isEmpty()}">ยังไม่มีทีมที่ได้รับอนุมัติ</div>
+        <div class="tm-grid">
+            <article class="tm-team" th:each="c : ${teamCards}" th:classappend="${c.viewerMember} ? 'is-mine'">
+                <div class="tm-title-row">
+                    <span class="tm-logo" th:text="${c.team.shortName}">T</span>
+                    <div class="tm-row-body">
+                        <h3 th:text="${c.team.name}">ทีม</h3>
+                        <span class="tm-meta">หัวหน้าทีม · <b th:text="${c.team.captain.userName}">user</b></span>
+                    </div>
+                </div>
+                <div class="tm-meter-row">
+                    <span class="tm-meta">สมาชิก</span>
+                    <span><b th:text="${c.memberCount}">0</b> / <span th:text="${c.teamSize}">11</span> คน</span>
+                </div>
+                <div class="tm-meter"><span th:style="'width:' + ${c.pct} + '%'" th:classappend="${c.full} ? 'full'"></span></div>
+
+                <details class="tm-members">
+                    <summary>ดูรายชื่อสมาชิก</summary>
+                    <ul>
+                        <li th:each="m : ${c.members}">
+                            <a class="user-link" th:href="@{'/users/' + ${m.user.id}}" th:text="${m.user.userName}">user</a>
+                            <span class="pill orange" th:if="${m.captain}">หัวหน้า</span>
+                        </li>
+                    </ul>
+                </details>
+
+                <!-- ปุ่มตามสถานะของผู้ดู -->
+                <th:block th:if="${c.viewerMember and c.team.captain.id != currentUser.id}">
+                    <div class="v2d-state green">✓ คุณอยู่ทีมนี้</div>
+                    <form th:if="${!drawn and !post.cancelLocked}" method="post" th:action="@{'/teams/' + ${c.team.id} + '/leave'}"
+                          onsubmit="return confirm('ออกจากทีมนี้?')">
+                        <button class="v2-btn outline v2d-full" type="submit">ออกจากทีม</button>
+                    </form>
+                </th:block>
+                <th:block th:if="${c.viewerPending}">
+                    <div class="v2d-state orange">ส่งคำขอแล้ว · รอหัวหน้าทีมอนุมัติ</div>
+                    <form method="post" th:action="@{'/teams/' + ${c.team.id} + '/leave'}">
+                        <button class="c-act" type="submit">ยกเลิกคำขอ</button>
+                    </form>
+                </th:block>
+                <div class="v2d-state" th:if="${c.full and !c.viewerMember}">ทีมเต็มแล้ว</div>
+                <details class="tm-join" th:if="${regOpen and !isOwner and myMembership == null and !c.full}">
+                    <summary class="v2-btn outline v2d-full">ขอเข้าร่วมทีม</summary>
+                    <form method="post" th:action="@{'/teams/' + ${c.team.id} + '/join'}" class="tm-form">
+                        <label th:for="'jm' + ${c.team.id}">ข้อความถึงหัวหน้าทีม <small>(ไม่บังคับ)</small></label>
+                        <input th:id="'jm' + ${c.team.id}" name="message" maxlength="300" placeholder="เช่น เล่นกองหลังได้">
+                        <button class="v2-btn flare" type="submit">ส่งคำขอเข้าร่วม</button>
+                    </form>
+                </details>
+            </article>
+        </div>
+
+        <div class="tm-banner info">
+            ยกเลิกการเข้าร่วมทีม หรือยกเลิกทีม ได้จนถึง 24 ชม. ก่อนเวลาแข่ง
+            (<span th:text="${#temporals.format(post.cancelDeadline,'dd/MM/yyyy HH:mm')}">-</span>) ตามเกณฑ์เดิมของระบบ
+        </div>
+    </th:block>
+</th:block>
+
+
+<!-- =====================================================================
+     แท็บแชท: แชทรวม / แชททีม (แสดงเมื่อผู้ดูอยู่ในทีมที่อนุมัติแล้ว)
+     ===================================================================== -->
+<nav class="tm-tabs" th:fragment="chatTabs(active)" th:if="${myTeam != null}" aria-label="ห้องแชท">
+    <a th:href="@{'/posts/' + ${post.id} + '?chat=all#chat'}" th:classappend="${active == 'all'} ? 'on'"
+       th:attr="aria-current=${active == 'all'} ? 'page' : null">แชทรวม</a>
+    <a th:href="@{'/posts/' + ${post.id} + '?chat=team#chat'}" th:classappend="${active == 'team'} ? 'on'"
+       th:attr="aria-current=${active == 'team'} ? 'page' : null" th:text="|แชททีม ${myTeam.name}|">แชททีม</a>
+</nav>
+
+
+<!-- =====================================================================
+     แชททีม — เห็นเฉพาะสมาชิกในทีม
+     ===================================================================== -->
+<section class="v2d-card" id="chat" th:fragment="teamChat">
+    <h2 class="v2f-h2">แชททีม <span class="v2-count-pill blue" th:text="${teamComments.size()}">0</span></h2>
+    <nav th:replace="~{tournament :: chatTabs('team')}"></nav>
+    <p class="tm-sub">เห็นเฉพาะสมาชิกทีม <b th:text="${myTeam.name}">ทีม</b> · เจ้าของทัวร์นาเมนต์และทีมอื่นมองไม่เห็น</p>
+
+    <div class="v2f-none" th:if="${teamComments.isEmpty()}">ยังไม่มีข้อความ เริ่มคุยกับเพื่อนในทีมได้เลย</div>
+    <div class="v2d-comments">
+        <div class="comment v2d-comment" th:each="c : ${teamComments}" th:id="'comment-'+${c.id}">
+            <img class="c-avatar" th:if="${c.user.avatarUrl != null}" th:src="@{${c.user.avatarUrl}}" alt="">
+            <div class="c-avatar" th:if="${c.user.avatarUrl == null}"
+                 th:text="${#strings.substring(c.user.userName,0,1).toUpperCase()}">U</div>
+            <div class="c-body">
+                <div class="v2d-c-head">
+                    <a class="c-name user-link" th:href="@{'/users/' + ${c.user.id}}" th:text="${c.user.userName}">user</a>
+                    <span class="v2d-host-badge" th:if="${c.user.id == myTeam.captain.id}">หัวหน้าทีม</span>
+                    <span class="c-time" th:text="${#temporals.format(c.time,'dd/MM HH:mm')}">time</span>
+                </div>
+                <div class="c-text" th:text="${c.text}">ข้อความ</div>
+                <div class="c-actions" th:if="${c.user.id == currentUser.id}">
+                    <form method="post" style="margin:0;display:inline"
+                          th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/delete'}"
+                          onsubmit="return confirm('ต้องการลบข้อความนี้ใช่หรือไม่?')">
+                        <button type="submit" class="c-act c-act-danger">ลบ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form th:if="${post.status != 'cancelled' and !post.expired}" class="v2d-send" method="post"
+          th:action="@{'/teams/' + ${myTeam.id} + '/chat'}">
+        <input name="text" placeholder="พิมพ์ข้อความถึงเพื่อนในทีม..." required maxlength="1000" aria-label="พิมพ์ข้อความถึงเพื่อนในทีม">
+        <button class="v2-btn pitch" type="submit">ส่ง</button>
+    </form>
+</section>
+
+</body>
+</html>

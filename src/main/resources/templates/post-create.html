@@ -59,8 +59,35 @@
 
             <!-- 3 จำนวนผู้เล่น -->
             <section class="v2c-step">
-                <div class="v2c-step-head"><i>3</i><span><b>จำนวนผู้เล่น</b><small th:text="${isTour} ? 'จำนวนผู้สมัครแข่ง ขั้นต่ำอย่างน้อย 3 คน' : 'รวมตัวคุณเองด้วย ขั้นต่ำอย่างน้อย 3 คน'">รวมตัวคุณเองด้วย ขั้นต่ำอย่างน้อย 3 คน</small></span></div>
-                <div class="v2c-row">
+                <div class="v2c-step-head"><i>3</i><span><b>จำนวนผู้เล่น</b><small th:text="${isTour} ? 'ขั้นต่ำถูกล็อกตามกีฬา · ปรับได้แค่จำนวนสูงสุด (ไม่เกิน 500 คน)' : 'รวมตัวคุณเองด้วย ขั้นต่ำอย่างน้อย 3 คน'">รวมตัวคุณเองด้วย ขั้นต่ำอย่างน้อย 3 คน</small></span></div>
+
+                <!-- ทัวร์นาเมนต์: กติกาจำนวนคนตามกีฬา -->
+                <th:block th:if="${isTour}">
+                    <div class="v2c-field v2-hidden" id="formatField">
+                        <span class="v2c-label">รูปแบบแบดมินตัน</span>
+                        <div class="tm-seg" role="radiogroup" aria-label="รูปแบบแบดมินตัน">
+                            <label><input type="radio" name="teamSize" value="1" checked><span>เดี่ยว</span></label>
+                            <label><input type="radio" name="teamSize" value="2"><span>คู่</span></label>
+                        </div>
+                    </div>
+                    <div class="tm-rule-grid">
+                        <div><span>รูปแบบการแข่ง</span><b id="ruleMode">-</b></div>
+                        <div><span>ขั้นต่ำ (ล็อก)</span><b id="ruleMin">-</b></div>
+                        <div><span>เพิ่มได้ทีละ</span><b id="ruleStep">-</b></div>
+                    </div>
+                    <input type="hidden" id="minPlayer" name="minPlayer" value="2">
+                    <div class="v2c-field">
+                        <label for="maxPlayer">จำนวนผู้เข้าแข่งสูงสุด (คน)</label>
+                        <div class="v2c-stepper">
+                            <button type="button" data-step="-1" data-for="maxPlayer" aria-label="ลดจำนวนสูงสุด">−</button>
+                            <input id="maxPlayer" type="number" name="maxPlayer" min="2" max="500" value="16" required>
+                            <button type="button" data-step="1" data-for="maxPlayer" aria-label="เพิ่มจำนวนสูงสุด">+</button>
+                        </div>
+                        <span class="v2c-hint" id="ruleUnits">-</span>
+                    </div>
+                </th:block>
+
+                <div class="v2c-row" th:unless="${isTour}">
                     <div class="v2c-field">
                         <label for="minPlayer">จำนวนขั้นต่ำ</label>
                         <div class="v2c-stepper">
@@ -168,13 +195,15 @@
     </form>
 </div>
 
-<script>
+<script th:inline="javascript">
 (function () {
+    /* กติกาจำนวนคนของทัวร์นาเมนต์ (จาก SportRule.java) */
+    var RULES = /*[[${sportRules}]]*/ {};
     var MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
     var $ = function (id) { return document.getElementById(id); };
     var form = $('createForm');
 
-    function update() {
+    function update(evt) {
         var name = $('postName').value.trim();
         $('nameLen').textContent = $('postName').value.length;
         $('pvName').textContent = name || 'ชื่อกิจกรรมของคุณ';
@@ -200,6 +229,10 @@
             $('pvWhen').textContent = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear() + ' ' + v.slice(11, 16);
         }
 
+        // ระหว่างพิมพ์ช่องจำนวนสูงสุด ยังไม่ปัดค่า (ปัดตอนออกจากช่อง)
+        var typing = evt && evt.type === 'input' && evt.target && evt.target.id === 'maxPlayer';
+        if (form.classList.contains('is-tour')) applyRule(sp, !typing);
+
         var mn = Number($('minPlayer').value), mx = Number($('maxPlayer').value);
         $('pvMax').textContent = mx || '-';
         $('pvNeed').textContent = 'ต้องการอย่างน้อย ' + (mn || '-') + ' คน';
@@ -208,12 +241,52 @@
         $('maxPlayer').setCustomValidity(bad ? 'จำนวนสูงสุดต้องไม่น้อยกว่าจำนวนขั้นต่ำ' : '');
     }
 
-    /* ปุ่ม + / − */
+    /* กติกาของกีฬาที่เลือกอยู่ */
+    function currentRule(sp) {
+        if (!sp) return null;
+        var key = sp.parentElement.textContent.trim().toLowerCase();
+        var ts = form.querySelector('input[name=teamSize]:checked');
+        if (key === 'badminton' && ts && ts.value === '2') key = 'badminton-2';
+        return RULES[key] || { min: 2, step: 1, teamSize: 1, cap: 500, label: key };
+    }
+
+    /* ปรับฟอร์มทัวร์นาเมนต์ตามกีฬา: ล็อกขั้นต่ำ, ปัดจำนวนสูงสุดให้ลงตัวกับขนาดทีม */
+    function applyRule(sp, snap) {
+        var r = currentRule(sp);
+        if (!r) return;
+        var isBad = sp.parentElement.textContent.trim().toLowerCase() === 'badminton';
+        $('formatField').classList.toggle('v2-hidden', !isBad);
+        if (!isBad) form.querySelector('input[name=teamSize][value="1"]').checked = true;
+
+        var mx = Number($('maxPlayer').value) || r.min;
+        if (snap) {
+            mx = Math.round(mx / r.step) * r.step;
+            mx = Math.min(r.cap, Math.max(r.min, mx));
+            $('maxPlayer').value = mx;
+        }
+        $('maxPlayer').min = r.min;
+        $('maxPlayer').max = r.cap;
+        $('maxPlayer').step = r.step;
+        $('minPlayer').value = r.min;
+
+        $('ruleMode').textContent = r.teamSize === 1 ? 'แบบเดี่ยว' : (r.teamSize === 2 ? 'แบบคู่ · คู่ละ 2 คน' : 'แบบทีม · ทีมละ ' + r.teamSize + ' คน');
+        $('ruleMin').textContent = r.min + ' คน';
+        $('ruleStep').textContent = r.step + ' คน';
+        var units = r.teamSize === 1 ? mx + ' คน' : (mx / r.teamSize) + (r.teamSize === 2 ? ' คู่' : ' ทีม');
+        $('ruleUnits').textContent = '= ' + units + ' · ตั้งได้สูงสุด ' + r.cap + ' คน';
+    }
+
+    /* ปุ่ม + / − (ทัวร์นาเมนต์: จำนวนสูงสุดเพิ่มทีละขนาดทีม) */
     form.querySelectorAll('.v2c-stepper button').forEach(function (b) {
         b.addEventListener('click', function () {
             var inp = $(b.dataset.for);
-            var n = (Number(inp.value) || 0) + Number(b.dataset.step);
-            inp.value = Math.max(Number(inp.min) || 0, n);
+            var step = 1;
+            if (form.classList.contains('is-tour') && b.dataset.for === 'maxPlayer') {
+                step = currentRule(form.querySelector('input[name=sportId]:checked')).step;
+            }
+            var n = (Number(inp.value) || 0) + Number(b.dataset.step) * step;
+            var max = Number(inp.max) || Infinity;
+            inp.value = Math.min(max, Math.max(Number(inp.min) || 0, n));
             update();
         });
     });

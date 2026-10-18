@@ -8,4 +8,10 @@ import java.util.List;
 
 public interface ChatRepository extends JpaRepository<Chat, Integer> {
     List<Chat> findByPostOrderByTimeAsc(Post post);
+
+    /** แชทรวมของโพสต์ (ไม่รวมแชททีม) */
+    List<Chat> findByPostAndTeamIsNullOrderByTimeAsc(Post post);
+
+    /** แชทของทีมหนึ่ง */
+    List<Chat> findByTeamOrderByTimeAsc(com.sportmate.entity.Team team);
 }

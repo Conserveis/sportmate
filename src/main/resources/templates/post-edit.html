@@ -84,21 +84,23 @@
 
             <!-- 3 -->
             <section class="v2c-step">
-                <div class="v2c-step-head"><i>3</i><span><b>จำนวนผู้เล่น</b><small>ลดจำนวนสูงสุดต่ำกว่าผู้เข้าร่วมปัจจุบันไม่ได้</small></span></div>
+                <div class="v2c-step-head"><i>3</i><span><b>จำนวนผู้เล่น</b><small th:text="${isTour} ? 'ขั้นต่ำล็อกตามกีฬา · เพิ่มได้ทีละ ' + ${post.teamSize} + ' คน · ไม่เกิน 500 · เปลี่ยนเป็นกีฬาที่ขนาดทีมต่างกันไม่ได้' : 'ลดจำนวนสูงสุดต่ำกว่าผู้เข้าร่วมปัจจุบันไม่ได้'">ลดจำนวนสูงสุดต่ำกว่าผู้เข้าร่วมปัจจุบันไม่ได้</small></span></div>
                 <div class="v2c-row">
                     <div class="v2c-field">
                         <label for="minPlayer">จำนวนขั้นต่ำ</label>
                         <div class="v2c-stepper">
-                            <button type="button" data-step="-1" data-for="minPlayer" aria-label="ลดจำนวนขั้นต่ำ">−</button>
-                            <input id="minPlayer" type="number" name="minPlayer" min="3" required th:value="${post.minPlayer}">
-                            <button type="button" data-step="1" data-for="minPlayer" aria-label="เพิ่มจำนวนขั้นต่ำ">+</button>
+                            <button type="button" data-step="-1" data-for="minPlayer" aria-label="ลดจำนวนขั้นต่ำ" th:unless="${isTour}">−</button>
+                            <input id="minPlayer" type="number" name="minPlayer" min="3" required th:value="${post.minPlayer}"
+                                   th:attr="readonly=${isTour} ? 'readonly' : null, min=${isTour} ? ${post.minPlayer} : 3">
+                            <button type="button" data-step="1" data-for="minPlayer" aria-label="เพิ่มจำนวนขั้นต่ำ" th:unless="${isTour}">+</button>
                         </div>
                     </div>
                     <div class="v2c-field">
                         <label for="maxPlayer">จำนวนสูงสุด</label>
                         <div class="v2c-stepper">
                             <button type="button" data-step="-1" data-for="maxPlayer" aria-label="ลดจำนวนสูงสุด">−</button>
-                            <input id="maxPlayer" type="number" name="maxPlayer" min="3" required th:value="${post.maxPlayer}">
+                            <input id="maxPlayer" type="number" name="maxPlayer" min="3" required th:value="${post.maxPlayer}"
+                                   th:attr="step=${isTour} ? ${post.teamSize} : 1, max=${isTour} ? 500 : null, min=${isTour} ? ${post.minPlayer} : 3">
                             <button type="button" data-step="1" data-for="maxPlayer" aria-label="เพิ่มจำนวนสูงสุด">+</button>
                         </div>
                     </div>
@@ -266,7 +268,9 @@
     form.querySelectorAll('.v2c-stepper button').forEach(function (b) {
         b.addEventListener('click', function () {
             var inp = $(b.dataset.for);
-            inp.value = Math.max(Number(inp.min) || 0, (Number(inp.value) || 0) + Number(b.dataset.step));
+            var step = Number(inp.step) || 1;   // ทัวร์นาเมนต์: เพิ่มทีละขนาดทีม
+            var max = Number(inp.max) || Infinity;
+            inp.value = Math.min(max, Math.max(Number(inp.min) || 0, (Number(inp.value) || 0) + Number(b.dataset.step) * step));
             update();
         });
     });

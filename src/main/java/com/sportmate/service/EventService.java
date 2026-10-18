@@ -23,6 +23,14 @@ public class EventService {
         this.notificationService = notificationService;
     }
 
+    /** ใส่แบบ field เพื่อไม่ให้ constructor เดิม (ที่ test ใช้) เปลี่ยน */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.sportmate.repository.TournamentMatchRepository matchRepo;
+
+    private boolean isDrawn(Post post) {
+        return matchRepo != null && matchRepo.existsByPost(post);
+    }
+
     public long countJoins(Post post) { return eventRepo.countApprovedJoins(post); }
 
     public List<Event> participants(Post post) { return eventRepo.findParticipants(post); }
@@ -50,6 +58,10 @@ public class EventService {
             throw new IllegalStateException("กิจกรรมนี้หมดเวลารับสมัครแล้ว");
         if (post.getOwner().getId().equals(user.getId()))
             throw new IllegalStateException("คุณเป็นเจ้าของกิจกรรมนี้อยู่แล้ว");
+        if (post.isTeamTournament())
+            throw new IllegalStateException("ทัวร์นาเมนต์นี้แข่งแบบทีม กรุณาขอสร้างทีม หรือขอเข้าร่วมทีมแทน");
+        if (post.isTournament() && isDrawn(post))
+            throw new IllegalStateException("จับสายการแข่งขันแล้ว ปิดรับสมัคร");
 
         long currentApproved = eventRepo.countApprovedJoins(post);
         if (currentApproved >= post.getMaxPlayer())
@@ -156,6 +168,12 @@ public class EventService {
                 .orElseThrow(() -> new IllegalStateException("คุณยังไม่ได้เข้าร่วมกิจกรรมนี้"));
         if ("cancelled".equals(e.getStatus())) {
             throw new IllegalStateException("คุณยกเลิกกิจกรรมนี้ไปแล้ว");
+        }
+        if (post.isTeamTournament() && !"cancelled".equals(post.getStatus())) {
+            throw new IllegalStateException("ทัวร์นาเมนต์แบบทีม ให้ออกจากทีมที่ส่วน \"ทีม\" แทน");
+        }
+        if (post.isTournament() && isDrawn(post) && !"cancelled".equals(post.getStatus())) {
+            throw new IllegalStateException("จับสายการแข่งขันแล้ว ยกเลิกการเข้าร่วมไม่ได้");
         }
         // เจ้าของโพสต์ยกเลิกกิจกรรมเอง -> ผู้เข้าร่วมถอนตัวได้เสมอ ไม่ติดเส้นตาย
         if (!"cancelled".equals(post.getStatus()) && post.isCancelLocked()) {
