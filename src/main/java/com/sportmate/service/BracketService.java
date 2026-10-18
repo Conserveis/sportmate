@@ -4,9 +4,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -191,6 +193,8 @@ public class BracketService {
         TournamentMatch next = m.getRound() < rounds
                 ? matchRepo.findByPostAndRoundAndSlot(post, m.getRound() + 1, m.getSlot() / 2).orElse(null)
                 : null;
+        if (m.isDone() && champion(post) != null)
+            throw new IllegalStateException("แก้ผลไม่ได้ เพราะทัวร์นาเมนต์จบการแข่งขันแล้ว");
         if (next != null && next.isDone())
             throw new IllegalStateException("แก้ผลคู่นี้ไม่ได้ เพราะรอบถัดไปบันทึกผลไปแล้ว");
 
@@ -248,6 +252,55 @@ public class BracketService {
             row.put("matches", list);
             out.add(row);
         }
+        return out;
+    }
+
+    /**
+     * MatchID ของคู่ที่บันทึกผลแล้วและแก้ไม่ได้อีก:
+     * คู่ในรอบถัดไปบันทึกผลแล้ว หรือทัวร์นาเมนต์จบแล้ว (คู่ชิงบันทึกผลแล้ว)
+     */
+    public Set<Integer> lockedMatchIds(Post post) {
+        List<TournamentMatch> all = matches(post);
+        Map<String, TournamentMatch> byKey = new HashMap<>();
+        int rounds = 0;
+        for (TournamentMatch m : all) {
+            byKey.put(m.getRound() + ":" + m.getSlot(), m);
+            rounds = Math.max(rounds, m.getRound());
+        }
+        TournamentMatch fin = byKey.get(rounds + ":0");
+        boolean finished = fin != null && fin.isDone();
+
+        Set<Integer> out = new HashSet<>();
+        for (TournamentMatch m : all) {
+            if (!m.isDone()) continue;
+            TournamentMatch next = byKey.get((m.getRound() + 1) + ":" + (m.getSlot() / 2));
+            if (finished || (next != null && next.isDone())) out.add(m.getId());
+        }
+        return out;
+    }
+
+    /**
+     * ทัวร์นาเมนต์ของผู้จัดที่เลยวันแข่งแล้วแต่ยังจัดการไม่เสร็จ (ยังไม่จับสาย หรือยังกรอกผลไม่ครบ)
+     * หน้าทัวร์นาเมนต์แสดงเฉพาะที่ยังไม่ถึงวันแข่ง จึงแสดงไว้ในหน้าจัดเก็บกิจกรรมให้ผู้จัดตามต่อได้
+     * @return [{post, drawn, done, total}] เรียงตามวันแข่ง ใหม่ → เก่า
+     */
+    public List<Map<String, Object>> unfinishedTournaments(List<Post> owned) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Post p : owned) {
+            if (!p.isTournament() || "cancelled".equals(p.getStatus()) || !p.isExpired()) continue;
+            boolean drawn = isDrawn(p);
+            if (drawn && champion(p) != null) continue;   // จบการแข่งขันแล้ว
+            Map<String, Object> row = new HashMap<>();
+            row.put("post", p);
+            row.put("drawn", drawn);
+            if (drawn) {
+                Map<String, Object> s = summary(p);
+                row.put("done", s.get("done"));
+                row.put("total", s.get("total"));
+            }
+            out.add(row);
+        }
+        out.sort((a, b) -> ((Post) b.get("post")).getDatePlay().compareTo(((Post) a.get("post")).getDatePlay()));
         return out;
     }
 

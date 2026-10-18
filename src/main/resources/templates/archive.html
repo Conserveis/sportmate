@@ -22,6 +22,38 @@
         </div>
     </section>
 
+    <!-- ================= ทัวร์นาเมนต์ที่ผู้จัดยังจัดการไม่เสร็จ ================= -->
+    <section class="v2a-pending-tours" th:unless="${unfinishedTours.isEmpty()}" aria-labelledby="pt-title">
+        <div class="v2a-pt-head">
+            <h2 id="pt-title">ทัวร์นาเมนต์ที่ยังจัดการไม่เสร็จ <span class="v2-count-pill" th:text="${unfinishedTours.size()}">0</span></h2>
+            <span>เลยวันแข่งแล้ว แต่ยังไม่ได้จับสายหรือกรอกผลให้ครบ</span>
+        </div>
+        <div class="v2a-pt-list">
+            <article class="v2a-pt" th:each="t : ${unfinishedTours}" th:with="p=${t.post}">
+                <span class="v2a-date">
+                    <span class="m" th:text="${mons[p.datePlay.monthValue - 1]}">SEP</span>
+                    <span class="d" th:text="${#temporals.format(p.datePlay,'dd')}">14</span>
+                    <span class="t" th:text="${#temporals.format(p.datePlay,'HH:mm')}">19:05</span>
+                </span>
+                <div class="v2a-pt-main">
+                    <span class="v2-card-top">
+                        <span class="sport-tag" th:text="${p.sport.name}">Sport</span>
+                        <span class="pill orange" th:if="${!t.drawn}">ยังไม่จับสาย</span>
+                        <span class="pill orange" th:if="${t.drawn}"
+                              th:text="|กรอกผลแล้ว ${t.done}/${t.total} คู่|">กรอกผลแล้ว 0/0 คู่</span>
+                    </span>
+                    <h3 th:text="${p.postName}">ชื่อทัวร์นาเมนต์</h3>
+                    <div class="v2-bar" th:if="${t.drawn}" aria-hidden="true">
+                        <i th:style="'width:' + (${t.total} > 0 ? ${t.done} * 100 / ${t.total} : 0) + '%'"></i>
+                    </div>
+                </div>
+                <a class="v2-btn pitch v2a-pt-go"
+                   th:href="${t.drawn} ? @{'/posts/' + ${p.id} + '/bracket'} : @{'/posts/' + ${p.id} + '#draw'}"
+                   th:text="${t.drawn} ? 'กรอกผล ›' : 'จับสาย ›'">จัดการ ›</a>
+            </article>
+        </div>
+    </section>
+
     <!-- ================= แถบเตือน ================= -->
     <section class="v2a-remind v2-hidden" id="remind">
         <span class="v2a-remind-ico"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg></span>

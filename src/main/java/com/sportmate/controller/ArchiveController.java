@@ -13,7 +13,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.sportmate.entity.Event;
 import com.sportmate.entity.User;
+import com.sportmate.service.BracketService;
 import com.sportmate.service.EventService;
+import com.sportmate.service.PostService;
 import com.sportmate.service.ReviewService;
 import com.sportmate.service.UserService;
 import com.sportmate.util.ErrorMessage;
@@ -26,12 +28,17 @@ public class ArchiveController {
     private final EventService eventService;
     private final ReviewService reviewService;
     private final UserService userService;
+    private final PostService postService;
+    private final BracketService bracketService;
 
     public ArchiveController(EventService eventService, ReviewService reviewService,
-                             UserService userService) {
+                             UserService userService, PostService postService,
+                             BracketService bracketService) {
         this.eventService = eventService;
         this.reviewService = reviewService;
         this.userService = userService;
+        this.postService = postService;
+        this.bracketService = bracketService;
     }
 
     private User me(HttpSession session) {
@@ -46,6 +53,7 @@ public class ArchiveController {
         for (Event e : archived) reviewed.put(e.getId(), reviewService.hasReviewed(e.getId()));
         model.addAttribute("events", archived);
         model.addAttribute("reviewed", reviewed);
+        model.addAttribute("unfinishedTours", bracketService.unfinishedTournaments(postService.ownedBy(me)));
         return "archive";
     }
 

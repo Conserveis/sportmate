@@ -130,6 +130,8 @@
                                 <a class="c-name user-link" th:href="@{'/users/' + ${c.user.id}}" th:text="${c.user.userName}">user</a>
                                 <span class="v2d-host-badge" th:if="${c.user.id == post.owner.id}">ผู้จัด</span>
                                 <span class="c-time" th:text="${#temporals.format(c.time,'dd/MM HH:mm')}">time</span>
+                                <span class="c-time c-edited" th:if="${c.editedLabel != null}" th:text="${c.editedLabel}"
+                                      th:title="${#temporals.format(c.editedAt,'dd/MM/yyyy HH:mm')}">(แก้ไข)</span>
                             </div>
                             <div class="c-text" th:text="${c.text}">ข้อความ</div>
 
@@ -138,7 +140,7 @@
                                         th:attr="data-target='edit-'+${c.id}" onclick="toggleCommentEdit(this)">แก้ไข</button>
                                 <form method="post" style="margin:0;display:inline"
                                       th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/delete'}"
-                                      onsubmit="return confirm('ต้องการลบความคิดเห็นนี้ใช่หรือไม่?')">
+                                      data-confirm="ต้องการลบความคิดเห็นนี้ใช่หรือไม่?">
                                     <button type="submit" class="c-act c-act-danger">ลบ</button>
                                 </form>
                             </div>
@@ -206,7 +208,7 @@
                         <div th:if="${post.editLocked}" class="v2d-note">ใช้สิทธิ์แก้ไขครบ 3 ครั้งแล้ว</div>
 
                         <form th:if="${!post.ownerCancelLocked}" method="post" th:action="@{'/posts/' + ${post.id} + '/cancel'}"
-                              onsubmit="return confirm('ยกเลิกกิจกรรมนี้? ผู้เข้าร่วมทุกคนจะได้รับการแจ้งเตือน และยกเลิกแล้วกู้คืนไม่ได้')">
+                              data-confirm="ยกเลิกกิจกรรมนี้? ผู้เข้าร่วมทุกคนจะได้รับการแจ้งเตือน และยกเลิกแล้วกู้คืนไม่ได้">
                             <button class="v2-btn v2f-danger v2d-full" type="submit">ยกเลิกกิจกรรม</button>
                         </form>
                         <div th:if="${post.ownerCancelLocked}" class="v2d-note"
@@ -244,7 +246,7 @@
                     <th:block th:if="${isPending and !post.expired}">
                         <div class="v2d-state orange">รอการอนุมัติจากผู้จัด</div>
                         <form th:if="${!post.cancelLocked}" method="post" th:action="@{'/posts/' + ${post.id} + '/cancel-join'}"
-                              onsubmit="return confirm('ยกเลิกคำขอเข้าร่วม?')">
+                              data-confirm="ยกเลิกคำขอเข้าร่วม?">
                             <button class="v2-btn outline v2d-full" type="submit">ยกเลิกคำขอ</button>
                         </form>
                         <div th:if="${post.cancelLocked}" class="v2d-note">เลยกำหนดยกเลิกแล้ว (ต้องยกเลิกก่อนวันจัดกิจกรรมอย่างน้อย 1 วัน)</div>
@@ -253,7 +255,7 @@
                     <th:block th:if="${hasJoined and !post.expired}">
                         <div class="v2d-state green">✓ คุณเข้าร่วมแล้ว</div>
                         <form th:if="${!post.cancelLocked and drawn != true}" method="post" th:action="@{'/posts/' + ${post.id} + '/cancel-join'}"
-                              onsubmit="return confirm('ยกเลิกการเข้าร่วมกิจกรรมนี้?')">
+                              data-confirm="ยกเลิกการเข้าร่วมกิจกรรมนี้?">
                             <button class="v2-btn outline v2d-full" type="submit">ยกเลิกการเข้าร่วม</button>
                         </form>
                         <div th:if="${post.cancelLocked}" class="v2d-note"
@@ -284,7 +286,7 @@
                                 <button class="v2-btn pitch v2f-sm" type="submit">อนุมัติ</button>
                             </form>
                             <form method="post" th:action="@{'/posts/' + ${post.id} + '/reject/' + ${e.user.id}}"
-                                  onsubmit="return confirm('ต้องการปฏิเสธคำขอนี้ใช่หรือไม่?')">
+                                  data-confirm="ต้องการปฏิเสธคำขอนี้ใช่หรือไม่?">
                                 <button class="v2-btn v2f-sm v2f-danger" type="submit">ปฏิเสธ</button>
                             </form>
                         </div>

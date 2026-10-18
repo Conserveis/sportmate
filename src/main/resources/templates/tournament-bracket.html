@@ -65,8 +65,8 @@
                                 <b th:text="${m.scoreB}"></b>
                             </div>
 
-                            <!-- เจ้าของ: กรอก / แก้ผล -->
-                            <details class="tm-result" th:if="${isOwner and !m.bye and m.teamA != null and m.teamB != null}"
+                            <!-- เจ้าของ: กรอก / แก้ผล (แก้ได้จนกว่าคู่รอบถัดไปจะบันทึกผล หรือจบการแข่งขัน) -->
+                            <details class="tm-result" th:if="${isOwner and !m.bye and m.teamA != null and m.teamB != null and !lockedIds.contains(m.id)}"
                                      th:attr="open=${m.ready} ? 'open' : null">
                                 <summary th:text="${m.done} ? 'แก้ผล' : 'กรอกผล'">กรอกผล</summary>
                                 <form method="post" th:action="@{'/matches/' + ${m.id} + '/result'}" class="tm-result-form">

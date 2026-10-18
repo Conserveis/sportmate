@@ -242,7 +242,7 @@
                                th:href="@{'/posts/' + ${p.id} + '/edit'}" th:text="|แก้ไข (${p.editsLeft}/3)|">แก้ไข</a>
                             <span class="pill" th:if="${p.status!='cancelled' and !p.expired and p.editLocked}">แก้ไขครบ 3 ครั้งแล้ว</span>
                             <form th:if="${p.status!='cancelled' and !p.expired and !p.ownerCancelLocked}" method="post"
-                                  th:action="@{'/posts/' + ${p.id} + '/cancel'}" onsubmit="return confirm('ยกเลิกกิจกรรมนี้?')">
+                                  th:action="@{'/posts/' + ${p.id} + '/cancel'}" data-confirm="ยกเลิกกิจกรรมนี้?">
                                 <button class="v2-btn v2f-sm v2f-danger">ยกเลิก</button>
                             </form>
                             <span class="pill" th:if="${p.status!='cancelled' and !p.expired and p.ownerCancelLocked}">ยกเลิกไม่ได้ (เลยกำหนดเดิมแล้ว)</span>

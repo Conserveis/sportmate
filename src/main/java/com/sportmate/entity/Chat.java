@@ -2,6 +2,7 @@ package com.sportmate.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "Chat")
@@ -33,6 +34,17 @@ public class Chat {
     @Column(name = "Time", nullable = false)
     private LocalDateTime time = LocalDateTime.now();
 
+    /** เวลาที่แก้ไขล่าสุด (null = ยังไม่เคยแก้) */
+    @Column(name = "EditedAt")
+    private LocalDateTime editedAt;
+
+    /** "(แก้ไข เมื่อ 14:05 น.)" ถ้าแก้วันเดียวกับที่ส่ง ไม่งั้น "(แก้ไข เมื่อ 18/10 14:05 น.)" */
+    public String getEditedLabel() {
+        if (editedAt == null) return null;
+        String pattern = editedAt.toLocalDate().equals(time.toLocalDate()) ? "HH:mm" : "dd/MM HH:mm";
+        return "(แก้ไข เมื่อ " + editedAt.format(DateTimeFormatter.ofPattern(pattern)) + " น.)";
+    }
+
     // ---- getters / setters ----
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -48,4 +60,6 @@ public class Chat {
     public void setText(String text) { this.text = text; }
     public LocalDateTime getTime() { return time; }
     public void setTime(LocalDateTime time) { this.time = time; }
+    public LocalDateTime getEditedAt() { return editedAt; }
+    public void setEditedAt(LocalDateTime editedAt) { this.editedAt = editedAt; }
 }

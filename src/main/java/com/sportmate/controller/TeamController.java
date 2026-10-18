@@ -207,6 +207,7 @@ public class TeamController {
             model.addAttribute("rounds", bracketService.rounds(p));
             model.addAttribute("summary", bracketService.summary(p));
             model.addAttribute("champion", bracketService.champion(p));
+            model.addAttribute("lockedIds", bracketService.lockedMatchIds(p));
         }
         return "tournament-bracket";
     }

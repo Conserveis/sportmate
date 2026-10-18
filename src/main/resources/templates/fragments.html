@@ -10,6 +10,80 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/v2.css}">
     <script>
+        /*
+         * กล่องยืนยันของเว็บ แทน confirm() ของเบราว์เซอร์
+         * ใช้กับฟอร์ม: data-confirm="หัวข้อ? รายละเอียด" (ตัดหัวข้อที่ ? ตัวแรก)
+         *   data-confirm-ok="ข้อความปุ่ม" (ค่าเริ่มต้น "ยืนยัน")
+         *   data-confirm-tone="primary" (ค่าเริ่มต้นเป็นสีอันตราย สำหรับลบ / ยกเลิก)
+         */
+        (function () {
+            var dlg = null;
+            var pending = null;   // ฟังก์ชันที่จะรันเมื่อกดยืนยัน (null = ไม่มีคำถามค้าง)
+            function build() {
+                dlg = document.createElement('dialog');
+                dlg.className = 'sm-confirm';
+                dlg.setAttribute('aria-labelledby', 'sm-confirm-title');
+                dlg.innerHTML =
+                    '<div class="sm-confirm-box">' +
+                    '<h2 id="sm-confirm-title" class="sm-confirm-title"></h2>' +
+                    '<p class="sm-confirm-body"></p>' +
+                    '<div class="sm-confirm-actions">' +
+                    '<button type="button" class="v2-btn outline sm-confirm-cancel">กลับ</button>' +
+                    '<button type="button" class="v2-btn sm-confirm-ok">ยืนยัน</button>' +
+                    '</div></div>';
+                dlg.querySelector('.sm-confirm-cancel').addEventListener('click', function () {
+                    pending = null;
+                    dlg.close();
+                });
+                dlg.querySelector('.sm-confirm-ok').addEventListener('click', function () {
+                    var run = pending;
+                    pending = null;
+                    dlg.close();
+                    if (run) run();
+                });
+                // กดพื้นหลังนอกกล่อง หรือกด Esc = ปิดโดยไม่ทำอะไร
+                dlg.addEventListener('click', function (e) { if (e.target === dlg) { pending = null; dlg.close(); } });
+                dlg.addEventListener('cancel', function () { pending = null; });
+                document.body.appendChild(dlg);
+            }
+
+            function ask(form, onOk) {
+                if (!dlg) build();
+                var text = form.getAttribute('data-confirm');
+                var q = text.indexOf('?');
+                var title = q >= 0 ? text.slice(0, q + 1) : text;
+                var body = q >= 0 ? text.slice(q + 1).trim() : '';
+                dlg.querySelector('.sm-confirm-title').textContent = title;
+                var bodyEl = dlg.querySelector('.sm-confirm-body');
+                bodyEl.textContent = body;
+                bodyEl.hidden = !body;
+                var ok = dlg.querySelector('.sm-confirm-ok');
+                ok.textContent = form.getAttribute('data-confirm-ok') || 'ยืนยัน';
+                ok.classList.toggle('pitch', form.getAttribute('data-confirm-tone') === 'primary');
+                ok.classList.toggle('danger', form.getAttribute('data-confirm-tone') !== 'primary');
+                pending = onOk;
+                dlg.showModal();
+                dlg.querySelector('.sm-confirm-cancel').focus();   // ปุ่มที่ปลอดภัยเป็นค่าเริ่มต้น
+            }
+
+            document.addEventListener('submit', function (e) {
+                var form = e.target;
+                if (!form.hasAttribute || !form.hasAttribute('data-confirm')) return;
+                if (form.dataset.confirmed === '1') { delete form.dataset.confirmed; return; }
+                e.preventDefault();
+                var submitter = e.submitter || null;
+                var go = function () {
+                    form.dataset.confirmed = '1';
+                    if (form.requestSubmit) form.requestSubmit(submitter); else form.submit();
+                };
+                if (typeof HTMLDialogElement === 'undefined') {
+                    if (window.confirm(form.getAttribute('data-confirm'))) go();
+                    return;
+                }
+                ask(form, go);
+            }, true);
+        })();
+
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('select').forEach(function (select) {
                 if (select.parentElement.classList.contains('select-wrap')) return;
@@ -57,9 +131,30 @@
                     menu.appendChild(item);
                 });
 
+                // วางเมนูแบบ fixed ตามตำแหน่งปุ่ม จะได้ไม่โดนกล่องที่ตั้ง overflow (เช่นการ์ดในสายการแข่งขัน) ตัด
+                function placeMenu() {
+                    var r = button.getBoundingClientRect();
+                    var below = window.innerHeight - r.bottom - 12;
+                    var above = r.top - 12;
+                    var openUp = below < 160 && above > below;
+                    menu.style.position = 'fixed';
+                    menu.style.left = r.left + 'px';
+                    menu.style.right = 'auto';
+                    menu.style.width = r.width + 'px';
+                    menu.style.maxHeight = Math.max(120, Math.min(240, openUp ? above : below)) + 'px';
+                    if (openUp) {
+                        menu.style.top = 'auto';
+                        menu.style.bottom = (window.innerHeight - r.top + 6) + 'px';
+                    } else {
+                        menu.style.bottom = 'auto';
+                        menu.style.top = (r.bottom + 6) + 'px';
+                    }
+                }
+
                 button.addEventListener('click', function () {
                     var isOpen = wrapper.classList.toggle('open');
                     button.setAttribute('aria-expanded', isOpen);
+                    if (isOpen) placeMenu();
                 });
                 select.addEventListener('change', syncSelection);
                 syncSelection();
@@ -210,6 +305,17 @@
                     }
                 });
             });
+
+            // เมนู select เป็น fixed: เลื่อนหน้า/ย่อขยายหน้าต่างแล้วปิด ไม่ให้ลอยค้างผิดที่ (ยกเว้นเลื่อนในเมนูเอง)
+            function closeSelectMenus(event) {
+                document.querySelectorAll('.select-wrap.open').forEach(function (wrapper) {
+                    if (event && event.target instanceof Node && wrapper.contains(event.target)) return;
+                    wrapper.classList.remove('open');
+                    wrapper.querySelector('.select-button').setAttribute('aria-expanded', 'false');
+                });
+            }
+            window.addEventListener('scroll', closeSelectMenus, true);
+            window.addEventListener('resize', function () { closeSelectMenus(); });
 
             document.addEventListener('click', function (event) {
                 document.querySelectorAll('.select-wrap.open').forEach(function (wrapper) {

@@ -34,7 +34,7 @@
                 <span class="tm-msg" th:if="${t.note != null}" th:text="|“${t.note}”|">ข้อความ</span>
             </div>
             <div class="tm-actions">
-                <form method="post" th:action="@{'/teams/' + ${t.id} + '/reject'}" onsubmit="return confirm('ปฏิเสธคำขอสร้างทีมนี้?')">
+                <form method="post" th:action="@{'/teams/' + ${t.id} + '/reject'}" data-confirm="ปฏิเสธคำขอสร้างทีมนี้?">
                     <button class="v2-btn outline v2f-sm tm-danger-text" type="submit">ปฏิเสธ</button>
                 </form>
                 <form method="post" th:action="@{'/teams/' + ${t.id} + '/approve'}">
@@ -45,7 +45,7 @@
     </section>
 
     <!-- ---------- เจ้าของ: จับสาย ---------- -->
-    <section class="v2d-card tm-card tm-dark" th:if="${isOwner and !drawn and post.status != 'cancelled'}">
+    <section class="v2d-card tm-card tm-dark" id="draw" th:if="${isOwner and !drawn and post.status != 'cancelled'}">
         <h2 class="v2f-h2">จับสายการแข่งขัน</h2>
         <div class="tm-stats">
             <div><span>ผู้เข้าแข่ง</span><b th:text="|${drawPreview.entrants} ${post.teamTournament ? 'ทีม' : 'คน'}|">0</b></div>
@@ -57,7 +57,8 @@
         <p class="tm-warn" th:each="c : ${teamCards}" th:if="${post.teamTournament and !c.full}"
            th:text="|${c.team.name} มีสมาชิก ${c.memberCount}/${c.teamSize} คน (ยังไม่ครบ)|"></p>
         <form method="post" th:action="@{'/posts/' + ${post.id} + '/bracket/draw'}"
-              onsubmit="return confirm('จับสายตอนนี้? หลังจับสายจะปิดรับสมัคร และแก้ไขสายไม่ได้')">
+              data-confirm="จับสายตอนนี้? หลังจับสายจะปิดรับสมัคร และแก้ไขสายไม่ได้"
+              data-confirm-ok="จับสายเลย" data-confirm-tone="primary">
             <fieldset class="tm-radios">
                 <legend>วิธีจับสาย</legend>
                 <label><input type="radio" name="method" value="random" checked> สุ่ม</label>
@@ -112,14 +113,14 @@
                 <span class="pill orange" th:if="${m.captain}">หัวหน้าทีม</span>
                 <form th:if="${!m.captain and !drawn and !post.cancelLocked}" method="post"
                       th:action="@{'/team-members/' + ${m.id} + '/remove'}"
-                      onsubmit="return confirm('นำสมาชิกคนนี้ออกจากทีม?')">
+                      data-confirm="นำสมาชิกคนนี้ออกจากทีม?">
                     <button class="c-act c-act-danger" type="submit">นำออก</button>
                 </form>
             </div>
 
             <form th:if="${!drawn and (captainTeam.pending or !post.cancelLocked)}" method="post"
                   th:action="@{'/teams/' + ${captainTeam.id} + '/cancel'}"
-                  onsubmit="return confirm('ยกเลิกทีมนี้? สมาชิกทุกคนจะออกจากทัวร์นาเมนต์และได้รับแจ้งเตือน')">
+                  data-confirm="ยกเลิกทีมนี้? สมาชิกทุกคนจะออกจากทัวร์นาเมนต์และได้รับแจ้งเตือน">
                 <button class="v2-btn v2f-danger v2d-full" type="submit"
                         th:text="${captainTeam.pending} ? 'ยกเลิกคำขอสร้างทีม' : 'ยกเลิกทีม'">ยกเลิกทีม</button>
             </form>
@@ -176,7 +177,7 @@
                 <th:block th:if="${c.viewerMember and c.team.captain.id != currentUser.id}">
                     <div class="v2d-state green">✓ คุณอยู่ทีมนี้</div>
                     <form th:if="${!drawn and !post.cancelLocked}" method="post" th:action="@{'/teams/' + ${c.team.id} + '/leave'}"
-                          onsubmit="return confirm('ออกจากทีมนี้?')">
+                          data-confirm="ออกจากทีมนี้?">
                         <button class="v2-btn outline v2d-full" type="submit">ออกจากทีม</button>
                     </form>
                 </th:block>
@@ -196,11 +197,6 @@
                     </form>
                 </details>
             </article>
-        </div>
-
-        <div class="tm-banner info">
-            ยกเลิกการเข้าร่วมทีม หรือยกเลิกทีม ได้จนถึง 24 ชม. ก่อนเวลาแข่ง
-            (<span th:text="${#temporals.format(post.cancelDeadline,'dd/MM/yyyy HH:mm')}">-</span>) ตามเกณฑ์เดิมของระบบ
         </div>
     </th:block>
 </th:block>
@@ -223,7 +219,6 @@
 <section class="v2d-card" id="chat" th:fragment="teamChat">
     <h2 class="v2f-h2">แชททีม <span class="v2-count-pill blue" th:text="${teamComments.size()}">0</span></h2>
     <nav th:replace="~{tournament :: chatTabs('team')}"></nav>
-    <p class="tm-sub">เห็นเฉพาะสมาชิกทีม <b th:text="${myTeam.name}">ทีม</b> · เจ้าของทัวร์นาเมนต์และทีมอื่นมองไม่เห็น</p>
 
     <div class="v2f-none" th:if="${teamComments.isEmpty()}">ยังไม่มีข้อความ เริ่มคุยกับเพื่อนในทีมได้เลย</div>
     <div class="v2d-comments">
@@ -236,15 +231,27 @@
                     <a class="c-name user-link" th:href="@{'/users/' + ${c.user.id}}" th:text="${c.user.userName}">user</a>
                     <span class="v2d-host-badge" th:if="${c.user.id == myTeam.captain.id}">หัวหน้าทีม</span>
                     <span class="c-time" th:text="${#temporals.format(c.time,'dd/MM HH:mm')}">time</span>
+                    <span class="c-time c-edited" th:if="${c.editedLabel != null}" th:text="${c.editedLabel}"
+                          th:title="${#temporals.format(c.editedAt,'dd/MM/yyyy HH:mm')}">(แก้ไข)</span>
                 </div>
                 <div class="c-text" th:text="${c.text}">ข้อความ</div>
                 <div class="c-actions" th:if="${c.user.id == currentUser.id}">
+                    <button type="button" class="c-act" th:if="${post.status != 'cancelled' and !post.expired}"
+                            th:attr="data-target='edit-'+${c.id}" onclick="toggleCommentEdit(this)">แก้ไข</button>
                     <form method="post" style="margin:0;display:inline"
                           th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/delete'}"
-                          onsubmit="return confirm('ต้องการลบข้อความนี้ใช่หรือไม่?')">
+                          data-confirm="ต้องการลบข้อความนี้ใช่หรือไม่?">
                         <button type="submit" class="c-act c-act-danger">ลบ</button>
                     </form>
                 </div>
+
+                <form class="c-edit-form" th:id="'edit-'+${c.id}" method="post"
+                      th:if="${c.user.id == currentUser.id and post.status != 'cancelled' and !post.expired}"
+                      th:action="@{'/posts/' + ${post.id} + '/comment/' + ${c.id} + '/edit'}">
+                    <input name="text" th:value="${c.text}" required maxlength="1000" aria-label="แก้ไขข้อความ">
+                    <button type="submit" class="v2-btn pitch v2f-sm">บันทึก</button>
+                    <button type="button" class="v2-btn outline v2f-sm" onclick="cancelCommentEdit(this)">ยกเลิก</button>
+                </form>
             </div>
         </div>
     </div>

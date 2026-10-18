@@ -23,6 +23,7 @@ CREATE TABLE `Chat` (
   `State` enum('active','ended') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
   `Text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `Time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `EditedAt` datetime DEFAULT NULL,
   PRIMARY KEY (`ChatID`),
   KEY `UserID` (`UserID`),
   KEY `idx_chat_post_time` (`PostID`,`Time`),

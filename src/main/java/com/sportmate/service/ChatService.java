@@ -108,7 +108,7 @@ public class ChatService {
     }
         /** แก้ไขคอมเมนต์ — เจ้าของคอมเมนต์เท่านั้น */
     @Transactional
-    public void editComment(User user, Integer commentId, Integer postId, String text) {
+    public Chat editComment(User user, Integer commentId, Integer postId, String text) {
         Chat c = chatRepo.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("ไม่พบความคิดเห็นนี้"));
         if (!c.getPost().getId().equals(postId)) {
@@ -116,6 +116,9 @@ public class ChatService {
         }
         if (!c.getUser().getId().equals(user.getId())) {
             throw new IllegalStateException("แก้ไขได้เฉพาะความคิดเห็นของตัวเองเท่านั้น");
+        }
+        if (c.getTeam() != null && !canAccessTeam(user, c.getTeam())) {
+            throw new IllegalStateException("แชททีมใช้ได้เฉพาะสมาชิกในทีมเท่านั้น");
         }
         if (c.getPost().isExpired() || "cancelled".equals(c.getPost().getStatus())) {
             throw new IllegalStateException("กิจกรรมนี้จบแล้ว ไม่สามารถแก้ไขความคิดเห็นได้");
@@ -126,13 +129,16 @@ public class ChatService {
         if (text.trim().length() > 1000) {
             throw new IllegalArgumentException("ความคิดเห็นยาวเกิน 1000 ตัวอักษร");
         }
-        c.setText(text.trim());
-        chatRepo.save(c);
+        if (!text.trim().equals(c.getText())) {   // กดบันทึกโดยไม่ได้เปลี่ยนข้อความ = ไม่นับว่าแก้
+            c.setText(text.trim());
+            c.setEditedAt(LocalDateTime.now());
+        }
+        return chatRepo.save(c);
     }
 
     /** ลบคอมเมนต์ — เจ้าของคอมเมนต์ หรือเจ้าของโพสต์ (ลบข้อความไม่เหมาะสมได้) */
     @Transactional
-    public void deleteComment(User user, Integer commentId, Integer postId) {
+    public Chat deleteComment(User user, Integer commentId, Integer postId) {
         Chat c = chatRepo.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("ไม่พบความคิดเห็นนี้"));
         if (!c.getPost().getId().equals(postId)) {
@@ -144,5 +150,6 @@ public class ChatService {
             throw new IllegalStateException("ไม่มีสิทธิ์ลบความคิดเห็นนี้");
         }
         chatRepo.delete(c);
+        return c;
     }
 }

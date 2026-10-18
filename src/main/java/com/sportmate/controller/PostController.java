@@ -1,6 +1,7 @@
 package com.sportmate.controller;
 
 import com.sportmate.util.ErrorMessage;
+import com.sportmate.entity.Chat;
 import com.sportmate.entity.Post;
 import com.sportmate.entity.User;
 import com.sportmate.service.*;
@@ -222,8 +223,9 @@ public class PostController {
                               @RequestParam String text,
                               HttpSession session, RedirectAttributes ra) {
         try {
-            chatService.editComment(me(session), commentId, id, text);
-            ra.addFlashAttribute("msg", "แก้ไขความคิดเห็นแล้ว");
+            Chat c = chatService.editComment(me(session), commentId, id, text);
+            ra.addFlashAttribute("msg", "แก้ไขข้อความแล้ว");
+            if (c.getTeam() != null) return "redirect:/posts/" + id + "?chat=team#chat";
         } catch (Exception e) {
             ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
@@ -234,8 +236,9 @@ public class PostController {
     public String deleteComment(@PathVariable Integer id, @PathVariable Integer commentId,
                                 HttpSession session, RedirectAttributes ra) {
         try {
-            chatService.deleteComment(me(session), commentId, id);
+            Chat c = chatService.deleteComment(me(session), commentId, id);
             ra.addFlashAttribute("msg", "ลบความคิดเห็นแล้ว");
+            if (c.getTeam() != null) return "redirect:/posts/" + id + "?chat=team#chat";
         } catch (Exception e) {
             ra.addFlashAttribute("error", ErrorMessage.forUser(e));
         }
