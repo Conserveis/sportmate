@@ -873,3 +873,21 @@ a.v2f-row:hover{border-color:var(--line);box-shadow:var(--shadow);color:var(--in
 .v2e-cost{font-size:.7rem;color:var(--muted);padding-top:6px;border-top:1px dashed var(--line)}
 .v2c-go:disabled{background:var(--line-light);color:#B8AC9C;cursor:not-allowed;transform:none;box-shadow:none}
 .v2c-layout.is-tour .v2e-changes li{border-left-color:var(--flare)}
+/* ===== admin: แถบเลือกช่วง 1 / 3 / 6 เดือน (แบบ statement) ===== */
+.adm-range{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;
+  background:var(--ink);color:#fff;border-radius:var(--radius);padding:16px 22px;margin:0 0 18px}
+.adm-range-left{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.adm-range-label{font-size:.8rem;color:#C9CCD6}
+.adm-range-tabs{display:flex;gap:4px;padding:4px;background:rgba(255,255,255,.08);border-radius:12px}
+.adm-range-tabs a{min-height:40px;padding:0 18px;display:flex;align-items:center;border-radius:9px;
+  font-size:.88rem;font-weight:700;color:#E4E6EC;text-decoration:none;transition:background var(--duration) var(--ease)}
+.adm-range-tabs a:hover{background:rgba(255,255,255,.1)}
+.adm-range-tabs a.on{background:var(--volt);color:var(--ink)}
+.adm-range-text{display:flex;flex-direction:column;line-height:1.35}
+.adm-range-text b{font-size:.95rem}
+.adm-range-text span{font-size:.74rem;color:#C9CCD6}
+.adm-range-sum{display:flex;flex-wrap:wrap;gap:6px 26px}
+.adm-range-sum div{display:flex;flex-direction:column}
+.adm-range-sum span{font-size:.72rem;color:#C9CCD6}
+.adm-range-sum b{font-size:1.3rem;font-weight:800;line-height:1.2}
+.bar-sub{font-size:.64rem;color:var(--muted);white-space:nowrap;margin-top:-6px;min-height:.9em}

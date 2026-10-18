@@ -61,13 +61,37 @@
         </div>
     </div>
 
+    <!-- ===== เลือกช่วงเวลา (แบบ statement) ===== -->
+    <div class="adm-range">
+        <div class="adm-range-left">
+            <span class="adm-range-label">ดูสถิติย้อนหลัง</span>
+            <nav class="adm-range-tabs" aria-label="เลือกช่วงเวลา">
+                <a th:href="@{/admin(range=1)}" th:classappend="${period.range == 1} ? 'on'"
+                   th:attr="aria-current=${period.range == 1} ? 'page' : null">1 เดือน</a>
+                <a th:href="@{/admin(range=3)}" th:classappend="${period.range == 3} ? 'on'"
+                   th:attr="aria-current=${period.range == 3} ? 'page' : null">3 เดือน</a>
+                <a th:href="@{/admin(range=6)}" th:classappend="${period.range == 6} ? 'on'"
+                   th:attr="aria-current=${period.range == 6} ? 'page' : null">6 เดือน</a>
+            </nav>
+            <div class="adm-range-text">
+                <b th:text="${period.text}">-</b>
+                <span th:text="${period.unit}">-</span>
+            </div>
+        </div>
+        <div class="adm-range-sum">
+            <div><span>โพสต์ในช่วงนี้</span><b th:text="${period.posts}">0</b></div>
+            <div><span>การเข้าร่วม</span><b th:text="${period.joins}">0</b></div>
+            <div><span>ผู้ใช้ใหม่</span><b th:text="${period.newUsers}">0</b></div>
+        </div>
+    </div>
+
     <!-- ===== รายได้จากการสมัครสมาชิก ===== -->
     <div class="adm-grid adm-rev">
 
         <div class="adm-card span2">
             <div class="adm-head">
                 <h2>รายได้จากการสมัครสมาชิก</h2>
-                <div class="adm-legend"><span><i style="background:var(--pitch)"></i> รายได้ต่อเดือน (บาท)</span></div>
+                <div class="adm-legend"><span><i style="background:var(--pitch)"></i> รายได้ในแต่ละช่วง (บาท)</span></div>
             </div>
             <div class="rev-stats">
                 <div>
@@ -97,6 +121,7 @@
                         </div>
                     </div>
                     <div class="bar-label" th:text="${m.label}">ม.ค.</div>
+                    <div class="bar-sub" th:text="${m.sub}"></div>
                 </div>
             </div>
         </div>
@@ -126,7 +151,7 @@
         <!-- แนวโน้ม 6 เดือน -->
         <div class="adm-card span2">
             <div class="adm-head">
-                <h2>แนวโน้ม 6 เดือนล่าสุด</h2>
+                <h2 th:text="'แนวโน้ม ' + ${period.range} + ' เดือนล่าสุด'">แนวโน้ม 6 เดือนล่าสุด</h2>
                 <div class="adm-legend">
                     <span><i style="background:var(--pitch)"></i> โพสต์ที่สร้าง</span>
                     <span><i style="background:var(--flare)"></i> การเข้าร่วม</span>
@@ -145,6 +170,7 @@
                         </div>
                     </div>
                     <div class="bar-label" th:text="${m.label}">ม.ค.</div>
+                    <div class="bar-sub" th:text="${m.sub}"></div>
                 </div>
             </div>
         </div>
@@ -161,7 +187,7 @@
                             th:attr="stroke=${seg.color},
                                      stroke-dasharray=${seg.dash} + ' ' + ${seg.gap},
                                      stroke-dashoffset=${seg.offset}"></circle>
-                    <text x="70" y="66" class="donut-c1" th:text="${s.fillRate} + '%'">0%</text>
+                    <text x="70" y="66" class="donut-c1" th:text="${period.fillRate} + '%'">0%</text>
                     <text x="70" y="84" class="donut-c2">อัตราเติมเต็ม</text>
                 </svg>
                 <div class="donut-legend">

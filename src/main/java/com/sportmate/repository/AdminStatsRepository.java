@@ -1,10 +1,12 @@
 package com.sportmate.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.Param;
 
 import com.sportmate.entity.Post;
 
@@ -167,4 +169,48 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
         LIMIT 6
         """, nativeQuery = true)
     List<Object[]> recentPayments();
+
+    // ---------- สถิติตามช่วงเวลา (1 / 3 / 6 เดือน) ----------
+    // นับเป็นรายวันตั้งแต่ :start แล้วให้ AdminService รวมเป็นสัปดาห์ / 2 สัปดาห์ / เดือน
+    @Query(value = """
+        SELECT DATE(DateCreate) AS d, COUNT(*) AS c
+        FROM Post
+        WHERE DateCreate >= :start
+        GROUP BY d ORDER BY d
+        """, nativeQuery = true)
+    List<Object[]> postsPerDaySince(@Param("start") LocalDate start);
+
+    @Query(value = """
+        SELECT DATE(JoinDate) AS d, COUNT(*) AS c
+        FROM Event
+        WHERE Status = 'approved' AND JoinDate >= :start
+        GROUP BY d ORDER BY d
+        """, nativeQuery = true)
+    List<Object[]> joinsPerDaySince(@Param("start") LocalDate start);
+
+    @Query(value = """
+        SELECT DATE(DatePlayment) AS d, SUM(PlaymentAmount) AS total, COUNT(*) AS c
+        FROM Receipt
+        WHERE DatePlayment >= :start
+        GROUP BY d ORDER BY d
+        """, nativeQuery = true)
+    List<Object[]> revenuePerDaySince(@Param("start") LocalDate start);
+
+    @Query(value = "SELECT Status, COUNT(*) FROM Post WHERE DateCreate >= :start GROUP BY Status",
+           nativeQuery = true)
+    List<Object[]> postStatusCountsSince(@Param("start") LocalDate start);
+
+    @Query(value = "SELECT COUNT(*) FROM `User` WHERE CreatedAt >= :start", nativeQuery = true)
+    long countNewUsersSince(@Param("start") LocalDate start);
+
+    @Query(value = """
+        SELECT COALESCE(AVG(rate),0) * 100 FROM (
+            SELECT COUNT(e.EventID) / p.MaxPlayer AS rate
+            FROM Post p
+            LEFT JOIN Event e ON e.PostID = p.PostID AND e.Status = 'approved'
+            WHERE p.Status <> 'cancelled' AND p.DateCreate >= :start
+            GROUP BY p.PostID, p.MaxPlayer
+        ) x
+        """, nativeQuery = true)
+    Double avgFillRateSince(@Param("start") LocalDate start);
 }

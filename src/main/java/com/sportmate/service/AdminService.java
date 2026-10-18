@@ -45,22 +45,100 @@ public class AdminService {
         return m;
     }
 
-    public List<Map<String, Object>> monthlyTrend() {
-        Map<String, Long> posts = toMap(repo.postsPerMonth());
-        Map<String, Long> joins = toMap(repo.joinsPerMonth());
+    // ---------- ช่วงเวลา (1 / 3 / 6 เดือน) ----------
+    /** ช่วงย่อย 1 แท่งในกราฟ: from..to (นับรวมทั้งสองวัน) */
+    public record Bucket(LocalDate from, LocalDate to, String label, String sub) {}
 
-        YearMonth start = YearMonth.from(LocalDate.now()).minusMonths(5);
+    /** รับได้แค่ 1, 3, 6 — ค่าอื่นหรือไม่ส่งมา = 6 */
+    public static int normalizeRange(Integer range) {
+        return (range != null && (range == 1 || range == 3)) ? range : 6;
+    }
+
+    /**
+     * แบ่งช่วงให้กราฟสมดุล:
+     * 1 เดือน = 4 สัปดาห์ (ช่วงละ 7 วัน), 3 เดือน = 6 ช่วงครึ่งเดือน (1–15, 16–สิ้นเดือน), 6 เดือน = 6 เดือนปฏิทิน
+     */
+    public List<Bucket> buckets(int range) {
+        LocalDate today = LocalDate.now();
+        List<Bucket> out = new ArrayList<>();
+        if (range == 6) {
+            YearMonth start = YearMonth.from(today).minusMonths(5);
+            for (int i = 0; i < 6; i++) {
+                YearMonth ym = start.plusMonths(i);
+                LocalDate to = (i == 5) ? today : ym.atEndOfMonth();
+                out.add(new Bucket(ym.atDay(1), to,
+                        TH_MONTH_SHORT[ym.getMonthValue() - 1],
+                        String.valueOf(ym.getYear() + 543)));
+            }
+            return out;
+        }
+        if (range == 3) {
+            // ครึ่งเดือน: 1–15 และ 16–วันสุดท้ายของเดือน ย้อนหลัง 6 ช่วง (ช่วงสุดท้ายคือครึ่งเดือนปัจจุบัน)
+            LocalDate from = today.withDayOfMonth(today.getDayOfMonth() <= 15 ? 1 : 16);
+            for (int i = 0; i < 5; i++) {
+                from = (from.getDayOfMonth() == 16)
+                        ? from.withDayOfMonth(1)
+                        : from.minusMonths(1).withDayOfMonth(16);
+            }
+            for (int i = 0; i < 6; i++) {
+                LocalDate halfEnd = (from.getDayOfMonth() == 1)
+                        ? from.withDayOfMonth(15)
+                        : YearMonth.from(from).atEndOfMonth();
+                LocalDate to = (i == 5) ? today : halfEnd;
+                out.add(new Bucket(from, to, thSpan(from, halfEnd), ""));
+                from = halfEnd.plusDays(1);
+            }
+            return out;
+        }
+        // 1 เดือน: 4 สัปดาห์ ช่วงละ 7 วัน สิ้นสุดวันนี้
+        LocalDate start = today.minusDays(4 * 7 - 1);
+        for (int i = 0; i < 4; i++) {
+            LocalDate from = start.plusDays(i * 7L);
+            LocalDate to = from.plusDays(6);
+            out.add(new Bucket(from, to, thSpan(from, to), ""));
+        }
+        return out;
+    }
+
+    /** ข้อมูลแถบเลือกช่วง: ช่วงวันที่ + ยอดสรุปของช่วงนั้น */
+    public Map<String, Object> period(int range) {
+        List<Bucket> bs = buckets(range);
+        LocalDate from = bs.get(0).from();
+        LocalDate to = bs.get(bs.size() - 1).to();
+
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("range", range);
+        m.put("text", thDay(from)
+                + (from.getYear() != to.getYear() ? " " + (from.getYear() + 543) : "")
+                + " – " + thDay(to) + " " + (to.getYear() + 543));
+        m.put("unit", switch (range) {
+            case 1 -> "แบ่งรายสัปดาห์ · 4 สัปดาห์";
+            case 3 -> "แบ่งครึ่งเดือน (1–15, 16–สิ้นเดือน) · 6 ช่วง";
+            default -> "แบ่งรายเดือน · 6 เดือน";
+        });
+        m.put("posts", sumAll(toDayMap(repo.postsPerDaySince(from))));
+        m.put("joins", sumAll(toDayMap(repo.joinsPerDaySince(from))));
+        m.put("newUsers", repo.countNewUsersSince(from));
+        m.put("fillRate", (int) Math.round(nz(repo.avgFillRateSince(from))));
+        return m;
+    }
+
+    public List<Map<String, Object>> trend(int range) {
+        List<Bucket> bs = buckets(range);
+        LocalDate start = bs.get(0).from();
+        Map<LocalDate, Long> posts = toDayMap(repo.postsPerDaySince(start));
+        Map<LocalDate, Long> joins = toDayMap(repo.joinsPerDaySince(start));
+
         long max = 1;
         List<Map<String, Object>> rows = new ArrayList<>();
-        for (int i = 0; i < 6; i++) {
-            YearMonth ym = start.plusMonths(i);
-            String key = String.format("%04d-%02d", ym.getYear(), ym.getMonthValue());
-            long p = posts.getOrDefault(key, 0L);
-            long j = joins.getOrDefault(key, 0L);
+        for (Bucket b : bs) {
+            long p = sumIn(posts, b);
+            long j = sumIn(joins, b);
             max = Math.max(max, Math.max(p, j));
 
             Map<String, Object> row = new HashMap<>();
-            row.put("label", TH_MONTH_SHORT[ym.getMonthValue() - 1]);
+            row.put("label", b.label());
+            row.put("sub", b.sub());
             row.put("posts", p);
             row.put("joins", j);
             rows.add(row);
@@ -72,7 +150,7 @@ public class AdminService {
         return rows;
     }
 
-    public List<Map<String, Object>> postStatusDonut() {
+    public List<Map<String, Object>> postStatusDonut(int range) {
         Map<String, String> labels = Map.of(
                 "open", "เปิดรับอยู่",
                 "closed", "ปิดรับแล้ว",
@@ -84,7 +162,7 @@ public class AdminService {
                 "finished", "#C8FF40",   // Lime Charge
                 "cancelled", "#FF007A"); // Berry Vibe
 
-        List<Object[]> raw = repo.postStatusCounts();
+        List<Object[]> raw = repo.postStatusCountsSince(buckets(range).get(0).from());
         long total = 0;
         for (Object[] r : raw) total += num(r[1]);
         if (total == 0) total = 1;
@@ -194,25 +272,31 @@ public class AdminService {
         return m;
     }
 
-    public List<Map<String, Object>> revenueTrend() {
-        Map<String, BigDecimal> totals = new HashMap<>();
-        Map<String, Long> counts = new HashMap<>();
-        for (Object[] r : repo.revenuePerMonth()) {
-            totals.put(String.valueOf(r[0]), new BigDecimal(r[1].toString()));
-            counts.put(String.valueOf(r[0]), num(r[2]));
+    public List<Map<String, Object>> revenueTrend(int range) {
+        List<Bucket> bs = buckets(range);
+        Map<LocalDate, BigDecimal> totals = new HashMap<>();
+        Map<LocalDate, Long> counts = new HashMap<>();
+        for (Object[] r : repo.revenuePerDaySince(bs.get(0).from())) {
+            LocalDate d = toLocalDate(r[0]);
+            totals.put(d, new BigDecimal(r[1].toString()));
+            counts.put(d, num(r[2]));
         }
-        YearMonth start = YearMonth.from(LocalDate.now()).minusMonths(5);
+
         long max = 1;
         List<Map<String, Object>> rows = new ArrayList<>();
-        for (int i = 0; i < 6; i++) {
-            YearMonth ym = start.plusMonths(i);
-            String key = String.format("%04d-%02d", ym.getYear(), ym.getMonthValue());
-            BigDecimal amt = totals.getOrDefault(key, BigDecimal.ZERO);
+        for (Bucket b : bs) {
+            BigDecimal amt = BigDecimal.ZERO;
+            long c = 0;
+            for (LocalDate d = b.from(); !d.isAfter(b.to()); d = d.plusDays(1)) {
+                amt = amt.add(totals.getOrDefault(d, BigDecimal.ZERO));
+                c += counts.getOrDefault(d, 0L);
+            }
             max = Math.max(max, amt.longValue());
             Map<String, Object> row = new HashMap<>();
-            row.put("label", TH_MONTH_SHORT[ym.getMonthValue() - 1]);
+            row.put("label", b.label());
+            row.put("sub", b.sub());
             row.put("amount", amt);
-            row.put("count", counts.getOrDefault(key, 0L));
+            row.put("count", c);
             rows.add(row);
         }
         for (Map<String, Object> row : rows) {
@@ -244,6 +328,46 @@ public class AdminService {
         Map<String, Long> m = new HashMap<>();
         for (Object[] r : rows) m.put(String.valueOf(r[0]), num(r[1]));
         return m;
+    }
+
+    /** แปลงผล DATE(...) ของ native query (อาจเป็น java.sql.Date / LocalDate / String) */
+    private static LocalDate toLocalDate(Object o) {
+        if (o instanceof LocalDate d) return d;
+        if (o instanceof java.sql.Date d) return d.toLocalDate();
+        return LocalDate.parse(o.toString().substring(0, 10));
+    }
+
+    private static Map<LocalDate, Long> toDayMap(List<Object[]> rows) {
+        Map<LocalDate, Long> m = new HashMap<>();
+        for (Object[] r : rows) m.put(toLocalDate(r[0]), num(r[1]));
+        return m;
+    }
+
+    /** รวมค่ารายวันที่อยู่ในช่วง b */
+    private static long sumIn(Map<LocalDate, Long> perDay, Bucket b) {
+        long sum = 0;
+        for (LocalDate d = b.from(); !d.isAfter(b.to()); d = d.plusDays(1)) {
+            sum += perDay.getOrDefault(d, 0L);
+        }
+        return sum;
+    }
+
+    private static long sumAll(Map<LocalDate, Long> perDay) {
+        long sum = 0;
+        for (long v : perDay.values()) sum += v;
+        return sum;
+    }
+
+    /** 21 ก.ย. */
+    private static String thDay(LocalDate d) {
+        return d.getDayOfMonth() + " " + TH_MONTH_SHORT[d.getMonthValue() - 1];
+    }
+
+    /** 21–27 ก.ย. หรือ 28 ก.ย.–4 ต.ค. */
+    private static String thSpan(LocalDate from, LocalDate to) {
+        return from.getMonthValue() == to.getMonthValue()
+                ? from.getDayOfMonth() + "–" + thDay(to)
+                : thDay(from) + "–" + thDay(to);
     }
 
     private static long num(Object o) {
