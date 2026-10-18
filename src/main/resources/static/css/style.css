@@ -1086,3 +1086,61 @@ img.avatar, img.who-avatar, img.c-avatar{ object-fit:cover; }
   opacity:0; overflow:hidden; z-index:-1;
 }
 .file-hidden:focus + label{ outline:2px solid var(--volt); outline-offset:2px; }
+/* admin: โพสต์ที่ไม่ถึงขั้นต่ำ แยกตามกีฬา */
+.adm-card.span-all{grid-column:1 / -1}
+.adm-sub{margin:-8px 0 12px;font-size:.76rem;color:var(--muted)}
+.um-cell{display:flex;align-items:center;gap:10px;min-width:180px}
+.um-track{flex:1;display:flex;height:10px;border-radius:999px;background:var(--chalk);overflow:hidden}
+.um-track i{display:block;height:100%}
+.um-ended{background:var(--berry)}
+.um-open{background:#FFB27A}
+.um-pct{min-width:3.2em;text-align:right;font-size:.84rem}
+.um-split{margin-left:4px;font-size:.72rem;color:var(--muted);white-space:nowrap}
+
+/* admin: สนามยอดนิยม */
+.vn-tabs{margin-bottom:14px;flex-wrap:wrap}
+.vn-name{display:flex;align-items:center;gap:8px;min-width:0}
+.vn-name .user-link{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vn-row[hidden]{display:none}
+
+/* admin: การใช้งานของผู้ใช้ (Active 7/30 วัน) */
+.act-wrap{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}
+.act-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.act-stat{border-radius:12px;padding:12px;background:var(--chalk);border-top:4px solid #D6CAB6;display:flex;flex-direction:column;gap:2px}
+.act-stat span{font-size:.74rem;color:var(--muted)}
+.act-stat b{font-size:1.6rem;font-weight:800;line-height:1.15}
+.act-stat small{font-size:.7rem;color:var(--muted)}
+.act-stat.ok{border-top-color:#7FB800}
+.act-stat.mid{border-top-color:var(--flare)}
+.act-stat.gone{border-top-color:var(--berry)}
+.act-bar{display:flex;height:12px;border-radius:999px;overflow:hidden;background:var(--chalk)}
+.act-bar i{display:block;height:100%}
+.act-bar .ok{background:#7FB800}
+.act-bar .mid{background:var(--flare)}
+.act-bar .gone{background:var(--berry)}
+.act-bar .none{background:#D6CAB6}
+.act-dormant h3{font-size:.86rem;font-weight:800;margin:0 0 8px}
+@media (max-width:900px){.act-wrap{grid-template-columns:1fr}.act-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* admin: สถานะจริงของโพสต์ (เปิดรับอยู่ / เสร็จสิ้น / ยกเลิก) */
+.pill.st-open{background:#F1FFD4;color:#4E7A00}
+.pill.st-finished{background:var(--chalk);color:var(--muted)}
+.pill.st-cancelled{background:#FFE6F0;color:#C4005E}
+
+/* admin: หน้ารายการโพสต์ทั้งหมด */
+.ap-filter{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 12px;margin-bottom:14px}
+.ap-field{display:flex;flex-direction:column;gap:4px;min-width:180px}
+.ap-field > span{font-size:.74rem;font-weight:700;color:var(--muted)}
+.ap-field input{height:44px;padding:0 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font:inherit;background:#fff}
+.ap-grow{flex:1;min-width:220px}
+.ap-filter .v2-btn{height:44px}
+.ap-tabs{margin-bottom:10px}
+.ap-tabs a{height:36px;padding:0 14px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;
+  font-size:.84rem;font-weight:700;color:var(--ink);text-decoration:none}
+.ap-tabs a span{padding:0 7px;border-radius:999px;background:var(--chalk);font-size:.68rem}
+.ap-tabs a.active{background:var(--ink);color:var(--volt)}
+.ap-tabs a.active span{background:rgba(255,255,255,.14);color:#fff}
+.ap-count{margin:0 0 8px}
+.ap-type{margin-left:6px;font-size:.62rem}
+.ap-min{display:block;font-size:.68rem;color:var(--berry)}
+.ap-pager{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:16px;font-size:.84rem;color:var(--muted)}

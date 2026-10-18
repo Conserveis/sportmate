@@ -200,11 +200,60 @@
             </div>
         </div>
 
+        <!-- การใช้งาน: Active 7 / 30 วัน และผู้ใช้ที่หายไป (จาก LastActivityAt) -->
+        <div class="adm-card span-all">
+            <div class="adm-head">
+                <h2>การใช้งานของผู้ใช้</h2>
+                <div class="adm-legend">
+                    <span><i style="background:#7FB800"></i> ภายใน 7 วัน</span>
+                    <span><i style="background:var(--flare)"></i> 8–30 วัน</span>
+                    <span><i style="background:var(--berry)"></i> หายไป &gt; 30 วัน</span>
+                    <span><i style="background:#D6CAB6"></i> ยังไม่มีข้อมูล</span>
+                </div>
+            </div>
+            <p class="adm-sub">นับจากเวลาที่เปิดใช้งานเว็บครั้งล่าสุด (ไม่ขึ้นกับช่วงเวลาที่เลือกด้านบน) · ผู้ใช้ทั้งหมด <b th:text="${activity.total}">0</b> คน</p>
+            <div class="act-wrap">
+                <div>
+                    <div class="act-stats">
+                        <div class="act-stat ok"><span>Active 7 วัน</span><b th:text="${activity.active7}">0</b>
+                            <small th:text="${activity.pct7} + '%'">0%</small></div>
+                        <div class="act-stat mid"><span>Active 30 วัน</span><b th:text="${activity.active30}">0</b>
+                            <small th:text="|8–30 วัน: ${activity.active8to30} คน|">-</small></div>
+                        <div class="act-stat gone"><span>หายไป &gt; 30 วัน</span><b th:text="${activity.dormant}">0</b>
+                            <small th:text="${activity.pctDormant} + '%'">0%</small></div>
+                        <div class="act-stat none"><span>ยังไม่มีข้อมูล</span><b th:text="${activity.unknown}">0</b>
+                            <small>ยังไม่เข้าใช้ตั้งแต่เริ่มเก็บสถิติ</small></div>
+                    </div>
+                    <div class="act-bar" role="img"
+                         th:attr="aria-label=|Active 7 วัน ${activity.pct7}%, 8 ถึง 30 วัน ${activity.pct8to30}%, หายไปเกิน 30 วัน ${activity.pctDormant}%, ยังไม่มีข้อมูล ${activity.pctUnknown}%|">
+                        <i class="ok" th:style="'width:' + ${activity.pct7} + '%'"></i>
+                        <i class="mid" th:style="'width:' + ${activity.pct8to30} + '%'"></i>
+                        <i class="gone" th:style="'width:' + ${activity.pctDormant} + '%'"></i>
+                        <i class="none" th:style="'width:' + ${activity.pctUnknown} + '%'"></i>
+                    </div>
+                </div>
+                <div class="act-dormant">
+                    <h3>ไม่ได้เข้ามานานที่สุด</h3>
+                    <div class="adm-list">
+                        <a class="adm-item" th:each="u : ${dormantUsers}" th:href="@{'/users/' + ${u.id}}">
+                            <span class="c-avatar" th:text="${#strings.toUpperCase(#strings.substring(u.name,0,1))}">U</span>
+                            <span class="adm-item-body">
+                                <span class="adm-item-name" th:text="${u.name}">user</span>
+                                <span class="adm-item-meta" th:text="'เข้าล่าสุด ' + ${u.lastSeen}">-</span>
+                            </span>
+                            <span class="pill orange" th:text="${u.days} + ' วัน'">0 วัน</span>
+                        </a>
+                        <div th:if="${dormantUsers.isEmpty()}" class="adm-empty">ยังไม่มีผู้ใช้ที่หายไปเกิน 30 วัน</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- โพสต์ล่าสุด -->
         <div class="adm-card span2">
             <div class="adm-head">
                 <h2>โพสต์ล่าสุด</h2>
-                <a class="sec-more" th:href="@{/posts}">ดูทั้งหมด ›</a>
+                <a class="sec-more" th:href="@{/admin/posts}">ดูทั้งหมด ›</a>
             </div>
             <div class="adm-table-wrap">
                 <table class="adm-table">
@@ -222,9 +271,7 @@
                         <td th:text="${p.datePlay}">-</td>
                         <td><b th:text="${p.joined}">0</b><span style="color:var(--muted)" th:text="'/' + ${p.max}">/0</span></td>
                         <td>
-                            <span class="pill"
-                                  th:classappend="${p.status == 'cancelled'} ? 'orange' : (${p.status == 'open'} ? 'green' : 'grey')"
-                                  th:text="${p.status}">open</span>
+                            <span class="pill" th:classappend="'st-' + ${p.status}" th:text="${p.statusLabel}">สถานะ</span>
                         </td>
                     </tr>
                     <tr th:if="${recentPosts.isEmpty()}"><td colspan="6" class="adm-empty">ยังไม่มีโพสต์</td></tr>
@@ -279,7 +326,107 @@
             </div>
         </div>
 
+        <!-- โพสต์ที่ไม่ถึงขั้นต่ำ แยกตามกีฬา -->
+        <div class="adm-card span-all">
+            <div class="adm-head">
+                <h2>โพสต์ที่ไม่ถึงขั้นต่ำ แยกตามกีฬา</h2>
+                <div class="adm-legend">
+                    <span><i style="background:var(--berry)"></i> เลยเวลาเล่นแล้ว</span>
+                    <span><i style="background:#FFB27A"></i> ยังเปิดรับอยู่</span>
+                </div>
+            </div>
+            <p class="adm-sub">ผู้เข้าร่วมที่อนุมัติแล้วยังไม่ถึงจำนวนขั้นต่ำ · เฉพาะโพสต์ทั่วไปที่ไม่ถูกยกเลิก ในช่วงที่เลือก · เรียงจากกีฬาที่หาคนยากที่สุด</p>
+            <div class="adm-table-wrap" th:unless="${underMin.isEmpty()}">
+                <table class="adm-table adm-undermin">
+                    <thead>
+                    <tr>
+                        <th>กีฬา</th>
+                        <th style="text-align:right">โพสต์ทั้งหมด</th>
+                        <th style="text-align:right">ไม่ถึงขั้นต่ำ</th>
+                        <th>สัดส่วน</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="u : ${underMin}">
+                        <td><span class="sport-tag" th:text="${u.sport}">Sport</span></td>
+                        <td style="text-align:right" th:text="${u.posts}">0</td>
+                        <td style="text-align:right">
+                            <b th:text="${u.under}">0</b>
+                            <span class="um-split" th:if="${u.under > 0}"
+                                  th:text="|(เลยเวลา ${u.underEnded} · ยังเปิด ${u.underOpen})|">(-)</span>
+                        </td>
+                        <td class="um-cell">
+                            <div class="um-track" role="img"
+                                 th:attr="aria-label=|ไม่ถึงขั้นต่ำ ${u.pct}% ของโพสต์ทั้งหมด|">
+                                <i class="um-ended" th:style="'width:' + ${u.underEnded * 100.0 / u.posts} + '%'"></i>
+                                <i class="um-open" th:style="'width:' + ${u.underOpen * 100.0 / u.posts} + '%'"></i>
+                            </div>
+                            <b class="um-pct" th:text="${u.pct} + '%'">0%</b>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${underMin.isEmpty()}" class="adm-empty">ยังไม่มีโพสต์ในช่วงนี้</div>
+        </div>
+
+        <!-- สนามยอดนิยม: สถานที่ × กีฬา -->
+        <div class="adm-card span-all" id="venues">
+            <div class="adm-head">
+                <h2>สนามยอดนิยม</h2>
+                <div class="adm-legend"><span><i style="background:var(--pitch)"></i> จำนวนโพสต์</span></div>
+            </div>
+            <p class="adm-sub">นับโพสต์ที่ไม่ถูกยกเลิกในช่วงที่เลือก แยกตามสถานที่และกีฬา · กดชื่อสนามเพื่อดูโพสต์ที่เปิดอยู่ของสนามและกีฬานั้น</p>
+            <th:block th:unless="${venues.isEmpty()}">
+                <div class="v2t-tabs vn-tabs" role="tablist" aria-label="กรองตามกีฬา">
+                    <button type="button" class="active" data-sport="">ทุกกีฬา</button>
+                    <button type="button" th:each="sp : ${venueSports}"
+                            th:attr="data-sport=${sp}" th:text="${sp}">กีฬา</button>
+                </div>
+                <div class="rank vn-list">
+                    <div class="rank-row vn-row" th:each="v : ${venues}"
+                         th:attr="data-sport=${v.sport}, data-posts=${v.posts}">
+                        <div class="rank-top">
+                            <span class="vn-name">
+                                <a class="user-link" th:href="@{/posts(locationId=${v.locationId}, sportId=${v.sportId})}"
+                                   th:text="${v.location}">สนาม</a>
+                                <span class="sport-tag" th:text="${v.sport}">Sport</span>
+                            </span>
+                            <span class="rank-num"><b th:text="${v.posts}">0</b> โพสต์ · <span th:text="${v.joins}">0</span> เข้าร่วม</span>
+                        </div>
+                        <div class="rank-track"><div class="rank-fill vn-fill"></div></div>
+                    </div>
+                </div>
+            </th:block>
+            <div th:if="${venues.isEmpty()}" class="adm-empty">ยังไม่มีโพสต์ในช่วงนี้</div>
+        </div>
+
     </div>
 </div>
+<script>
+    /* สนามยอดนิยม: กรองตามกีฬา แสดง 8 อันดับแรก แถบยาวเทียบกับอันดับ 1 ของตัวกรองนั้น */
+    (function () {
+        var card = document.getElementById('venues');
+        if (!card) return;
+        var rows = Array.prototype.slice.call(card.querySelectorAll('.vn-row'));
+        var tabs = card.querySelectorAll('.vn-tabs button');
+        var TOP = 8;
+        function show(sport) {
+            var shown = rows.filter(function (r) { return !sport || r.dataset.sport === sport; }).slice(0, TOP);
+            var max = shown.reduce(function (m, r) { return Math.max(m, Number(r.dataset.posts)); }, 1);
+            rows.forEach(function (r) { r.hidden = shown.indexOf(r) < 0; });
+            shown.forEach(function (r) {
+                r.querySelector('.vn-fill').style.width = Math.max(4, Number(r.dataset.posts) * 100 / max) + '%';
+            });
+            tabs.forEach(function (b) {
+                var on = b.dataset.sport === sport;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-selected', on);
+            });
+        }
+        tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.sport); }); });
+        show('');
+    })();
+</script>
 </body>
 </html>

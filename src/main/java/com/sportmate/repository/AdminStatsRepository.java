@@ -13,6 +13,30 @@ import com.sportmate.entity.Post;
 /** Query สถิติสำหรับแดชบอร์ดผู้ดูแลระบบ (อ่านอย่างเดียว ใช้ native SQL) */
 public interface AdminStatsRepository extends Repository<Post, Integer> {
 
+    /**
+     * สถานะจริงของโพสต์ (alias p): ยกเลิก / เลยเวลาเล่นแล้ว = เสร็จสิ้น / นอกนั้น = เปิดรับอยู่
+     * คอลัมน์ Post.Status ไม่ถูกเปลี่ยนเมื่อเลยวันเล่น จึงต้องคำนวณจาก DatePlay เอง
+     */
+    String POST_STATE_SQL = """
+        CASE WHEN p.Status = 'cancelled' THEN 'cancelled'
+             WHEN p.DatePlay < NOW()     THEN 'finished'
+             ELSE 'open' END""";
+
+    /** โพสต์ทั้งหมดพร้อมสถานะจริง สำหรับหน้า /admin/posts (alias x) — กรองกีฬา / คำค้นได้ */
+    String ADMIN_POSTS_SQL = """
+        SELECT p.PostID, p.PostName, s.SportName, u.UserName, p.DatePlay,
+               """ + POST_STATE_SQL + """
+                AS st,
+               (SELECT COUNT(*) FROM Event e WHERE e.PostID = p.PostID AND e.Status = 'approved') AS joined,
+               p.MaxPlayer, p.MinPlayer, t.PtypeName, u.UserID, p.DateCreate
+        FROM Post p
+        JOIN Sport    s ON s.SportID    = p.SportID
+        JOIN `User`   u ON u.UserID     = p.OwnerUserID
+        JOIN PostType t ON t.PostTypeID = p.PostTypeID
+        WHERE (:sportId IS NULL OR p.SportID = :sportId)
+          AND (:q IS NULL OR p.PostName LIKE CONCAT('%', :q, '%') OR u.UserName LIKE CONCAT('%', :q, '%'))
+        """;
+
     // ---------- ตัวเลขสรุป ----------
     @Query(value = "SELECT COUNT(*) FROM `User`", nativeQuery = true)
     long countUsers();
@@ -89,7 +113,9 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
 
     // ---------- ตาราง ----------
     @Query(value = """
-        SELECT p.PostID, p.PostName, s.SportName, u.UserName, p.DatePlay, p.Status,
+        SELECT p.PostID, p.PostName, s.SportName, u.UserName, p.DatePlay,
+               """ + POST_STATE_SQL + """
+               ,
                (SELECT COUNT(*) FROM Event e WHERE e.PostID = p.PostID AND e.Status = 'approved'),
                p.MaxPlayer
         FROM Post p
@@ -99,6 +125,17 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
         LIMIT 8
         """, nativeQuery = true)
     List<Object[]> recentPosts();
+
+    // ---------- หน้ารายการโพสต์ทั้งหมด (/admin/posts) ----------
+    @Query(value = "SELECT * FROM (" + ADMIN_POSTS_SQL + ") x"
+            + " WHERE (:status IS NULL OR x.st = :status)"
+            + " ORDER BY x.DateCreate DESC LIMIT :limit OFFSET :offset", nativeQuery = true)
+    List<Object[]> adminPosts(@Param("sportId") Integer sportId, @Param("status") String status,
+                              @Param("q") String q, @Param("limit") int limit, @Param("offset") int offset);
+
+    /** จำนวนโพสต์ต่อสถานะ ตามตัวกรองกีฬา / คำค้น (ใช้แสดงตัวเลขบนแท็บสถานะ) */
+    @Query(value = "SELECT x.st, COUNT(*) FROM (" + ADMIN_POSTS_SQL + ") x GROUP BY x.st", nativeQuery = true)
+    List<Object[]> adminPostStateCounts(@Param("sportId") Integer sportId, @Param("q") String q);
 
     @Query(value = """
         SELECT u.UserID, u.UserName, COUNT(p.PostID) AS c, ROUND(u.AvgScore, 2)
@@ -186,11 +223,8 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
 
     @Query(value = """
         SELECT x.st, COUNT(*) FROM (
-            SELECT CASE
-                     WHEN p.Status = 'cancelled' THEN 'cancelled'
-                     WHEN p.DatePlay < NOW()     THEN 'finished'
-                     ELSE 'open'
-                   END AS st
+            SELECT """ + POST_STATE_SQL + """
+                 AS st
             FROM Post p
             WHERE p.DateCreate >= :start
         ) x
@@ -198,6 +232,69 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
         ORDER BY FIELD(x.st, 'open', 'finished', 'cancelled')
         """, nativeQuery = true)
     List<Object[]> postStatusCountsSince(@Param("start") LocalDate start);
+
+    /**
+     * โพสต์ที่ "ไม่ถึงขั้นต่ำ" แยกตามกีฬา (เฉพาะโพสต์ทั่วไป ไม่รวมทัวร์นาเมนต์และโพสต์ที่ยกเลิก)
+     * ไม่ถึงขั้นต่ำ = ผู้เข้าร่วมที่ approved น้อยกว่า MinPlayer
+     * คอลัมน์: กีฬา, โพสต์ทั้งหมด, ไม่ถึงขั้นต่ำ, ไม่ถึงขั้นต่ำและเลยเวลาเล่นแล้ว
+     */
+    @Query(value = """
+        SELECT s.SportName, COUNT(*) AS posts,
+               SUM(x.joined < x.MinPlayer) AS under_min,
+               SUM(x.joined < x.MinPlayer AND x.DatePlay < NOW()) AS under_ended
+        FROM (
+            SELECT p.SportID, p.MinPlayer, p.DatePlay,
+                   (SELECT COUNT(*) FROM Event e
+                    WHERE e.PostID = p.PostID AND e.Status = 'approved') AS joined
+            FROM Post p
+            JOIN PostType t ON t.PostTypeID = p.PostTypeID
+            WHERE p.Status <> 'cancelled' AND t.PtypeName = 'Post' AND p.DateCreate >= :start
+        ) x
+        JOIN Sport s ON s.SportID = x.SportID
+        GROUP BY s.SportID, s.SportName
+        ORDER BY SUM(x.joined < x.MinPlayer) / COUNT(*) DESC, under_min DESC, posts DESC
+        """, nativeQuery = true)
+    List<Object[]> underMinBySportSince(@Param("start") LocalDate start);
+
+    /**
+     * สนามยอดนิยม: จำนวนโพสต์และผู้เข้าร่วม (approved) ต่อคู่ สถานที่ × กีฬา (ไม่รวมโพสต์ที่ยกเลิก)
+     * คอลัมน์: LocationID, ชื่อสถานที่, กีฬา, โพสต์, ผู้เข้าร่วม, SportID
+     */
+    @Query(value = """
+        SELECT l.LocationID, l.LocationName, s.SportName, COUNT(*) AS posts,
+               COALESCE(SUM(j.c), 0) AS joins, s.SportID
+        FROM Post p
+        JOIN Location l ON l.LocationID = p.LocationID
+        JOIN Sport s    ON s.SportID    = p.SportID
+        LEFT JOIN (SELECT PostID, COUNT(*) AS c FROM Event
+                   WHERE Status = 'approved' GROUP BY PostID) j ON j.PostID = p.PostID
+        WHERE p.Status <> 'cancelled' AND p.DateCreate >= :start
+        GROUP BY l.LocationID, l.LocationName, s.SportID, s.SportName
+        ORDER BY posts DESC, joins DESC
+        """, nativeQuery = true)
+    List<Object[]> venueSportStatsSince(@Param("start") LocalDate start);
+
+    // ---------- การใช้งาน (LastActivityAt) ----------
+    /** [ทั้งหมด, active 7 วัน, active 30 วัน, หายไป > 30 วัน, ยังไม่มีข้อมูล] */
+    @Query(value = """
+        SELECT COUNT(*),
+               COALESCE(SUM(LastActivityAt >= NOW() - INTERVAL 7 DAY), 0),
+               COALESCE(SUM(LastActivityAt >= NOW() - INTERVAL 30 DAY), 0),
+               COALESCE(SUM(LastActivityAt <  NOW() - INTERVAL 30 DAY), 0),
+               COALESCE(SUM(LastActivityAt IS NULL), 0)
+        FROM `User`
+        """, nativeQuery = true)
+    List<Object[]> activityCounts();
+
+    /** ผู้ใช้ที่ไม่ได้เข้ามาเกิน 30 วัน — หายไปนานสุดก่อน */
+    @Query(value = """
+        SELECT UserID, UserName, LastActivityAt, DATEDIFF(NOW(), LastActivityAt) AS days
+        FROM `User`
+        WHERE LastActivityAt < NOW() - INTERVAL 30 DAY
+        ORDER BY LastActivityAt ASC
+        LIMIT 6
+        """, nativeQuery = true)
+    List<Object[]> dormantUsers();
 
     @Query(value = "SELECT COUNT(*) FROM `User` WHERE CreatedAt >= :start", nativeQuery = true)
     long countNewUsersSince(@Param("start") LocalDate start);

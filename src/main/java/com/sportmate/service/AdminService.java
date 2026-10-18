@@ -23,6 +23,16 @@ public class AdminService {
             "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
     };
 
+    /** ป้ายสถานะจริงของโพสต์ (ดู AdminStatsRepository.POST_STATE_SQL) เรียงตามลำดับแท็บ */
+    public static final Map<String, String> STATE_LABELS;
+    static {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("open", "เปิดรับอยู่");
+        m.put("finished", "เสร็จสิ้น");
+        m.put("cancelled", "ยกเลิก");
+        STATE_LABELS = java.util.Collections.unmodifiableMap(m);
+    }
+
     private final AdminStatsRepository repo;
 
     public AdminService(AdminStatsRepository repo) {
@@ -149,10 +159,7 @@ public class AdminService {
     }
 
     public List<Map<String, Object>> postStatusDonut(int range) {
-        Map<String, String> labels = Map.of(
-                "open", "เปิดรับอยู่",
-                "finished", "เสร็จสิ้น",
-                "cancelled", "ยกเลิก");
+        Map<String, String> labels = STATE_LABELS;
         Map<String, String> colors = Map.of(
                 "open", "#FF6A00",       // Orange Burst
                 "finished", "#C8FF40",   // Lime Charge
@@ -203,6 +210,73 @@ public class AdminService {
         return out;
     }
 
+    /** กีฬาที่หาคนยาก: สัดส่วนโพสต์ที่ผู้เข้าร่วมไม่ถึงขั้นต่ำ ในช่วงที่เลือก (มาก → น้อย) */
+    public List<Map<String, Object>> underMinBySport(int range) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Object[] r : repo.underMinBySportSince(buckets(range).get(0).from())) {
+            long posts = num(r[1]);
+            long under = num(r[2]);
+            Map<String, Object> m = new HashMap<>();
+            m.put("sport", String.valueOf(r[0]));
+            m.put("posts", posts);
+            m.put("under", under);
+            m.put("underEnded", num(r[3]));
+            m.put("underOpen", under - num(r[3]));
+            m.put("pct", posts == 0 ? 0 : (int) Math.round(under * 100.0 / posts));
+            out.add(m);
+        }
+        return out;
+    }
+
+    /** สนามยอดนิยม: คู่ สถานที่ × กีฬา ในช่วงที่เลือก เรียงตามจำนวนโพสต์ (หน้าเว็บกรองตามกีฬาเอง) */
+    public List<Map<String, Object>> popularVenues(int range) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Object[] r : repo.venueSportStatsSince(buckets(range).get(0).from())) {
+            Map<String, Object> m = new HashMap<>();
+            m.put("locationId", num(r[0]));
+            m.put("location", String.valueOf(r[1]));
+            m.put("sport", String.valueOf(r[2]));
+            m.put("posts", num(r[3]));
+            m.put("joins", num(r[4]));
+            m.put("sportId", num(r[5]));
+            out.add(m);
+        }
+        return out;
+    }
+
+    /** สถิติการใช้งาน: active 7 / 30 วัน, หายไป > 30 วัน, ยังไม่มีข้อมูล (ยังไม่เข้าใช้งานตั้งแต่เริ่มเก็บ) */
+    public Map<String, Object> activity() {
+        Object[] r = repo.activityCounts().get(0);
+        long total = num(r[0]);
+        long a7 = num(r[1]), a30 = num(r[2]), gone = num(r[3]), unknown = num(r[4]);
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("total", total);
+        m.put("active7", a7);
+        m.put("active30", a30);
+        m.put("active8to30", a30 - a7);
+        m.put("dormant", gone);
+        m.put("unknown", unknown);
+        long base = Math.max(total, 1);
+        m.put("pct7", round(a7 * 100.0 / base, 1));
+        m.put("pct8to30", round((a30 - a7) * 100.0 / base, 1));
+        m.put("pctDormant", round(gone * 100.0 / base, 1));
+        m.put("pctUnknown", round(unknown * 100.0 / base, 1));
+        return m;
+    }
+
+    public List<Map<String, Object>> dormantUsers() {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Object[] r : repo.dormantUsers()) {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", num(r[0]));
+            m.put("name", String.valueOf(r[1]));
+            m.put("lastSeen", r[2] == null ? "-" : r[2].toString().substring(0, 10));
+            m.put("days", num(r[3]));
+            out.add(m);
+        }
+        return out;
+    }
+
     public List<Map<String, Object>> recentPosts() {
         List<Map<String, Object>> out = new ArrayList<>();
         for (Object[] r : repo.recentPosts()) {
@@ -213,10 +287,63 @@ public class AdminService {
             m.put("owner", String.valueOf(r[3]));
             m.put("datePlay", r[4] == null ? "-" : r[4].toString().substring(0, 16).replace('T', ' '));
             m.put("status", String.valueOf(r[5]));
+            m.put("statusLabel", STATE_LABELS.getOrDefault(String.valueOf(r[5]), String.valueOf(r[5])));
             m.put("joined", num(r[6]));
             m.put("max", num(r[7]));
             out.add(m);
         }
+        return out;
+    }
+
+    // ---------- หน้ารายการโพสต์ทั้งหมด (/admin/posts) ----------
+    public static final int POSTS_PAGE_SIZE = 20;
+
+    /** null = ทุกสถานะ */
+    public static String normalizeState(String status) {
+        return STATE_LABELS.containsKey(status) ? status : null;
+    }
+
+    /** รายการโพสต์หน้าที่ page (เริ่ม 1) ตามตัวกรอง พร้อมจำนวนต่อสถานะสำหรับแท็บ */
+    public Map<String, Object> postList(Integer sportId, String status, String q, int page) {
+        String query = (q == null || q.isBlank()) ? null : q.trim();
+        Map<String, Long> counts = new LinkedHashMap<>();
+        for (String s : STATE_LABELS.keySet()) counts.put(s, 0L);
+        long all = 0;
+        for (Object[] r : repo.adminPostStateCounts(sportId, query)) {
+            counts.put(String.valueOf(r[0]), num(r[1]));
+            all += num(r[1]);
+        }
+        long matched = status == null ? all : counts.getOrDefault(status, 0L);
+        int pages = (int) Math.max(1, (matched + POSTS_PAGE_SIZE - 1) / POSTS_PAGE_SIZE);
+        int p = Math.min(Math.max(page, 1), pages);
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (Object[] r : repo.adminPosts(sportId, status, query, POSTS_PAGE_SIZE, (p - 1) * POSTS_PAGE_SIZE)) {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", num(r[0]));
+            m.put("name", String.valueOf(r[1]));
+            m.put("sport", String.valueOf(r[2]));
+            m.put("owner", String.valueOf(r[3]));
+            m.put("datePlay", r[4] == null ? "-" : r[4].toString().substring(0, 16).replace('T', ' '));
+            m.put("status", String.valueOf(r[5]));
+            m.put("statusLabel", STATE_LABELS.getOrDefault(String.valueOf(r[5]), String.valueOf(r[5])));
+            m.put("joined", num(r[6]));
+            m.put("max", num(r[7]));
+            m.put("min", num(r[8]));
+            m.put("tournament", "Tournament".equals(String.valueOf(r[9])));
+            m.put("ownerId", num(r[10]));
+            rows.add(m);
+        }
+
+        Map<String, Object> out = new HashMap<>();
+        out.put("rows", rows);
+        out.put("counts", counts);
+        out.put("all", all);
+        out.put("matched", matched);
+        out.put("page", p);
+        out.put("pages", pages);
+        out.put("from", matched == 0 ? 0 : (long) (p - 1) * POSTS_PAGE_SIZE + 1);
+        out.put("to", (long) (p - 1) * POSTS_PAGE_SIZE + rows.size());
         return out;
     }
 

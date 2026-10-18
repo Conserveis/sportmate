@@ -17,4 +17,12 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @org.springframework.data.jpa.repository.Query(
         "SELECT u FROM User u JOIN u.interestedSports s WHERE s.id = :sportId")
     java.util.List<User> findFollowersOfSport(@org.springframework.data.repository.query.Param("sportId") Integer sportId);
+
+    // บันทึกเวลาใช้งานล่าสุด (เรียกจาก AuthInterceptor) — อัปเดตคอลัมน์เดียว ไม่โหลด entity
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query(
+        value = "UPDATE `User` SET LastActivityAt = :now WHERE UserID = :id", nativeQuery = true)
+    int touchActivity(@org.springframework.data.repository.query.Param("id") Integer id,
+                      @org.springframework.data.repository.query.Param("now") java.time.LocalDateTime now);
 }

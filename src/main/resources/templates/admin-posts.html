@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('โพสต์ทั้งหมด · ผู้ดูแลระบบ')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('admin')}"></nav>
+
+<div class="wrap">
+    <div th:if="${msg}" class="flash ok" th:text="${msg}"></div>
+    <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+    <div class="adm-hero">
+        <div>
+            <div class="eyebrow">Admin · Posts</div>
+            <h1>โพสต์ทั้งหมด</h1>
+            <p>โพสต์และทัวร์นาเมนต์ทุกรายการในระบบ กรองตามกีฬา สถานะ หรือค้นหาจากชื่อกิจกรรม / ผู้จัด</p>
+        </div>
+        <a class="v2-btn outline" th:href="@{/admin}">‹ กลับแดชบอร์ด</a>
+    </div>
+
+    <div class="adm-card">
+        <!-- ตัวกรอง -->
+        <form class="ap-filter" method="get" th:action="@{/admin/posts}">
+            <input type="hidden" name="status" th:value="${fStatus}">
+            <label class="ap-field">
+                <span>กีฬา</span>
+                <select name="sportId" onchange="this.form.submit()">
+                    <option value="">ทุกกีฬา</option>
+                    <option th:each="s : ${sports}" th:value="${s.id}" th:text="${s.name}"
+                            th:selected="${fSportId != null and fSportId == s.id}">กีฬา</option>
+                </select>
+            </label>
+            <label class="ap-field ap-grow">
+                <span>ค้นหา</span>
+                <input type="search" name="q" th:value="${fQ}" placeholder="ชื่อกิจกรรม หรือชื่อผู้จัด">
+            </label>
+            <button class="v2-btn pitch" type="submit">ค้นหา</button>
+            <a class="v2-btn text" th:if="${fSportId != null or fStatus != null or !#strings.isEmpty(fQ)}"
+               th:href="@{/admin/posts}">ล้างตัวกรอง</a>
+        </form>
+
+        <!-- แท็บสถานะ -->
+        <nav class="v2t-tabs ap-tabs" aria-label="กรองตามสถานะ">
+            <a th:href="@{/admin/posts(sportId=${fSportId}, q=${fQ})}"
+               th:classappend="${fStatus == null} ? 'active'"
+               th:attr="aria-current=${fStatus == null} ? 'page' : null">ทั้งหมด <span th:text="${list.all}">0</span></a>
+            <a th:each="e : ${stateLabels}"
+               th:href="@{/admin/posts(sportId=${fSportId}, status=${e.key}, q=${fQ})}"
+               th:classappend="${fStatus == e.key} ? 'active'"
+               th:attr="aria-current=${fStatus == e.key} ? 'page' : null">
+                <th:block th:text="${e.value}">สถานะ</th:block> <span th:text="${list.counts[e.key]}">0</span></a>
+        </nav>
+
+        <p class="adm-sub ap-count" th:if="${list.matched > 0}"
+           th:text="|แสดง ${list.from}–${list.to} จาก ${list.matched} รายการ|">-</p>
+
+        <div class="adm-table-wrap" th:unless="${list.rows.isEmpty()}">
+            <table class="adm-table">
+                <thead>
+                <tr>
+                    <th>กิจกรรม</th><th>กีฬา</th><th>ผู้จัด</th>
+                    <th>วันเวลาเล่น</th><th>ผู้เข้าร่วม</th><th>สถานะ</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${list.rows}">
+                    <td>
+                        <a class="user-link" th:href="@{'/posts/' + ${p.id}}" th:text="${p.name}">ชื่อ</a>
+                        <span class="pill orange ap-type" th:if="${p.tournament}">Tournament</span>
+                    </td>
+                    <td><span class="sport-tag" th:text="${p.sport}">Sport</span></td>
+                    <td><a class="user-link" th:href="@{'/users/' + ${p.ownerId}}" th:text="${p.owner}">owner</a></td>
+                    <td th:text="${p.datePlay}">-</td>
+                    <td>
+                        <b th:text="${p.joined}">0</b><span style="color:var(--muted)" th:text="'/' + ${p.max}">/0</span>
+                        <span class="ap-min" th:if="${p.status != 'cancelled' and p.joined < p.min}"
+                              th:text="|ขั้นต่ำ ${p.min}|">ขั้นต่ำ 0</span>
+                    </td>
+                    <td><span class="pill" th:classappend="'st-' + ${p.status}" th:text="${p.statusLabel}">สถานะ</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div th:if="${list.rows.isEmpty()}" class="adm-empty">ไม่พบโพสต์ที่ตรงกับตัวกรอง</div>
+
+        <!-- หน้า -->
+        <nav class="ap-pager" th:if="${list.pages > 1}" aria-label="เลือกหน้า">
+            <a class="v2-btn outline" th:if="${list.page > 1}"
+               th:href="@{/admin/posts(sportId=${fSportId}, status=${fStatus}, q=${fQ}, page=${list.page - 1})}">‹ ก่อนหน้า</a>
+            <span th:text="|หน้า ${list.page} / ${list.pages}|">หน้า 1 / 1</span>
+            <a class="v2-btn outline" th:if="${list.page < list.pages}"
+               th:href="@{/admin/posts(sportId=${fSportId}, status=${fStatus}, q=${fQ}, page=${list.page + 1})}">ถัดไป ›</a>
+        </nav>
+    </div>
+</div>
+</body>
+</html>
