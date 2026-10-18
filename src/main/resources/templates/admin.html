@@ -187,8 +187,6 @@
                             th:attr="stroke=${seg.color},
                                      stroke-dasharray=${seg.dash} + ' ' + ${seg.gap},
                                      stroke-dashoffset=${seg.offset}"></circle>
-                    <text x="70" y="66" class="donut-c1" th:text="${period.fillRate} + '%'">0%</text>
-                    <text x="70" y="84" class="donut-c2">อัตราเติมเต็ม</text>
                 </svg>
                 <div class="donut-legend">
                     <div th:each="seg : ${statusDonut}">

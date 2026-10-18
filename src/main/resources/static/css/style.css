@@ -978,8 +978,6 @@ button.sec-more:hover{color:var(--pitch-dark)}
 .donut-track{fill:none;stroke:var(--chalk);stroke-width:16}
 .donut-seg{fill:none;stroke-width:16;stroke-linecap:butt}
 .donut text{transform:rotate(90deg);transform-origin:70px 70px;text-anchor:middle}
-.donut-c1{font-size:20px;font-weight:800;fill:var(--ink)}
-.donut-c2{font-size:9px;fill:var(--muted)}
 .donut-legend{width:100%;display:flex;flex-direction:column;gap:7px;font-size:.78rem}
 .donut-legend>div{display:flex;align-items:center;gap:7px}
 .donut-legend i{width:9px;height:9px;border-radius:3px;flex:none}

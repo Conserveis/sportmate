@@ -41,7 +41,6 @@ public class AdminService {
         m.put("pendingJoins", repo.countPendingJoins());
         m.put("reviews", repo.countReviews());
         m.put("avgScore", round(nz(repo.avgReviewScore()), 2));
-        m.put("fillRate", (int) Math.round(nz(repo.avgFillRate())));
         return m;
     }
 
@@ -119,7 +118,6 @@ public class AdminService {
         m.put("posts", sumAll(toDayMap(repo.postsPerDaySince(from))));
         m.put("joins", sumAll(toDayMap(repo.joinsPerDaySince(from))));
         m.put("newUsers", repo.countNewUsersSince(from));
-        m.put("fillRate", (int) Math.round(nz(repo.avgFillRateSince(from))));
         return m;
     }
 
@@ -153,12 +151,10 @@ public class AdminService {
     public List<Map<String, Object>> postStatusDonut(int range) {
         Map<String, String> labels = Map.of(
                 "open", "เปิดรับอยู่",
-                "closed", "ปิดรับแล้ว",
-                "finished", "จบแล้ว",
+                "finished", "เสร็จสิ้น",
                 "cancelled", "ยกเลิก");
         Map<String, String> colors = Map.of(
                 "open", "#FF6A00",       // Orange Burst
-                "closed", "#0071FF",     // Blue Raspberry
                 "finished", "#C8FF40",   // Lime Charge
                 "cancelled", "#FF007A"); // Berry Vibe
 

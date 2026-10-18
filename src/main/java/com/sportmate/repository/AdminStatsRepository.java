@@ -52,18 +52,6 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
     @Query(value = "SELECT COALESCE(AVG(ReviewScore),0) FROM Review", nativeQuery = true)
     Double avgReviewScore();
 
-    /** อัตราการเติมเต็มเฉลี่ย (ผู้เข้าร่วมจริง / ที่รับได้) เป็น % */
-    @Query(value = """
-        SELECT COALESCE(AVG(rate),0) * 100 FROM (
-            SELECT COUNT(e.EventID) / p.MaxPlayer AS rate
-            FROM Post p
-            LEFT JOIN Event e ON e.PostID = p.PostID AND e.Status = 'approved'
-            WHERE p.Status <> 'cancelled'
-            GROUP BY p.PostID, p.MaxPlayer
-        ) x
-        """, nativeQuery = true)
-    Double avgFillRate();
-
     // ---------- กราฟ ----------
     @Query(value = """
         SELECT DATE_FORMAT(DateCreate,'%Y-%m') AS ym, COUNT(*) AS c
@@ -196,21 +184,21 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
         """, nativeQuery = true)
     List<Object[]> revenuePerDaySince(@Param("start") LocalDate start);
 
-    @Query(value = "SELECT Status, COUNT(*) FROM Post WHERE DateCreate >= :start GROUP BY Status",
-           nativeQuery = true)
+    @Query(value = """
+        SELECT x.st, COUNT(*) FROM (
+            SELECT CASE
+                     WHEN p.Status = 'cancelled' THEN 'cancelled'
+                     WHEN p.DatePlay < NOW()     THEN 'finished'
+                     ELSE 'open'
+                   END AS st
+            FROM Post p
+            WHERE p.DateCreate >= :start
+        ) x
+        GROUP BY x.st
+        ORDER BY FIELD(x.st, 'open', 'finished', 'cancelled')
+        """, nativeQuery = true)
     List<Object[]> postStatusCountsSince(@Param("start") LocalDate start);
 
     @Query(value = "SELECT COUNT(*) FROM `User` WHERE CreatedAt >= :start", nativeQuery = true)
     long countNewUsersSince(@Param("start") LocalDate start);
-
-    @Query(value = """
-        SELECT COALESCE(AVG(rate),0) * 100 FROM (
-            SELECT COUNT(e.EventID) / p.MaxPlayer AS rate
-            FROM Post p
-            LEFT JOIN Event e ON e.PostID = p.PostID AND e.Status = 'approved'
-            WHERE p.Status <> 'cancelled' AND p.DateCreate >= :start
-            GROUP BY p.PostID, p.MaxPlayer
-        ) x
-        """, nativeQuery = true)
-    Double avgFillRateSince(@Param("start") LocalDate start);
 }
