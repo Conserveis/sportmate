@@ -26,7 +26,7 @@
     <section class="v2a-pending-tours" th:unless="${unfinishedTours.isEmpty()}" aria-labelledby="pt-title">
         <div class="v2a-pt-head">
             <h2 id="pt-title">ทัวร์นาเมนต์ที่ยังจัดการไม่เสร็จ <span class="v2-count-pill" th:text="${unfinishedTours.size()}">0</span></h2>
-            <span>เลยวันแข่งแล้ว แต่ยังไม่ได้จับสายหรือกรอกผลให้ครบ</span>
+            <span>ถึงเวลาแข่งแล้ว แต่ยังไม่ได้จับสายหรือกรอกผลให้ครบ · แสดงถึงสิ้นวันแข่ง</span>
         </div>
         <div class="v2a-pt-list">
             <article class="v2a-pt" th:each="t : ${unfinishedTours}" th:with="p=${t.post}">

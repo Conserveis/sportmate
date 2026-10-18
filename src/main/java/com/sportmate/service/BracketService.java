@@ -280,14 +280,17 @@ public class BracketService {
     }
 
     /**
-     * ทัวร์นาเมนต์ของผู้จัดที่เลยวันแข่งแล้วแต่ยังจัดการไม่เสร็จ (ยังไม่จับสาย หรือยังกรอกผลไม่ครบ)
-     * หน้าทัวร์นาเมนต์แสดงเฉพาะที่ยังไม่ถึงวันแข่ง จึงแสดงไว้ในหน้าจัดเก็บกิจกรรมให้ผู้จัดตามต่อได้
+     * ทัวร์นาเมนต์ของผู้จัดที่ถึงเวลาแข่งแล้วแต่ยังจัดการไม่เสร็จ (ยังไม่จับสาย หรือยังกรอกผลไม่ครบ)
+     * แสดงตั้งแต่เวลาแข่งจนถึงสิ้นวันแข่ง (00:00 ของวันถัดไป) ให้ผู้จัดกรอกผลระหว่างวันได้ — เลยวันแข่งแล้วไม่แสดง
      * @return [{post, drawn, done, total}] เรียงตามวันแข่ง ใหม่ → เก่า
      */
     public List<Map<String, Object>> unfinishedTournaments(List<Post> owned) {
+        LocalDateTime now = LocalDateTime.now();
         List<Map<String, Object>> out = new ArrayList<>();
         for (Post p : owned) {
-            if (!p.isTournament() || "cancelled".equals(p.getStatus()) || !p.isExpired()) continue;
+            if (!p.isTournament() || "cancelled".equals(p.getStatus()) || p.getDatePlay() == null) continue;
+            LocalDateTime endOfPlayDay = p.getDatePlay().toLocalDate().plusDays(1).atStartOfDay();
+            if (now.isBefore(p.getDatePlay()) || !now.isBefore(endOfPlayDay)) continue;
             boolean drawn = isDrawn(p);
             if (drawn && champion(p) != null) continue;   // จบการแข่งขันแล้ว
             Map<String, Object> row = new HashMap<>();
