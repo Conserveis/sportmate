@@ -268,9 +268,19 @@
 
             <!-- รายชื่อผู้เข้าร่วม -->
             <section class="v2f-card">
-                <b class="t">รายชื่อผู้เข้าร่วม <span class="v2-count-pill" th:text="${participants.size()}">0</span></b>
-                <div class="v2f-none" th:if="${participants.isEmpty()}">ยังไม่มีผู้เข้าร่วม เป็นคนแรกเลยไหม?</div>
+                <b class="t">รายชื่อผู้เข้าร่วม <span class="v2-count-pill" th:text="${participants.size() + post.ownerSlots}">0</span></b>
+                <div class="v2f-none" th:if="${participants.isEmpty() and post.ownerSlots == 0}">ยังไม่มีผู้เข้าร่วม เป็นคนแรกเลยไหม?</div>
                 <div class="v2d-people">
+                    <!-- โพสต์ทั่วไป: ผู้โพสต์นับเป็นผู้เข้าร่วมด้วย (ทัวร์นาเมนต์ไม่นับ) -->
+                    <div class="v2d-person" th:if="${post.ownerSlots > 0}">
+                        <div class="v2d-person-row">
+                            <img class="v2d-p-av" th:if="${post.owner.avatarUrl != null}" th:src="@{${post.owner.avatarUrl}}" alt="">
+                            <span class="v2d-p-av" th:if="${post.owner.avatarUrl == null}"
+                                  th:text="${#strings.substring(post.owner.userName,0,1).toUpperCase()}">U</span>
+                            <a class="user-link v2d-p-name" th:href="@{'/users/' + ${post.owner.id}}" th:text="${post.owner.userName}">owner</a>
+                            <span class="v2d-host-badge">ผู้จัด</span>
+                        </div>
+                    </div>
                     <div class="v2d-person" th:each="e : ${participants}">
                         <div class="v2d-person-row">
                             <img class="v2d-p-av" th:if="${e.user.avatarUrl != null}" th:src="@{${e.user.avatarUrl}}" alt="">

@@ -22,12 +22,17 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
              WHEN p.DatePlay < NOW()     THEN 'finished'
              ELSE 'open' END""";
 
+    /** ที่นั่งของผู้โพสต์ (alias t = PostType): โพสต์ทั่วไป +1, ทัวร์นาเมนต์ 0 — ตรงกับ Post.getOwnerSlots() */
+    String OWNER_SLOT_SQL = "(CASE WHEN t.PtypeName = 'Tournament' THEN 0 ELSE 1 END)";
+
     /** โพสต์ทั้งหมดพร้อมสถานะจริง สำหรับหน้า /admin/posts (alias x) — กรองกีฬา / คำค้นได้ */
     String ADMIN_POSTS_SQL = """
         SELECT p.PostID, p.PostName, s.SportName, u.UserName, p.DatePlay,
                """ + POST_STATE_SQL + """
                 AS st,
-               (SELECT COUNT(*) FROM Event e WHERE e.PostID = p.PostID AND e.Status = 'approved') AS joined,
+               (SELECT COUNT(*) FROM Event e WHERE e.PostID = p.PostID AND e.Status = 'approved')
+                 + """ + OWNER_SLOT_SQL + """
+                 AS joined,
                p.MaxPlayer, p.MinPlayer, t.PtypeName, u.UserID, p.DateCreate
         FROM Post p
         JOIN Sport    s ON s.SportID    = p.SportID
@@ -116,11 +121,14 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
         SELECT p.PostID, p.PostName, s.SportName, u.UserName, p.DatePlay,
                """ + POST_STATE_SQL + """
                ,
-               (SELECT COUNT(*) FROM Event e WHERE e.PostID = p.PostID AND e.Status = 'approved'),
+               (SELECT COUNT(*) FROM Event e WHERE e.PostID = p.PostID AND e.Status = 'approved')
+                 + """ + OWNER_SLOT_SQL + """
+               ,
                p.MaxPlayer
         FROM Post p
-        JOIN Sport  s ON s.SportID = p.SportID
-        JOIN `User` u ON u.UserID  = p.OwnerUserID
+        JOIN Sport    s ON s.SportID    = p.SportID
+        JOIN `User`   u ON u.UserID     = p.OwnerUserID
+        JOIN PostType t ON t.PostTypeID = p.PostTypeID
         ORDER BY p.DateCreate DESC
         LIMIT 8
         """, nativeQuery = true)
@@ -223,7 +231,7 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
 
     @Query(value = """
         SELECT x.st, COUNT(*) FROM (
-            SELECT """ + POST_STATE_SQL + """
+            SELECT\s""" + POST_STATE_SQL + """
                  AS st
             FROM Post p
             WHERE p.DateCreate >= :start
@@ -235,7 +243,7 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
 
     /**
      * โพสต์ที่ "ไม่ถึงขั้นต่ำ" แยกตามกีฬา (เฉพาะโพสต์ทั่วไป ไม่รวมทัวร์นาเมนต์และโพสต์ที่ยกเลิก)
-     * ไม่ถึงขั้นต่ำ = ผู้เข้าร่วมที่ approved น้อยกว่า MinPlayer
+     * ไม่ถึงขั้นต่ำ = ผู้เข้าร่วมที่ approved + ผู้โพสต์ (+1) น้อยกว่า MinPlayer
      * คอลัมน์: กีฬา, โพสต์ทั้งหมด, ไม่ถึงขั้นต่ำ, ไม่ถึงขั้นต่ำและเลยเวลาเล่นแล้ว
      */
     @Query(value = """
@@ -245,7 +253,7 @@ public interface AdminStatsRepository extends Repository<Post, Integer> {
         FROM (
             SELECT p.SportID, p.MinPlayer, p.DatePlay,
                    (SELECT COUNT(*) FROM Event e
-                    WHERE e.PostID = p.PostID AND e.Status = 'approved') AS joined
+                    WHERE e.PostID = p.PostID AND e.Status = 'approved') + 1 AS joined
             FROM Post p
             JOIN PostType t ON t.PostTypeID = p.PostTypeID
             WHERE p.Status <> 'cancelled' AND t.PtypeName = 'Post' AND p.DateCreate >= :start

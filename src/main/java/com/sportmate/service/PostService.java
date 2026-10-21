@@ -290,7 +290,7 @@ public class PostService {
                 throw new IllegalArgumentException("จำนวนคนสูงสุดต้องไม่น้อยกว่าจำนวนขั้นต่ำ");
         }
 
-        long joined = eventRepo.countApprovedJoins(p);
+        long joined = eventRepo.countApprovedJoins(p) + p.getOwnerSlots();   // รวมผู้โพสต์
         if (maxPlayer < joined)
             throw new IllegalStateException(
                     "ลดจำนวนสูงสุดเหลือ " + maxPlayer + " ไม่ได้ เพราะมีผู้เข้าร่วมแล้ว " + joined + " คน");

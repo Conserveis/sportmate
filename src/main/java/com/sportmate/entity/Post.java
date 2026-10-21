@@ -146,6 +146,14 @@ public class Post {
         return postType != null && PostType.TOURNAMENT.equals(postType.getName());
     }
 
+    /**
+     * ที่นั่งของผู้โพสต์: โพสต์ทั่วไปนับผู้โพสต์เป็นผู้เล่น 1 คน (รวมในจำนวนผู้เข้าร่วม / ขั้นต่ำ / สูงสุด)
+     * ทัวร์นาเมนต์ไม่นับ เพราะผู้จัดไม่ได้ลงแข่ง
+     */
+    public int getOwnerSlots() {
+        return isTournament() ? 0 : 1;
+    }
+
     /** ทัวร์นาเมนต์แบบทีม/คู่ — ต้องสร้างทีมก่อนเข้าร่วม */
     @Transient
     public boolean isTeamTournament() {

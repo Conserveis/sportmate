@@ -31,7 +31,8 @@ public class EventService {
         return matchRepo != null && matchRepo.existsByPost(post);
     }
 
-    public long countJoins(Post post) { return eventRepo.countApprovedJoins(post); }
+    /** จำนวนผู้เข้าร่วม = ผู้ที่ approved + ผู้โพสต์ (เฉพาะโพสต์ทั่วไป ดู Post.getOwnerSlots) */
+    public long countJoins(Post post) { return eventRepo.countApprovedJoins(post) + post.getOwnerSlots(); }
 
     public List<Event> participants(Post post) { return eventRepo.findParticipants(post); }
 
@@ -63,7 +64,7 @@ public class EventService {
         if (post.isTournament() && isDrawn(post))
             throw new IllegalStateException("จับสายการแข่งขันแล้ว ปิดรับสมัคร");
 
-        long currentApproved = eventRepo.countApprovedJoins(post);
+        long currentApproved = countJoins(post);
         if (currentApproved >= post.getMaxPlayer())
             throw new IllegalStateException("จำนวนผู้เข้าร่วมเต็มแล้ว");
 
@@ -90,7 +91,7 @@ public class EventService {
 
         if (post.isPublic()) {
             // โพสต์สาธารณะ: นับเป็นเข้าร่วมทันที และแจ้งเตือนเจ้าของ
-            long joined = eventRepo.countApprovedJoins(post);
+            long joined = countJoins(post);
             long need = Math.max(0, post.getMinPlayer() - joined);
             String msg = user.getUserName() + " เข้าร่วม \"" + post.getPostName() + "\" (ตอนนี้ " + joined + "/" + post.getMaxPlayer()
                     + (need > 0 ? " ยังขาดอีก " + need + " คน)" : ")");
@@ -122,7 +123,7 @@ public class EventService {
             throw new IllegalStateException("สถานะคำขอไม่ถูกต้อง");
         }
 
-        long currentApproved = eventRepo.countApprovedJoins(post);
+        long currentApproved = countJoins(post);
         if (currentApproved >= post.getMaxPlayer()) {
             throw new IllegalStateException("จำนวนผู้เข้าร่วมเต็มแล้ว ไม่สามารถอนุมัติเพิ่มได้");
         }
@@ -187,7 +188,7 @@ public class EventService {
 
         if (wasApproved) {
             // แจ้งเตือนเจ้าของว่ามีคนยกเลิก + จำนวนล่าสุด
-            long joined = eventRepo.countApprovedJoins(post);
+            long joined = countJoins(post);
             long need = Math.max(0, post.getMinPlayer() - joined);
             String msg = user.getUserName() + " ยกเลิกการเข้าร่วม \"" + post.getPostName() + "\" (ตอนนี้ "
                     + joined + "/" + post.getMaxPlayer()
