@@ -296,5 +296,17 @@
     update();
 })();
 </script>
+<script>
+/* ปฏิทินล็อกวันเวลาในอดีตไว้ตั้งแต่แรก (ตามเวลาเครื่องผู้ใช้) — เซิร์ฟเวอร์ตรวจซ้ำอีกชั้น */
+(function () {
+    var now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    var minNow = now.toISOString().slice(0, 16);
+    ['datePlay', 'publishAt'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.min = minNow;
+    });
+})();
+</script>
 </body>
 </html>

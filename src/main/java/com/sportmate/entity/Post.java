@@ -187,6 +187,8 @@ public class Post {
     public LocalDateTime getDateCreate() { return dateCreate; }
     public void setDateCreate(LocalDateTime dateCreate) { this.dateCreate = dateCreate; }
     public LocalDateTime getPublishAt() { return publishAt; }
+    /** ตั้งเวลาเผยแพร่ไว้และยังไม่ถึงเวลา (ยังแก้เวลาเผยแพร่ได้) */
+    public boolean isScheduled() { return publishAt != null && publishAt.isAfter(LocalDateTime.now()); }
     public void setPublishAt(LocalDateTime publishAt) { this.publishAt = publishAt; }
     public LocalDateTime getNotifiedAt() { return notifiedAt; }
     public void setNotifiedAt(LocalDateTime notifiedAt) { this.notifiedAt = notifiedAt; }

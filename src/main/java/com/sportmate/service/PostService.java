@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -121,8 +122,11 @@ public class PostService {
         return (int) Math.max(0, WEEKLY_POST_QUOTA - used);
     }
 
-        /** ตรวจว่าวันเวลานัด/เวลาเผยแพร่ อยู่ในช่วงปี 2026–2028 และไม่ใช่อดีต */
-    private void validateSchedule(LocalDateTime datePlay, LocalDateTime publishAt) {
+        /**
+     * ตรวจว่าวันเวลานัด/เวลาเผยแพร่ อยู่ในช่วงปี 2026–2028 และไม่ใช่อดีต
+     * @param checkPublishPast ตรวจว่าเวลาเผยแพร่ไม่อยู่ในอดีต (ตอนแก้ไข ตรวจเฉพาะโพสต์ที่ยังไม่ถึงเวลาเผยแพร่)
+     */
+    private void validateSchedule(LocalDateTime datePlay, LocalDateTime publishAt, boolean checkPublishPast) {
         if (datePlay == null)
             throw new IllegalArgumentException("กรุณาระบุวันและเวลานัด");
         if (datePlay.isBefore(ALLOWED_FROM) || datePlay.isAfter(ALLOWED_TO))
@@ -133,6 +137,9 @@ public class PostService {
         if (publishAt != null) {
             if (publishAt.isBefore(ALLOWED_FROM) || publishAt.isAfter(ALLOWED_TO))
                 throw new IllegalArgumentException("วันเวลาเผยแพร่ต้องอยู่ระหว่าง " + RANGE_TEXT);
+            // เทียบระดับนาที: ช่อง datetime-local เลือกได้ถึงนาทีปัจจุบัน (ค่าวินาทีเป็น 00)
+            if (checkPublishPast && publishAt.isBefore(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)))
+                throw new IllegalArgumentException("วันเวลาเผยแพร่ต้องไม่อยู่ในอดีต");
             if (!publishAt.isBefore(datePlay))
                 throw new IllegalArgumentException("วันเวลาเผยแพร่ต้องมาก่อนวันและเวลานัด");
         }
@@ -149,7 +156,7 @@ public class PostService {
                        Integer maxPlayer, Integer minPlayer, boolean isPublic,
                        LocalDateTime publishAt, Integer teamSize) {
 
-        validateSchedule(datePlay, publishAt);
+        validateSchedule(datePlay, publishAt, true);
         boolean tournament = PostType.TOURNAMENT.equals(type);
 
         if (tournament && !owner.isMember()) {
@@ -264,7 +271,7 @@ public class PostService {
             throw new IllegalStateException(
                     "แก้ไขโพสต์นี้ครบ " + Post.MAX_EDIT + " ครั้งแล้ว ไม่สามารถแก้ไขเพิ่มได้");
 
-        validateSchedule(datePlay, publishAt);
+        validateSchedule(datePlay, publishAt, p.isScheduled());
 
         // เพดานเลื่อนเวลา 72 ชม. นับจากกำหนดเดิม (ไม่ใช่จากค่าที่แก้ครั้งก่อน)
         LocalDateTime limit = p.getPostponeDeadline();
